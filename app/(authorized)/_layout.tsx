@@ -22,6 +22,12 @@ export default function RootLayout(): ReactNode {
         }}
       >
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="printScreen"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
   );
 }

@@ -1,6 +1,7 @@
 import { useAuthSession } from "@/app/providers/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Link, useNavigation } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
@@ -18,7 +19,7 @@ import { StyleSheet } from "react-native";
 
 export default function AnalyticsDashboard() {
   const [activeChartTab, setActiveChartTab] = useState("week");
-
+  const navigation: any = useNavigation();
   // Sample data for revenue chart
   const revenueData: any = {
     week: [4500, 5200, 3800, 6100, 5800, 7200, 6800],
@@ -111,7 +112,14 @@ export default function AnalyticsDashboard() {
               </LinearGradient>
             </View>
             <Text style={enhancedStyles.summaryValue}>$24,580</Text>
-            <Text style={enhancedStyles.summaryTitle}>Total Revenue</Text>
+            <Link href={`/printScreen`} asChild>
+              <Text
+                style={enhancedStyles.summaryTitle}
+                onPress={() => navigation.navigate("printScreen")}
+              >
+                Total Revenue
+              </Text>
+            </Link>
             <View style={enhancedStyles.summaryTrend}>
               <Ionicons name="arrow-up" size={12} color="#4CAF50" />
               <Text style={enhancedStyles.summaryTrendText}>12.8%</Text>
