@@ -4,20 +4,17 @@ import {
   Dimensions,
   FlatList,
   Image,
-  Modal,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import OrderSummaryModal from "../_components/orderSummaryModal";
 import VarientModal from "../_components/varientModal";
-import { BlurView } from "expo-blur";
 
-// Sample product data
+// Sample product data kept the same
 const PRODUCTS = [
   {
     id: 1,
@@ -51,7 +48,13 @@ const PRODUCTS = [
     image:
       "https://www.tech21.com/cdn/shop/files/1eee32c5-e890-4159-88e9-eb5a9cf980ec.jpg?v=1718361342",
     variants: [
-      { id: 301, name: "AirPods Pro", price: 249 },
+      {
+        id: 301,
+        image:
+          "https://www.tech21.com/cdn/shop/files/1eee32c5-e890-4159-88e9-eb5a9cf980ec.jpg?v=1718361342",
+        name: "AirPods Pro",
+        price: 249,
+      },
       { id: 302, name: "AirPods Pro with MagSafe Case", price: 279 },
     ],
     category: "Audio",
@@ -61,9 +64,15 @@ const PRODUCTS = [
     name: "iPad Air",
     price: 599,
     image:
-      "https://www.imagineonline.store/cdn/shop/files/iPad_Air_5thGen_Wi-Fi_Purple_PDP_Image_Position-1b__en-IN_7f057f0d-0511-471c-921c-9d38767c0a6b.jpg?v=1705480138&width=1445",
+      "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/ipad-pro-storage-select-202405-11inch-silver-glossy-wifi?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=czlRMVFIQnlSdTl0T3ZTQUtJUW9rMm5pQUoxb0NIVEJFSjRVRzZ4dzV5VHhzSVRSdnBuOHFlMHZ5cERpS2J3bFZ4Z1Fxa3Y4V1F0eXdGcDVzSnYvZ3J4M3lYcDIyK01lckZBaW5GTC9DMEQxcjBVRyswWG14bEI4WVZBcUIybEZTMW5aeVlPZFhiTTZza0hENEFwOTlB&traceId=1",
     variants: [
-      { id: 401, name: "iPad Air 64GB", price: 599 },
+      {
+        id: 401,
+        image:
+          "https://www.dxomark.com/wp-content/uploads/medias/post-125834/Apple-iPhone-14_FINAL_featured-image-packshot-review.jpg",
+        name: "iPad Air 64GB",
+        price: 599,
+      },
       { id: 402, name: "iPad Air 256GB", price: 749 },
     ],
     category: "Tablets",
@@ -221,11 +230,6 @@ export default function ProductListingScreen() {
               {item.variants.length} variants
             </Text>
           </View>
-
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryBadgeText}>{item.category}</Text>
-          </View>
-
           <View style={styles.productInfo}>
             <Text style={styles.productName}>{item.name}</Text>
             <Text style={styles.productPrice}>${item.price}</Text>
@@ -265,7 +269,7 @@ export default function ProductListingScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.addButtonGradient}
                 >
-                  <Text style={styles.addButtonText}>Add to Cart</Text>
+                  <Text style={styles.addButtonText}>Add</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -298,7 +302,7 @@ export default function ProductListingScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Premium Tech</Text>
           <TouchableOpacity
@@ -318,7 +322,7 @@ export default function ProductListingScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.searchContainer}>
+        <View style={styles.searchAndCategoriesContainer}>
           <View style={styles.searchBar}>
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
@@ -337,9 +341,69 @@ export default function ProductListingScreen() {
               </TouchableOpacity>
             )}
           </View>
+
+          <FlatList
+            data={CATEGORIES}
+            renderItem={renderCategoryItem}
+            keyExtractor={(item) => item}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesList}
+          />
+        </View>
+      </View> */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.headerTitle}>Premium Tech</Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#6C757D",
+                marginTop: 2,
+                fontWeight: "500",
+              }}
+            >
+              Find your perfect device
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => getTotalItems() > 0 && setShowOrderModal(true)}
+          >
+            <LinearGradient
+              colors={
+                getTotalItems() > 0
+                  ? [ACCENT_COLOR, "#7A86FF"]
+                  : ["#E0E0E0", "#F0F0F0"]
+              }
+              style={styles.cartIndicator}
+            >
+              <Text style={styles.cartIndicatorText}>{getTotalItems()}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.categoriesContainer}>
+        <View style={styles.searchAndCategoriesContainer}>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search premium products..."
+              placeholderTextColor="#9DA3B4"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setSearchQuery("")}
+              >
+                <Text style={styles.clearButtonText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           <FlatList
             data={CATEGORIES}
             renderItem={renderCategoryItem}
@@ -402,183 +466,6 @@ export default function ProductListingScreen() {
       )}
 
       {/* Order Summary Modal */}
-      {/* <Modal
-        visible={showOrderModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowOrderModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <BlurView
-            intensity={15}
-            style={StyleSheet.absoluteFill}
-            tint="dark"
-          />
-
-          <View style={styles.orderModal}>
-            <View style={styles.modalHandle} />
-
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Order Summary</Text>
-              <TouchableOpacity
-                style={styles.closeButtonContainer}
-                onPress={() => setShowOrderModal(false)}
-              >
-                <Text style={styles.closeButton}>×</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={styles.orderItems}
-              showsVerticalScrollIndicator={false}
-            >
-              {Object.keys(cart).map((productId) => {
-                const product = PRODUCTS.find(
-                  (p) => p.id === parseInt(productId)
-                );
-                if (product && cart[productId] > 0) {
-                  return (
-                    <View key={productId} style={styles.orderItem}>
-                      <View style={styles.orderImageContainer}>
-                        <Image
-                          source={{ uri: product.image }}
-                          style={styles.orderItemImage}
-                        />
-                        <LinearGradient
-                          colors={["rgba(0,0,0,0.01)", "rgba(0,0,0,0.1)"]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 0, y: 1 }}
-                          style={styles.orderImageGradient}
-                        />
-                      </View>
-                      <View style={styles.orderItemDetails}>
-                        <Text style={styles.orderItemName}>{product.name}</Text>
-                        <Text style={styles.orderItemPrice}>
-                          ${product.price}
-                        </Text>
-                      </View>
-                      <View style={styles.orderItemQuantity}>
-                        <TouchableOpacity
-                          style={styles.orderQuantityButton}
-                          onPress={() => handleDecrement(product.id)}
-                        >
-                          <Text style={styles.quantityControl}>−</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.orderQuantityText}>
-                          {cart[productId]}
-                        </Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.orderQuantityButton,
-                            styles.orderIncrementButton,
-                          ]}
-                          onPress={() => handleIncrement(product.id)}
-                        >
-                          <Text
-                            style={[
-                              styles.quantityControl,
-                              { color: "#FFFFFF" },
-                            ]}
-                          >
-                            +
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                }
-                return null;
-              })}
-
-              {Object.keys(variantCart).map((variantId) => {
-                const variant = PRODUCTS.flatMap((p) => p.variants).find(
-                  (v) => v.id === parseInt(variantId)
-                );
-                if (variant && variantCart[variantId] > 0) {
-                  return (
-                    <View key={variantId} style={styles.orderItem}>
-                      <View style={styles.variantItemImage}>
-                        <LinearGradient
-                          colors={["#E3E6FF", "#D1D8FF"]}
-                          style={styles.variantImageGradient}
-                        >
-                          <Text style={styles.variantLabel}>Variant</Text>
-                        </LinearGradient>
-                      </View>
-                      <View style={styles.orderItemDetails}>
-                        <Text style={styles.orderItemName}>{variant.name}</Text>
-                        <Text style={styles.orderItemPrice}>
-                          ${variant.price}
-                        </Text>
-                      </View>
-                      <View style={styles.orderItemQuantity}>
-                        <TouchableOpacity
-                          style={styles.orderQuantityButton}
-                          onPress={() => handleVariantDecrement(variant.id)}
-                        >
-                          <Text style={styles.quantityControl}>−</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.orderQuantityText}>
-                          {variantCart[variantId]}
-                        </Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.orderQuantityButton,
-                            styles.orderIncrementButton,
-                          ]}
-                          onPress={() => handleVariantIncrement(variant.id)}
-                        >
-                          <Text
-                            style={[
-                              styles.quantityControl,
-                              { color: "#FFFFFF" },
-                            ]}
-                          >
-                            +
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                }
-                return null;
-              })}
-            </ScrollView>
-
-            <View style={styles.orderSummary}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal</Text>
-                <Text style={styles.summaryValue}>${getTotalPrice()}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tax</Text>
-                <Text style={styles.summaryValue}>
-                  ${(parseFloat(getTotalPrice()) * 0.08).toFixed(2)}
-                </Text>
-              </View>
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>
-                  ${(parseFloat(getTotalPrice()) * 1.08).toFixed(2)}
-                </Text>
-              </View>
-
-              <TouchableOpacity style={styles.checkoutButton}>
-                <LinearGradient
-                  colors={[ACCENT_COLOR, "#7A86FF"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.checkoutGradient}
-                >
-                  <Text style={styles.checkoutButtonText}>
-                    Proceed to Checkout
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal> */}
       <OrderSummaryModal
         visible={showOrderModal}
         onClose={() => setShowOrderModal(false)}
@@ -599,93 +486,8 @@ export default function ProductListingScreen() {
         variantCart={variantCart}
         handleVariantDecrement={handleVariantDecrement}
         handleVariantIncrement={handleVariantIncrement}
+        selectedProduct={selectedProduct}
       />
-      {/* <Modal
-        visible={showVariantModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowVariantModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <BlurView intensity={15} style={StyleSheet.absoluteFill} tint="dark" />
-          
-          <View style={styles.variantModal}>
-            {selectedProduct && (
-              <>
-                <View style={styles.modalHandle} />
-                
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>{selectedProduct.name} Variants</Text>
-                  <TouchableOpacity 
-                    style={styles.closeButtonContainer}
-                    onPress={() => setShowVariantModal(false)}
-                  >
-                    <Text style={styles.closeButton}>×</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <ScrollView style={styles.variantsList} showsVerticalScrollIndicator={false}>
-                  {selectedProduct.variants.map((variant: any) => {
-                    const quantity = variantCart[variant.id] || 0;
-                    
-                    return (
-                      <View key={variant.id} style={styles.variantItem}>
-                        <View style={styles.variantInfo}>
-                          <Text style={styles.variantName}>{variant.name}</Text>
-                          <Text style={styles.variantPrice}>${variant.price}</Text>
-                        </View>
-                        
-                        <View style={styles.variantQuantity}>
-                          {quantity > 0 ? (
-                            <View style={styles.quantityControlGroup}>
-                              <TouchableOpacity
-                                style={styles.variantQuantityButton}
-                                onPress={() => handleVariantDecrement(variant.id)}
-                              >
-                                <Text style={styles.quantityButtonText}>−</Text>
-                              </TouchableOpacity>
-                              
-                              <Text style={styles.quantityText}>{quantity}</Text>
-                              
-                              <TouchableOpacity
-                                style={[styles.variantQuantityButton, styles.variantIncrementButton]}
-                                onPress={() => handleVariantIncrement(variant.id)}
-                              >
-                                <Text style={[styles.quantityButtonText, {color: '#FFFFFF'}]}>+</Text>
-                              </TouchableOpacity>
-                            </View>
-                          ) : (
-                            <TouchableOpacity
-                              style={styles.variantAddButton}
-                              onPress={() => handleVariantIncrement(variant.id)}
-                            >
-                              <Text style={styles.variantAddButtonText}>Add</Text>
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-                
-                <TouchableOpacity
-                  style={styles.doneButton}
-                  onPress={() => setShowVariantModal(false)}
-                >
-                  <LinearGradient
-                    colors={[ACCENT_COLOR, '#7A86FF']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.doneButtonGradient}
-                  >
-                    <Text style={styles.doneButtonText}>Done</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal> */}
     </View>
   );
 }
@@ -696,101 +498,97 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFBFF",
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 10,
+    paddingTop: 40,
+    paddingBottom: 5,
     backgroundColor: "#FFFFFF",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
     zIndex: 10,
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    marginBottom: 10,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "700",
     color: "#212529",
   },
   cartButton: {
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: "hidden",
   },
   cartIndicator: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
   cartIndicatorText: {
     color: "#FFFFFF",
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 13,
   },
-  searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 15,
+  searchAndCategoriesContainer: {
+    paddingHorizontal: 16,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F5F6FA",
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    height: 50,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 40,
+    marginBottom: 8,
   },
   searchIcon: {
-    fontSize: 16,
-    marginRight: 10,
+    fontSize: 14,
+    marginRight: 8,
     color: "#9DA3B4",
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: "#212529",
   },
   clearButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: "#E0E0E0",
     justifyContent: "center",
     alignItems: "center",
   },
   clearButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
     color: "#7A7A7A",
     textAlign: "center",
   },
-  categoriesContainer: {
-    marginBottom: 10,
-  },
   categoriesList: {
-    paddingHorizontal: 16,
-    paddingVertical: 5,
+    paddingVertical: 4,
   },
   categoryItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 4,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 6,
+    borderRadius: 16,
     backgroundColor: "#F0F2F5",
   },
   selectedCategoryItem: {
     backgroundColor: ACCENT_COLOR,
   },
   categoryText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "500",
     color: "#555555",
   },
@@ -798,41 +596,45 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   productList: {
-    paddingHorizontal: 10,
-    paddingTop: 20,
-    paddingBottom: 100,
+    paddingHorizontal: 8,
+    paddingTop: 16,
+    paddingBottom: 80,
   },
   productRow: {
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   productCardContainer: {
-    width: (width - 50) / 2,
-    marginBottom: 20,
+    width: (width - 40) / 2,
+    marginBottom: 12,
   },
   productCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 12,
+    borderRadius: 16,
+    padding: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
-    height: 280,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 4,
+    height: 220,
     justifyContent: "space-between",
+    borderWidth: 0.5,
+    borderColor: "rgba(0,0,0,0.03)",
   },
   imageContainer: {
     position: "relative",
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: "hidden",
-    marginBottom: 12,
+    marginBottom: 8,
+    elevation: 1,
   },
   productImage: {
     width: "100%",
-    height: 140,
-    borderRadius: 16,
+    height: 110,
+    borderRadius: 14,
     backgroundColor: "#F8F9FA",
+    resizeMode: "cover",
   },
   imageGradient: {
     position: "absolute",
@@ -840,109 +642,108 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    opacity: 0.7,
   },
   productBadge: {
     position: "absolute",
-    top: 20,
-    right: 20,
-    backgroundColor: "rgba(77, 93, 250, 0.1)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(77, 93, 250, 0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   productBadgeText: {
     color: ACCENT_COLOR,
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  categoryBadge: {
-    position: "absolute",
-    top: 140,
-    left: 20,
-    backgroundColor: "rgba(255, 138, 101, 0.15)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryBadgeText: {
-    color: SECONDARY_COLOR,
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   productInfo: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: "#212529",
     marginBottom: 4,
+    letterSpacing: 0.2,
   },
   productPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: ACCENT_COLOR,
   },
   quantityContainer: {
     marginTop: "auto",
+    alignItems: "flex-end",
   },
   quantityControls: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: 36,
-  },
-
-  addButton: {
+    height: 34,
+    backgroundColor: "#F7F8FC",
     borderRadius: 12,
-    overflow: "hidden",
-  },
-  addButtonGradient: {
-    paddingVertical: 12,
-    alignItems: "center",
-    borderRadius: 12,
-  },
-  addButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
+    paddingHorizontal: 5,
   },
   quantityButton: {
-    width: 32,
-    height: 32,
-    backgroundColor: "#F0F2F5",
+    width: 28,
+    height: 28,
+    backgroundColor: "#FFFFFF",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   incrementButton: {
     backgroundColor: ACCENT_COLOR,
   },
+  addButton: {
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  addButtonGradient: {
+    paddingVertical: 8,
+    paddingHorizontal: 28,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
   quantityButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: "#555555",
   },
   quantityText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: "#212529",
-    marginHorizontal: 10,
+    marginHorizontal: 8,
   },
   noResultsContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   noResultsText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: "#212529",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   noResultsSubtext: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#6C757D",
     textAlign: "center",
   },
@@ -951,55 +752,55 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 15,
+    paddingTop: 12,
   },
   footerGradient: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: 50,
+    height: 40,
   },
   footerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
   },
   footerLeftContent: {
     justifyContent: "center",
   },
   totalItemsText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#6C757D",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   totalPriceText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#212529",
   },
   placeOrderButton: {
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: "hidden",
   },
   placeOrderGradient: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
   placeOrderButtonText: {
     color: "#FFFFFF",
     fontWeight: "600",
-    fontSize: 16,
+    fontSize: 14,
   },
 });

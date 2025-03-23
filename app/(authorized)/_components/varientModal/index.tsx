@@ -1,18 +1,25 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import React from "react";
 import { BlurView } from "expo-blur";
-import { ScrollView } from "moti";
+import { ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-const ACCENT_COLOR = "#4D5DFA";
-const SECONDARY_COLOR = "#FF8A65";
 
-const VarientModal = ({
+const ACCENT_COLOR = "#4D5DFA";
+
+const VariantModal = ({
   visible,
   onClose,
   selectedProduct,
   handleVariantDecrement,
   handleVariantIncrement,
-  variantCart
+  variantCart,
 }: any) => {
   return (
     <Modal
@@ -50,66 +57,85 @@ const VarientModal = ({
 
                   return (
                     <View key={variant.id} style={styles.variantItem}>
-                      <View style={styles.variantInfo}>
-                        <Text style={styles.variantName}>{variant.name}</Text>
-                        <Text style={styles.variantPrice}>
+                      {variant.image ? (
+                        <View style={styles.orderImageContainer}>
+                          <Image
+                            source={{ uri: variant.image }}
+                            style={styles.orderItemImage}
+                          />
+                          <LinearGradient
+                            colors={["rgba(0,0,0,0.01)", "rgba(0,0,0,0.1)"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={styles.orderImageGradient}
+                          />
+                        </View>
+                      ) : (
+                        <View style={styles.variantItemImage}>
+                          <LinearGradient
+                            colors={["#E3E6FF", "#D1D8FF"]}
+                            style={styles.variantImageGradient}
+                          >
+                            <Text style={styles.variantLabel}>Variant</Text>
+                          </LinearGradient>
+                        </View>
+                      )}
+
+                      <View style={styles.variantItemDetails}>
+                        <Text style={styles.variantItemName}>
+                          {variant.name}
+                        </Text>
+                        <Text style={styles.variantItemPrice}>
                           ${variant.price}
                         </Text>
                       </View>
 
-                      <View style={styles.variantQuantity}>
-                        {quantity > 0 ? (
-                          <View style={styles.quantityControlGroup}>
-                            <TouchableOpacity
-                              style={styles.variantQuantityButton}
-                              onPress={() => handleVariantDecrement(variant.id)}
-                            >
-                              <Text style={styles.quantityButtonText}>−</Text>
-                            </TouchableOpacity>
+                      <View style={styles.variantItemQuantity}>
+                        <TouchableOpacity
+                          style={styles.variantQuantityButton}
+                          onPress={() => handleVariantDecrement(variant.id)}
+                        >
+                          <Text style={styles.quantityControl}>−</Text>
+                        </TouchableOpacity>
 
-                            <Text style={styles.quantityText}>{quantity}</Text>
+                        <Text style={styles.variantQuantityText}>
+                          {quantity}
+                        </Text>
 
-                            <TouchableOpacity
-                              style={[
-                                styles.variantQuantityButton,
-                                styles.variantIncrementButton,
-                              ]}
-                              onPress={() => handleVariantIncrement(variant.id)}
-                            >
-                              <Text
-                                style={[
-                                  styles.quantityButtonText,
-                                  { color: "#FFFFFF" },
-                                ]}
-                              >
-                                +
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.variantAddButton}
-                            onPress={() => handleVariantIncrement(variant.id)}
+                        <TouchableOpacity
+                          style={[
+                            styles.variantQuantityButton,
+                            styles.variantIncrementButton,
+                          ]}
+                          onPress={() => handleVariantIncrement(variant.id)}
+                        >
+                          <Text
+                            style={[
+                              styles.quantityControl,
+                              { color: "#FFFFFF" },
+                            ]}
                           >
-                            <Text style={styles.variantAddButtonText}>Add</Text>
-                          </TouchableOpacity>
-                        )}
+                            +
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   );
                 })}
               </ScrollView>
 
-              <TouchableOpacity style={styles.doneButton} onPress={onClose}>
-                <LinearGradient
-                  colors={[ACCENT_COLOR, "#7A86FF"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.doneButtonGradient}
-                >
-                  <Text style={styles.doneButtonText}>Done</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              <View style={styles.variantFooter}>
+                <TouchableOpacity style={styles.doneButton} onPress={onClose}>
+                  <LinearGradient
+                    colors={[ACCENT_COLOR, "#7A86FF"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.doneButtonGradient}
+                  >
+                    <Text style={styles.doneButtonText}>Done</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </>
           )}
         </View>
@@ -118,7 +144,7 @@ const VarientModal = ({
   );
 };
 
-export default VarientModal;
+export default VariantModal;
 
 const styles = StyleSheet.create({
   modalOverlay: {
@@ -126,12 +152,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-  orderModal: {
+  variantModal: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingTop: 15,
-    maxHeight: 300,
   },
   modalHandle: {
     width: 40,
@@ -167,70 +192,20 @@ const styles = StyleSheet.create({
     color: "#555555",
     lineHeight: 24,
   },
-  orderItems: {
+  variantsList: {
     paddingHorizontal: 20,
-    // maxHeight: height * 0.4,
   },
-  orderItem: {
+  variantItem: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-  },
-  orderItemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: "#F8F9FA",
-  },
-  orderItemDetails: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  orderItemName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#212529",
-    marginBottom: 4,
-  },
-  orderItemPrice: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: ACCENT_COLOR,
-  },
-  orderItemQuantity: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F5F6FA",
-    borderRadius: 10,
-    padding: 4,
-  },
-  orderQuantityButton: {
-    width: 28,
-    height: 28,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  orderIncrementButton: {
-    backgroundColor: ACCENT_COLOR,
-  },
-  orderQuantityText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#212529",
-    marginHorizontal: 10,
-  },
-  quantityControl: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#555555",
   },
   variantItemImage: {
     width: 60,
     height: 60,
     borderRadius: 12,
     overflow: "hidden",
+    backgroundColor: "#F8F9FA",
   },
   variantImageGradient: {
     width: "100%",
@@ -243,105 +218,49 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: ACCENT_COLOR,
   },
-  orderSummary: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F2F5",
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  summaryLabel: {
-    fontSize: 16,
-    color: "#6C757D",
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#212529",
-  },
-  totalRow: {
-    marginTop: 10,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F2F5",
-    marginBottom: 20,
-  },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#212529",
-  },
-  totalValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: ACCENT_COLOR,
-  },
-  checkoutButton: {
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  checkoutGradient: {
-    paddingVertical: 16,
-    alignItems: "center",
-    borderRadius: 14,
-  },
-  checkoutButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 18,
-  },
-  variantModal: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingTop: 15,
-    maxHeight: 300,
-  },
-  variantsList: {
-    paddingHorizontal: 20,
-    maxHeight: 300,
-  },
-  variantItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F2F5",
-  },
-  variantInfo: {
+  variantItemDetails: {
     flex: 1,
+    marginLeft: 15,
   },
-  variantName: {
+  variantItemName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#212529",
     marginBottom: 4,
   },
-  variantPrice: {
+  variantItemPrice: {
     fontSize: 16,
     fontWeight: "700",
     color: ACCENT_COLOR,
   },
-  variantQuantity: {
+  variantItemQuantity: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  variantQuantityButton: {
-    width: 32,
-    height: 32,
     backgroundColor: "#F5F6FA",
     borderRadius: 10,
+    padding: 4,
+  },
+  variantQuantityButton: {
+    width: 28,
+    height: 28,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 5,
   },
   variantIncrementButton: {
     backgroundColor: ACCENT_COLOR,
+  },
+  variantQuantityText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#212529",
+    marginHorizontal: 10,
+  },
+  quantityControl: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#555555",
   },
   variantAddButton: {
     backgroundColor: ACCENT_COLOR,
@@ -354,9 +273,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
+  variantFooter: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F2F5",
+  },
   doneButton: {
-    marginHorizontal: 20,
-    marginVertical: 20,
     borderRadius: 14,
     overflow: "hidden",
   },
@@ -370,27 +293,25 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 18,
   },
-  quantityButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#555555",
+  orderImageContainer: {
+    position: "relative",
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    overflow: "hidden",
   },
-  quantityText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#212529",
-    marginHorizontal: 10,
+  orderImageGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
   },
-  quantityButton: {
-    width: 32,
-    height: 32,
-    backgroundColor: "#F0F2F5",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quantityControlGroup: {
-    flexDirection: "row",
-    alignItems: "center",
+  orderItemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: "#F8F9FA",
   },
 });
