@@ -355,7 +355,7 @@ export default function ProductListingScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerTitle}>Premium Tech</Text>
+            <Text style={styles.headerTitle}>Products</Text>
             <Text
               style={{
                 fontSize: 14,
