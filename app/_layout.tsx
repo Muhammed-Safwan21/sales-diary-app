@@ -4,6 +4,7 @@ import AuthProvider from "./providers/AuthProvider";
 import { useFonts } from "expo-font";
 import { fonts } from "@/config/font";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 export default function RootLayout(): ReactNode {
@@ -20,7 +21,8 @@ export default function RootLayout(): ReactNode {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <StatusBar style="dark"  />
       <AuthProvider>
         <Slot />
       </AuthProvider>
