@@ -10,6 +10,7 @@ import {
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
+import { useNavigation, useRouter } from "expo-router";
 const ACCENT_COLOR = "#4D5DFA";
 
 const OrderSummaryModal = ({
@@ -24,6 +25,12 @@ const OrderSummaryModal = ({
   handleVariantIncrement,
   handleVariantDecrement,
 }: any) => {
+
+  const router = useRouter();
+  const handleCheckout = () => {
+    router.push("/(authorized)/printScreen");
+    onClose();
+  };
   return (
     <Modal
       visible={visible}
@@ -178,7 +185,7 @@ const OrderSummaryModal = ({
               </Text>
             </View>
 
-            <TouchableOpacity style={styles.checkoutButton}>
+            <TouchableOpacity style={styles.checkoutButton} onPress={() => handleCheckout() }>
               <LinearGradient
                 colors={[ACCENT_COLOR, "#7A86FF"]}
                 start={{ x: 0, y: 0 }}

@@ -882,40 +882,6 @@ const AnalyticsDashboard = () => {
               </View>
             </View>
           </View>
-
-          <View style={styles.chartSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Top Categories</Text>
-              <TouchableOpacity style={styles.moreButton}>
-                <Text style={styles.moreButtonText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            {/* <View style={styles.chartContainer}>
-                <BarChart
-                  data={salesByCategory}
-                  width={width - 40}
-                  height={220}
-                  chartConfig={{
-                    backgroundColor: COLOR.white,
-                    backgroundGradientFrom: COLOR.white,
-                    backgroundGradientTo: COLOR.white,
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(72, 168, 119, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(72, 72, 72, ${opacity})`,
-                    style: {
-                      borderRadius: 16,
-                    },
-                  }}
-                  style={{
-                    borderRadius: 16,
-                    paddingRight: 0,
-                    paddingLeft: 0,
-                  }}
-                  showValuesOnTopOfBars
-                />
-              </View> */}
-          </View>
-
           <View style={styles.recentTransactionsContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Recent Transactions</Text>

@@ -455,6 +455,7 @@ import {
   Dimensions,
   StatusBar,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   useFonts,
   Poppins_400Regular,
@@ -465,21 +466,22 @@ import {
 
 const { width } = Dimensions.get("window");
 
-// Brand colors (same as your dashboard)
-const COLOR = {
-  primary: "#48a877",
-  secondary: "#e8f5ef",
-  accent: "#3d8d64",
-  white: "#ffffff",
-  black: "#000",
-  grey: "#888",
-  lightGrey: "#f1f5f9",
-  darkGrey: "#4b5563",
+// Updated theme to match OrderSummaryModal
+const ACCENT_COLOR = "#4D5DFA";
+export const COLOR = {
+  primary: ACCENT_COLOR,
+  secondary: "#E3E6FF",
+  accent: "#7A86FF",
+  white: "#FFFFFF",
+  black: "#212529",
+  grey: "#6C757D",
+  lightGrey: "#F5F6FA",
+  darkGrey: "#495057",
   red: "#ef4444",
   green: "#22c55e",
-  blue: "#3b82f6",
+  blue: "#4F6CF7",
   yellow: "#f59e0b",
-  purple: "#8b5cf6",
+  purple: "#8A4EF5",
 };
 
 const Settings = () => {
@@ -629,7 +631,7 @@ const Settings = () => {
             source={{
               uri: "https://img.icons8.com/ios-filled/50/000000/search.png",
             }}
-            style={styles.headerIcon}
+            style={[styles.headerIcon, {tintColor: COLOR.darkGrey}]}
           />
         </TouchableOpacity>
       </View>
@@ -642,14 +644,28 @@ const Settings = () => {
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
-            <Text style={styles.profileInitial}>J</Text>
+            <LinearGradient
+              colors={[COLOR.primary, COLOR.accent]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.profileImageGradient}
+            >
+              <Text style={styles.profileInitial}>J</Text>
+            </LinearGradient>
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>John Doe</Text>
             <Text style={styles.profileEmail}>john.doe@example.com</Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit</Text>
+            <LinearGradient
+              colors={[COLOR.primary, COLOR.accent]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.editButtonGradient}
+            >
+              <Text style={styles.editButtonText}>Edit</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -674,17 +690,12 @@ const Settings = () => {
                   <View
                     style={[
                       styles.settingIconContainer,
-                      item.id === "notifications" && styles.notificationIcon,
-                      item.id === "darkMode" && styles.darkModeIcon,
-                      item.id === "privacy" && styles.privacyIcon,
-                      item.id === "profile" && styles.profileIcon,
-                      item.id === "biometric" && styles.biometricIcon,
-                      item.id === "help" && styles.helpIcon,
+                      getIconBackground(item.id),
                     ]}
                   >
                     <Image
                       source={{ uri: item.icon }}
-                      style={styles.settingIcon}
+                      style={[styles.settingIcon, {tintColor: getIconColor(item.id)}]}
                     />
                   </View>
                   <View style={styles.settingDetails}>
@@ -698,13 +709,14 @@ const Settings = () => {
                     onValueChange={item.onToggle}
                     trackColor={{ false: "#DDDDDD", true: COLOR.secondary }}
                     thumbColor={item.value ? COLOR.primary : "#F4F3F4"}
+                    ios_backgroundColor="#DDDDDD"
                   />
                 ) : (
                   <Image
                     source={{
                       uri: "https://img.icons8.com/ios-filled/50/000000/chevron-right.png",
                     }}
-                    style={styles.arrowIcon}
+                    style={[styles.arrowIcon, {tintColor: COLOR.primary}]}
                   />
                 )}
               </TouchableOpacity>
@@ -714,13 +726,20 @@ const Settings = () => {
 
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton}>
-          <Image
-            source={{
-              uri: "https://img.icons8.com/ios-filled/50/ffffff/logout-rounded.png",
-            }}
-            style={styles.logoutIcon}
-          />
-          <Text style={styles.logoutText}>Logout</Text>
+          <LinearGradient
+            colors={["#FF6B6B", "#FF8C6B"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.logoutGradient}
+          >
+            <Image
+              source={{
+                uri: "https://img.icons8.com/ios-filled/50/ffffff/logout-rounded.png",
+              }}
+              style={styles.logoutIcon}
+            />
+            <Text style={styles.logoutText}>Logout</Text>
+          </LinearGradient>
         </TouchableOpacity>
 
         <View style={styles.versionContainer}>
@@ -729,6 +748,70 @@ const Settings = () => {
       </ScrollView>
     </SafeAreaView>
   );
+};
+
+// Helper function to get icon background based on ID
+const getIconBackground = (id:any) => {
+  switch (id) {
+    case "profile":
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+    case "password":
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+    case "biometric":
+      return { backgroundColor: "rgba(138, 78, 245, 0.1)" };
+    case "notifications":
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+    case "darkMode":
+      return { backgroundColor: "rgba(73, 80, 87, 0.1)" };
+    case "emailUpdates":
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+    case "dataSync":
+      return { backgroundColor: "rgba(79, 108, 247, 0.1)" };
+    case "privacy":
+      return { backgroundColor: "rgba(138, 78, 245, 0.1)" };
+    case "download":
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+    case "help":
+      return { backgroundColor: "rgba(245, 158, 11, 0.1)" };
+    case "feedback":
+      return { backgroundColor: "rgba(79, 108, 247, 0.1)" };
+    case "about":
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+    default:
+      return { backgroundColor: "rgba(77, 93, 250, 0.1)" };
+  }
+};
+
+// Helper function to get icon color based on ID
+const getIconColor = (id:any) => {
+  switch (id) {
+    case "profile":
+      return COLOR.primary;
+    case "password":
+      return COLOR.primary;
+    case "biometric":
+      return COLOR.purple;
+    case "notifications":
+      return COLOR.primary;
+    case "darkMode":
+      return COLOR.darkGrey;
+    case "emailUpdates":
+      return COLOR.primary;
+    case "dataSync":
+      return COLOR.blue;
+    case "privacy":
+      return COLOR.purple;
+    case "download":
+      return COLOR.primary;
+    case "help":
+      return COLOR.yellow;
+    case "feedback":
+      return COLOR.blue;
+    case "about":
+      return COLOR.primary;
+    default:
+      return COLOR.primary;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -750,7 +833,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLOR.white,
   },
   pageTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: "Poppins_600SemiBold",
     color: COLOR.black,
   },
@@ -784,14 +867,18 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: COLOR.secondary,
+    overflow: "hidden",
+  },
+  profileImageGradient: {
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
   profileInitial: {
     fontSize: 24,
     fontFamily: "Poppins_600SemiBold",
-    color: COLOR.primary,
+    color: COLOR.white,
   },
   profileInfo: {
     flex: 1,
@@ -809,15 +896,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   editButton: {
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  editButtonGradient: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLOR.secondary,
   },
   editButtonText: {
     fontSize: 14,
     fontFamily: "Poppins_500Medium",
-    color: COLOR.primary,
+    color: COLOR.white,
   },
   settingsSection: {
     backgroundColor: COLOR.white,
@@ -859,24 +948,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 12,
   },
-  notificationIcon: {
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
-  },
-  darkModeIcon: {
-    backgroundColor: "rgba(75, 85, 99, 0.1)",
-  },
-  privacyIcon: {
-    backgroundColor: "rgba(139, 92, 246, 0.1)",
-  },
-  profileIcon: {
-    backgroundColor: "rgba(72, 168, 119, 0.1)",
-  },
-  biometricIcon: {
-    backgroundColor: "rgba(245, 158, 11, 0.1)",
-  },
-  helpIcon: {
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-  },
   settingIcon: {
     width: 20,
     height: 20,
@@ -902,15 +973,17 @@ const styles = StyleSheet.create({
     tintColor: COLOR.grey,
   },
   logoutButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: COLOR.red,
     borderRadius: 12,
-    paddingVertical: 14,
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 16,
+    overflow: "hidden",
+  },
+  logoutGradient: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 14,
   },
   logoutIcon: {
     width: 20,

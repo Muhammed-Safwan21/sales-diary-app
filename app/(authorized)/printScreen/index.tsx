@@ -222,7 +222,10 @@ import {
   StyleSheet,
   Platform,
   Alert,
+  ScrollView,
+  Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
@@ -251,7 +254,9 @@ ThermalPrinterModule.defaultConfig = {
   timeout: 30000,
 };
 
-const SimplifiedPrintScreen = () => {
+const ACCENT_COLOR = "#4D5DFA";
+
+const PrintScreen = () => {
   const [isPrinting, setIsPrinting] = useState(false);
   const [pdfUri, setPdfUri] = useState<string | null>(null);
 
@@ -454,62 +459,273 @@ ${orderDetails.items
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={printReceipt}
-        disabled={isPrinting}
-      >
-        <Text style={styles.buttonText}>{isPrinting ? 'Printing...' : 'Print Receipt'}</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={generatePrintPreview}
-      >
-        <Text style={styles.buttonText}>Print Preview</Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Order Receipt</Text>
+        <Text style={styles.orderId}>Order #{orderDetails.id}</Text>
+        <Text style={styles.orderDate}>{formatDate(orderDetails.timestamp)}</Text>
+      </View>
 
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={downloadPDF}
-      >
-        <Text style={styles.buttonText}>Download PDF</Text>
-      </TouchableOpacity>
+      <ScrollView style={styles.itemsContainer} showsVerticalScrollIndicator={false}>
+        {orderDetails.items.map((item, index) => (
+          <View key={index} style={styles.orderItem}>
+            <View style={styles.itemImageContainer}>
+              <LinearGradient
+                colors={["#E3E6FF", "#D1D8FF"]}
+                style={styles.itemImageGradient}
+              >
+                <Text style={styles.itemInitial}>{item.name.charAt(0)}</Text>
+              </LinearGradient>
+            </View>
+            <View style={styles.itemDetails}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <View style={styles.itemPriceQty}>
+                <Text style={styles.itemPrice}>${item.price}</Text>
+                <Text style={styles.itemQuantity}>x{item.quantity}</Text>
+              </View>
+            </View>
+            <Text style={styles.itemTotal}>${(item.price * item.quantity).toFixed(2)}</Text>
+          </View>
+        ))}
+      </ScrollView>
 
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={sharePDF}
-      >
-        <Text style={styles.buttonText}>Share Receipt</Text>
-      </TouchableOpacity>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Subtotal</Text>
+          <Text style={styles.summaryValue}>${orderDetails.total.toFixed(2)}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Tax</Text>
+          <Text style={styles.summaryValue}>${(orderDetails.total * 0.08).toFixed(2)}</Text>
+        </View>
+        <View style={[styles.summaryRow, styles.totalRow]}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>${(orderDetails.total * 1.08).toFixed(2)}</Text>
+        </View>
+      </View>
+
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={printReceipt}
+          disabled={isPrinting}
+        >
+          <LinearGradient
+            colors={[ACCENT_COLOR, "#7A86FF"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.buttonGradient}
+          >
+            <Text style={styles.buttonText}>{isPrinting ? 'Printing...' : 'Print Receipt'}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={[styles.secondaryButton, styles.halfButton]} 
+            onPress={generatePrintPreview}
+          >
+            <Text style={styles.secondaryButtonText}>Preview</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.secondaryButton, styles.halfButton]} 
+            onPress={downloadPDF}
+          >
+            <Text style={styles.secondaryButtonText}>Download</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.shareButton} 
+          onPress={sharePDF}
+        >
+          <Text style={styles.shareButtonText}>Share Receipt</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
+export default PrintScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
+    paddingTop: 50,
+  },
+  header: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F2F5',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#212529',
+    marginBottom: 5,
+  },
+  orderId: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: ACCENT_COLOR,
+    marginBottom: 2,
+  },
+  orderDate: {
+    fontSize: 14,
+    color: '#6C757D',
+  },
+  itemsContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  orderItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    paddingVertical: 8,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+  },
+  itemImageContainer: {
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  itemImageGradient: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
-  button: {
-    backgroundColor: '#f2f2f2',
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 5,
-    marginVertical: 10,
-    minWidth: 200,
+  itemInitial: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: ACCENT_COLOR,
+  },
+  itemDetails: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  itemName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 2,
+  },
+  itemPriceQty: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#333333',
-    fontSize: 16,
+  itemPrice: {
+    fontSize: 14,
     fontWeight: '500',
+    color: '#6C757D',
+  },
+  itemQuantity: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+    marginLeft: 8,
+    backgroundColor: '#F0F2F5',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  itemTotal: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: ACCENT_COLOR,
+  },
+  summaryContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F2F5',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 15,
+    color: '#6C757D',
+  },
+  summaryValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  totalRow: {
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F2F5',
+  },
+  totalLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#212529',
+  },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: ACCENT_COLOR,
+  },
+  actionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+  actionButton: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  buttonGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 14,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  halfButton: {
+    flex: 0.48,
+  },
+  secondaryButton: {
+    borderRadius: 12,
+    backgroundColor: '#F5F6FA',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#495057',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  shareButton: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: ACCENT_COLOR,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    color: ACCENT_COLOR,
+    fontWeight: '600',
+    fontSize: 15,
   },
 });
-
-export default SimplifiedPrintScreen;
