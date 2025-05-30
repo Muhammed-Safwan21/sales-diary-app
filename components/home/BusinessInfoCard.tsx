@@ -1,89 +1,107 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { Settings } from 'lucide-react-native';
+import { Calendar, Settings, Star } from 'lucide-react-native';
+import React from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const BusinessInfoCard = () => {
-  const { theme } = useTheme();
+  const { theme }:any = useTheme();
 
   return (
     <View style={[
       styles.container, 
       { 
-        backgroundColor: theme.colors.card, 
+        backgroundColor: theme.colors.surface, 
         borderColor: theme.colors.border,
-        shadowColor: theme.colors.shadow
+        shadowColor: theme.colors.shadowMedium
       }
     ]}>
-      <View style={styles.content}>
+      <View style={styles.header}>
         <View style={styles.businessDetails}>
           <Text 
             style={[
               styles.businessName, 
-              { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }
+              { color: theme.colors.text, fontWeight: '700' }
             ]}
           >
-            My Business
+            My Business Store
           </Text>
           <Text 
             style={[
               styles.businessType, 
-              { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }
+              { color: theme.colors.textSecondary, fontWeight: '500' }
             ]}
           >
-            Retail Store
+            Retail & E-commerce
           </Text>
         </View>
         
         <TouchableOpacity 
           style={[
             styles.settingsButton, 
-            { backgroundColor: theme.colors.primaryLight }
+            { backgroundColor: theme.colors.background }
           ]}
+          activeOpacity={0.7}
         >
-          <Settings size={18} color={theme.colors.primary} />
+          <Settings size={18} color={theme.colors.textSecondary} />
         </TouchableOpacity>
       </View>
       
-      <View style={[styles.infoRow, { borderTopColor: theme.colors.border }]}>
-        <View style={styles.infoItem}>
-          <Text 
-            style={[
-              styles.infoLabel, 
-              { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }
-            ]}
-          >
-            Subscription
-          </Text>
-          <Text 
-            style={[
-              styles.infoValue, 
-              { color: theme.colors.success, fontFamily: theme.typography.fontFamily.medium }
-            ]}
-          >
-            Silver Plan
-          </Text>
+      <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+      
+      <View style={styles.infoSection}>
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <View style={styles.infoHeader}>
+              <Star size={14} color={theme.colors.warning} />
+              <Text 
+                style={[
+                  styles.infoLabel, 
+                  { color: theme.colors.textSecondary, fontWeight: '500' }
+                ]}
+              >
+                Plan
+              </Text>
+            </View>
+            <Text 
+              style={[
+                styles.infoValue, 
+                { color: theme.colors.primary, fontWeight: '600' }
+              ]}
+            >
+              Silver Pro
+            </Text>
+          </View>
+          
+          <View style={styles.infoItem}>
+            <View style={styles.infoHeader}>
+              <Calendar size={14} color={theme.colors.accent} />
+              <Text 
+                style={[
+                  styles.infoLabel, 
+                  { color: theme.colors.textSecondary, fontWeight: '500' }
+                ]}
+              >
+                Valid Until
+              </Text>
+            </View>
+            <Text 
+              style={[
+                styles.infoValue, 
+                { color: theme.colors.text, fontWeight: '600' }
+              ]}
+            >
+              Dec 01, 2024
+            </Text>
+          </View>
         </View>
         
-        <View style={styles.separator} />
-        
-        <View style={styles.infoItem}>
-          <Text 
-            style={[
-              styles.infoLabel, 
-              { color: theme.colors.textLight, fontFamily: theme.typography.fontFamily.regular }
-            ]}
-          >
-            Valid Till
-          </Text>
-          <Text 
-            style={[
-              styles.infoValue, 
-              { color: theme.colors.text, fontFamily: theme.typography.fontFamily.medium }
-            ]}
-          >
-            01 Dec 2024
-          </Text>
+        <View style={[styles.statusBar, { backgroundColor: theme.colors.background }]}>
+          <View style={styles.statusIndicator}>
+            <View style={[styles.statusDot, { backgroundColor: theme.colors.success }]} />
+            <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>
+              All systems operational
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -92,66 +110,97 @@ export const BusinessInfoCard = () => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
+    zIndex:999,
     overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 4,
+        elevation: 6,
       },
       web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
       },
     }),
   },
-  content: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
+    alignItems: 'flex-start',
+    padding: 20,
   },
   businessDetails: {
     flex: 1,
+    marginRight: 16,
   },
   businessName: {
     fontSize: 18,
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   businessType: {
-    fontSize: 14,
+    fontSize: 13,
+    letterSpacing: -0.1,
   },
   settingsButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  divider: {
+    height: 1,
+    marginHorizontal: 20,
+  },
+  infoSection: {
+    padding: 20,
+    paddingTop: 16,
+  },
   infoRow: {
     flexDirection: 'row',
-    borderTopWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 24,
   },
   infoItem: {
     flex: 1,
   },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 6,
+  },
   infoLabel: {
     fontSize: 12,
-    marginBottom: 2,
+    letterSpacing: -0.1,
   },
   infoValue: {
     fontSize: 14,
+    letterSpacing: -0.2,
   },
-  separator: {
-    width: 1,
-    height: '100%',
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: 16,
+  statusBar: {
+    borderRadius: 8,
+    padding: 12,
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: -0.1,
   },
 });

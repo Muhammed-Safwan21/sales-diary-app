@@ -26,6 +26,10 @@ export interface ThemeColors {
   border: string;
   notification: string;
   shadow: string;
+  cardGlass: string;
+  textGlow: string;
+  borderGlow: string;
+  shadowIntense: string;
 }
 
 export interface Typography {
