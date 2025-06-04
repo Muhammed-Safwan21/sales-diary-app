@@ -2,20 +2,20 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
-import Animated, { 
-  useAnimatedStyle, 
-  withSpring, 
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
   withSequence,
   withDelay,
   withTiming,
   Easing,
   FadeIn,
-  FadeOut
+  FadeOut,
 } from 'react-native-reanimated';
 
 export default function SplashScreen() {
   const { theme } = useTheme();
-  const router = useRouter();
+  const router: any = useRouter();
 
   const navigateToLogin = () => {
     router.replace('/auth/login');
@@ -43,15 +43,20 @@ export default function SplashScreen() {
       ],
       opacity: withSequence(
         withTiming(0, { duration: 0 }),
-        withTiming(1, { duration: 800, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
+        withTiming(1, {
+          duration: 800,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        }),
         withDelay(1500, withTiming(0.8, { duration: 500 }))
       ),
     };
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Animated.View 
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <Animated.View
         entering={FadeIn.duration(1000)}
         exiting={FadeOut.duration(500)}
         style={[styles.logoContainer, logoStyle]}
@@ -82,4 +87,4 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-}); 
+});

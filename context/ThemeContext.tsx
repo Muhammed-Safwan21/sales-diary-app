@@ -11,8 +11,8 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: themes.light,
-  themeType: 'light',
+  theme: themes.dark,
+  themeType: 'dark',
   toggleTheme: () => {},
   setThemeType: () => {},
 });
@@ -25,7 +25,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const colorScheme = useColorScheme() as ThemeType;
-  const [themeType, setThemeType] = useState<ThemeType>(colorScheme || 'light');
+  const [themeType, setThemeType] = useState<ThemeType>('dark');
 
   useEffect(() => {
     // Update theme when system theme changes
@@ -35,13 +35,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, [colorScheme]);
 
   const toggleTheme = () => {
-    setThemeType(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    setThemeType((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
   const theme = themes[themeType];
 
   return (
-    <ThemeContext.Provider value={{ theme, themeType, toggleTheme, setThemeType }}>
+    <ThemeContext.Provider
+      value={{ theme, themeType, toggleTheme, setThemeType }}
+    >
       {children}
     </ThemeContext.Provider>
   );

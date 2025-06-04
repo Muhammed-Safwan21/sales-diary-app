@@ -32,10 +32,10 @@
 //   const { theme, themeType, toggleTheme } = useTheme();
 //   const router = useRouter();
 
-//   const SettingsItem: React.FC<SettingsItemProps> = ({ 
-//     icon, 
-//     title, 
-//     description, 
+//   const SettingsItem: React.FC<SettingsItemProps> = ({
+//     icon,
+//     title,
+//     description,
 //     onPress,
 //     rightElement,
 //     delay = 0
@@ -44,7 +44,7 @@
 //       <TouchableOpacity
 //         style={[
 //           styles.settingsItem,
-//           { 
+//           {
 //             backgroundColor: theme.colors.card,
 //             borderColor: theme.colors.border,
 //           }
@@ -76,7 +76,7 @@
 //             )}
 //           </View>
 //         </View>
-        
+
 //         {rightElement || <ChevronRight size={20} color={theme.colors.textLight} />}
 //       </TouchableOpacity>
 //     </Animated.View>
@@ -89,13 +89,13 @@
 //           More
 //         </Text>
 //       </View>
-      
+
 //       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 //         <View style={styles.profileSection}>
 //           <View style={[styles.profileImageContainer, { backgroundColor: theme.colors.primaryLight }]}>
 //             <Text style={[styles.profileInitials, { color: theme.colors.primary }]}>MB</Text>
 //           </View>
-          
+
 //           <View style={styles.profileInfo}>
 //             <Text style={[styles.businessName, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }]}>
 //               My Business
@@ -104,20 +104,20 @@
 //               mybusiness@example.com
 //             </Text>
 //           </View>
-          
-//           <TouchableOpacity 
+
+//           <TouchableOpacity
 //             style={[styles.editButton, { backgroundColor: theme.colors.primaryLight }]}
 //             onPress={() => router.push('/business/profile')}
 //           >
 //             <Settings size={18} color={theme.colors.primary} />
 //           </TouchableOpacity>
 //         </View>
-        
+
 //         <View style={styles.settingsSection}>
 //           <Text style={[styles.sectionTitle, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.medium }]}>
 //             Business
 //           </Text>
-          
+
 //           <SettingsItem
 //             icon={<Store size={20} color={theme.colors.primary} />}
 //             title="Business Profile"
@@ -125,7 +125,7 @@
 //             onPress={() => router.push('/business/profile')}
 //             delay={100}
 //           />
-          
+
 //           <SettingsItem
 //             icon={<CreditCard size={20} color={theme.colors.primary} />}
 //             title="Subscription"
@@ -133,7 +133,7 @@
 //             onPress={() => {}}
 //             delay={200}
 //           />
-          
+
 //           <SettingsItem
 //             icon={<FileText size={20} color={theme.colors.primary} />}
 //             title="Invoice Settings"
@@ -141,7 +141,7 @@
 //             onPress={() => {}}
 //             delay={300}
 //           />
-          
+
 //           <SettingsItem
 //             icon={<Users size={20} color={theme.colors.primary} />}
 //             title="Manage Staff"
@@ -150,15 +150,15 @@
 //             delay={300}
 //           />
 //         </View>
-        
+
 //         <View style={styles.settingsSection}>
 //           <Text style={[styles.sectionTitle, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.medium }]}>
 //             Appearance
 //           </Text>
-          
+
 //           <SettingsItem
-//             icon={themeType === 'dark' ? 
-//               <Moon size={20} color={theme.colors.primary} /> : 
+//             icon={themeType === 'dark' ?
+//               <Moon size={20} color={theme.colors.primary} /> :
 //               <Sun size={20} color={theme.colors.primary} />
 //             }
 //             title="Dark Mode"
@@ -174,12 +174,12 @@
 //             delay={400}
 //           />
 //         </View>
-        
+
 //         <View style={styles.settingsSection}>
 //           <Text style={[styles.sectionTitle, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.medium }]}>
 //             Support & About
 //           </Text>
-          
+
 //           <SettingsItem
 //             icon={<Headphones size={20} color={theme.colors.primary} />}
 //             title="Help & Support"
@@ -187,7 +187,7 @@
 //             onPress={() => {}}
 //             delay={500}
 //           />
-          
+
 //           <SettingsItem
 //             icon={<Share2 size={20} color={theme.colors.primary} />}
 //             title="Share App"
@@ -195,7 +195,7 @@
 //             onPress={() => {}}
 //             delay={600}
 //           />
-          
+
 //           <SettingsItem
 //             icon={<Star size={20} color={theme.colors.primary} />}
 //             title="Rate App"
@@ -204,21 +204,21 @@
 //             delay={700}
 //           />
 //         </View>
-        
-//         <TouchableOpacity 
+
+//         <TouchableOpacity
 //           style={[
-//             styles.logoutButton, 
-//             { 
+//             styles.logoutButton,
+//             {
 //               backgroundColor: theme.colors.errorLight,
 //               borderColor: theme.colors.error,
 //             }
 //           ]}
 //         >
 //           <LogOut size={20} color={theme.colors.error} />
-//           <Text 
+//           <Text
 //             style={[
-//               styles.logoutText, 
-//               { 
+//               styles.logoutText,
+//               {
 //                 color: theme.colors.error,
 //                 fontFamily: theme.typography.fontFamily.medium
 //               }
@@ -227,7 +227,7 @@
 //             Logout
 //           </Text>
 //         </TouchableOpacity>
-        
+
 //         <Text style={[styles.versionText, { color: theme.colors.textLight }]}>
 //           Version 1.0.0
 //         </Text>
@@ -353,7 +353,15 @@
 // });
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Switch,
+  Platform,
+} from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -377,9 +385,10 @@ import {
   Sparkles,
   Crown,
   Shield,
-  ArrowUpRight
+  ArrowUpRight,
 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -394,91 +403,100 @@ interface SettingsItemProps {
 export default function MoreScreen() {
   const { theme, themeType, toggleTheme }: any = useTheme();
   const router = useRouter();
+  const { logout } = useAuth(); // Use the custom hook
 
-  const SettingsItem: React.FC<SettingsItemProps> = ({ 
-    icon, 
-    title, 
-    description, 
+  const SettingsItem: React.FC<SettingsItemProps> = ({
+    icon,
+    title,
+    description,
     onPress,
     rightElement,
     delay = 0,
-    gradient
-  }:any) => (
+    gradient,
+  }: any) => (
     <Animated.View entering={FadeInDown.delay(delay).springify()}>
       <TouchableOpacity
         style={styles.settingsItem}
         onPress={onPress}
         activeOpacity={0.8}
       >
-        <View style={[
-          styles.settingsItemContainer,
-          {
-            backgroundColor: themeType === 'dark'
-              ? 'rgba(255, 255, 255, 0.05)'
-              : 'rgba(255, 255, 255, 0.8)',
-            borderColor: themeType === 'dark'
-              ? 'rgba(255, 255, 255, 0.08)'
-              : 'rgba(0, 0, 0, 0.06)',
-          }
-        ]}>
+        <View
+          style={[
+            styles.settingsItemContainer,
+            {
+              backgroundColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'rgba(255, 255, 255, 0.8)',
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+            },
+          ]}
+        >
           {/* Gradient overlay */}
           {gradient && (
             <LinearGradient
-              colors={[
-                `${gradient[0]}12`,
-                `${gradient[1]}06`,
-                'transparent'
-              ]}
+              colors={[`${gradient[0]}12`, `${gradient[1]}06`, 'transparent']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.settingsGradientOverlay}
             />
           )}
-          
+
           <View style={styles.settingsItemContent}>
-            <View style={[
-              styles.iconContainer,
-              {
-                backgroundColor: gradient 
-                  ? `${gradient[0]}20`
-                  : `${theme.colors.primary}20`,
-                borderColor: gradient 
-                  ? `${gradient[0]}30`
-                  : `${theme.colors.primary}30`,
-              }
-            ]}>
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: gradient
+                    ? `${gradient[0]}20`
+                    : `${theme.colors.primary}20`,
+                  borderColor: gradient
+                    ? `${gradient[0]}30`
+                    : `${theme.colors.primary}30`,
+                },
+              ]}
+            >
               {React.cloneElement(icon, {
-                color: gradient ? gradient[0] : theme.colors.primary
+                color: gradient ? gradient[0] : theme.colors.primary,
               })}
             </View>
-            
+
             <View style={styles.settingsTextContainer}>
-              <Text style={[
-                styles.settingsItemTitle,
-                { color: theme.colors.text }
-              ]}>
+              <Text
+                style={[styles.settingsItemTitle, { color: theme.colors.text }]}
+              >
                 {title}
               </Text>
               {description && (
-                <Text style={[
-                  styles.settingsItemDescription,
-                  { color: theme.colors.textSecondary }
-                ]}>
+                <Text
+                  style={[
+                    styles.settingsItemDescription,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   {description}
                 </Text>
               )}
             </View>
           </View>
-          
-          <View style={[
-            styles.rightElementContainer,
-            !rightElement && {
-              backgroundColor: themeType === 'dark'
-                ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(0, 0, 0, 0.05)',
-            }
-          ]}>
-            {rightElement || <ChevronRight size={16} color={theme.colors.textSecondary} />}
+
+          <View
+            style={[
+              styles.rightElementContainer,
+              !rightElement && {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.05)',
+              },
+            ]}
+          >
+            {rightElement || (
+              <ChevronRight size={16} color={theme.colors.textSecondary} />
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -486,14 +504,17 @@ export default function MoreScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-      
+
       {/* Modern header with gradient */}
       <LinearGradient
-        colors={themeType === 'dark' 
-          ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent'] 
-          : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+        colors={
+          themeType === 'dark'
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -508,46 +529,61 @@ export default function MoreScreen() {
           </View>
         </SafeAreaView>
       </LinearGradient>
-      
-      <ScrollView 
-        style={styles.scrollView} 
+
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Profile Section with Glass Effect */}
         <Animated.View entering={FadeInUp.delay(100)}>
-          <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.profileSection}>
+          <BlurView
+            intensity={themeType === 'dark' ? 15 : 80}
+            tint={themeType}
+            style={styles.profileSection}
+          >
             <View style={styles.profileContent}>
               <LinearGradient
-                colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
+                colors={[
+                  theme.colors.primary,
+                  theme.colors.primaryLight || theme.colors.primary,
+                ]}
                 style={styles.profileImageContainer}
               >
                 <Text style={styles.profileInitials}>MB</Text>
                 <View style={styles.onlineIndicator} />
               </LinearGradient>
-              
+
               <View style={styles.profileInfo}>
-                <Text style={[styles.businessName, { color: theme.colors.text }]}>
+                <Text
+                  style={[styles.businessName, { color: theme.colors.text }]}
+                >
                   My Business Store
                 </Text>
-                <Text style={[styles.businessEmail, { color: theme.colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.businessEmail,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   mybusiness@example.com
                 </Text>
-                
+
                 <View style={styles.subscriptionBadge}>
                   <Crown size={12} color="#F59E0B" />
                   <Text style={styles.subscriptionText}>Silver Pro</Text>
                 </View>
               </View>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[
                   styles.editButton,
                   {
-                    backgroundColor: themeType === 'dark'
-                      ? 'rgba(255, 255, 255, 0.08)'
-                      : 'rgba(0, 0, 0, 0.05)',
-                  }
+                    backgroundColor:
+                      themeType === 'dark'
+                        ? 'rgba(255, 255, 255, 0.08)'
+                        : 'rgba(0, 0, 0, 0.05)',
+                  },
                 ]}
                 onPress={() => router.push('/business/profile')}
               >
@@ -556,7 +592,7 @@ export default function MoreScreen() {
             </View>
           </BlurView>
         </Animated.View>
-        
+
         {/* Business Section */}
         <View style={styles.settingsSection}>
           <View style={styles.sectionHeader}>
@@ -565,7 +601,7 @@ export default function MoreScreen() {
               Business
             </Text>
           </View>
-          
+
           <SettingsItem
             icon={<Store size={20} />}
             title="Business Profile"
@@ -574,7 +610,7 @@ export default function MoreScreen() {
             delay={200}
             gradient={['#6366F1', '#8B5CF6']}
           />
-          
+
           <SettingsItem
             icon={<CreditCard size={20} />}
             title="Subscription"
@@ -583,7 +619,7 @@ export default function MoreScreen() {
             delay={250}
             gradient={['#F59E0B', '#FBBF24']}
           />
-          
+
           <SettingsItem
             icon={<FileText size={20} />}
             title="Invoice Settings"
@@ -592,7 +628,7 @@ export default function MoreScreen() {
             delay={300}
             gradient={['#EC4899', '#F472B6']}
           />
-          
+
           <SettingsItem
             icon={<Users size={20} />}
             title="Manage Staff"
@@ -602,7 +638,7 @@ export default function MoreScreen() {
             gradient={['#06D6A0', '#34D399']}
           />
         </View>
-        
+
         {/* Appearance Section */}
         <View style={styles.settingsSection}>
           <View style={styles.sectionHeader}>
@@ -611,7 +647,7 @@ export default function MoreScreen() {
               Appearance
             </Text>
           </View>
-          
+
           <SettingsItem
             icon={themeType === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
             title="Dark Mode"
@@ -621,19 +657,27 @@ export default function MoreScreen() {
               <Switch
                 value={themeType === 'dark'}
                 onValueChange={toggleTheme}
-                trackColor={{ 
-                  false: themeType === 'dark' ? '#374151' : '#D1D5DB', 
-                  true: `${theme.colors.primary}40` 
+                trackColor={{
+                  false: themeType === 'dark' ? '#374151' : '#D1D5DB',
+                  true: `${theme.colors.primary}40`,
                 }}
-                thumbColor={themeType === 'dark' ? theme.colors.primary : '#FFFFFF'}
-                ios_backgroundColor={themeType === 'dark' ? '#374151' : '#D1D5DB'}
+                thumbColor={
+                  themeType === 'dark' ? theme.colors.primary : '#FFFFFF'
+                }
+                ios_backgroundColor={
+                  themeType === 'dark' ? '#374151' : '#D1D5DB'
+                }
               />
             }
             delay={400}
-            gradient={themeType === 'dark' ? ['#6366F1', '#8B5CF6'] : ['#F59E0B', '#FBBF24']}
+            gradient={
+              themeType === 'dark'
+                ? ['#6366F1', '#8B5CF6']
+                : ['#F59E0B', '#FBBF24']
+            }
           />
         </View>
-        
+
         {/* Support Section */}
         <View style={styles.settingsSection}>
           <View style={styles.sectionHeader}>
@@ -642,7 +686,7 @@ export default function MoreScreen() {
               Support & About
             </Text>
           </View>
-          
+
           <SettingsItem
             icon={<Headphones size={20} />}
             title="Help & Support"
@@ -651,7 +695,7 @@ export default function MoreScreen() {
             delay={500}
             gradient={['#06B6D4', '#22D3EE']}
           />
-          
+
           <SettingsItem
             icon={<Share2 size={20} />}
             title="Share App"
@@ -660,7 +704,7 @@ export default function MoreScreen() {
             delay={550}
             gradient={['#8B5CF6', '#A78BFA']}
           />
-          
+
           <SettingsItem
             icon={<Star size={20} />}
             title="Rate App"
@@ -670,24 +714,27 @@ export default function MoreScreen() {
             gradient={['#F59E0B', '#FBBF24']}
           />
         </View>
-        
+
         {/* Logout Button */}
         <Animated.View entering={FadeInDown.delay(650)}>
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => logout()}
+          >
             <LinearGradient
               colors={['#EF4444', '#F87171']}
               style={styles.logoutGradient}
             >
               <LogOut size={20} color="#FFFFFF" />
-              <Text style={styles.logoutText}>
-                Logout
-              </Text>
+              <Text style={styles.logoutText}>Logout</Text>
               <ArrowUpRight size={16} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-        
-        <Text style={[styles.versionText, { color: theme.colors.textSecondary }]}>
+
+        <Text
+          style={[styles.versionText, { color: theme.colors.textSecondary }]}
+        >
           Version 1.0.0 • Built with ❤️
         </Text>
       </ScrollView>

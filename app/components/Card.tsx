@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { shadows, borderRadius, spacing } from '../theme';
+import { shadows, borderRadius, spacing } from '../../theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -33,9 +33,7 @@ export const Card = ({ children, style, variant = 'elevated' }: CardProps) => {
   };
 
   return (
-    <View style={[styles.container, getCardStyle(), style]}>
-      {children}
-    </View>
+    <View style={[styles.container, getCardStyle(), style]}>{children}</View>
   );
 };
 
@@ -45,4 +43,4 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     margin: spacing.sm,
   },
-}); 
+});

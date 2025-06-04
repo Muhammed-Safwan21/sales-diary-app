@@ -9,7 +9,7 @@ import {
   StatusBarStyle,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { spacing } from '../theme';
+import { spacing } from '../../theme';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -60,4 +60,4 @@ const styles = StyleSheet.create({
       },
     }),
   },
-}); 
+});

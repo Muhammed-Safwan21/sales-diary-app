@@ -1,7 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { borderRadius, spacing, typography } from '../theme';
+import { borderRadius, spacing, typography } from '../../theme';
 
 interface ButtonProps {
   onPress: () => void;
@@ -57,7 +63,10 @@ export const Button = ({
 
   const getTextStyle = () => {
     const baseStyle = {
-      color: variant === 'outline' || variant === 'text' ? theme.colors.primary : '#FFFFFF',
+      color:
+        variant === 'outline' || variant === 'text'
+          ? theme.colors.primary
+          : '#FFFFFF',
     };
 
     switch (size) {
@@ -104,4 +113,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     textAlign: 'center',
   },
-}); 
+});

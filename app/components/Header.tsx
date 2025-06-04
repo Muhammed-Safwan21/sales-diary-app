@@ -7,7 +7,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { spacing, typography } from '../theme';
+import { spacing, typography } from '../../theme';
 import { useRouter } from 'expo-router';
 
 interface HeaderProps {
@@ -42,18 +42,13 @@ export const Header = ({
       </View>
 
       <Text
-        style={[
-          styles.title,
-          { color: theme.colors.onBackground },
-        ]}
+        style={[styles.title, { color: theme.colors.onBackground }]}
         numberOfLines={1}
       >
         {title}
       </Text>
 
-      <View style={styles.rightContainer}>
-        {rightComponent}
-      </View>
+      <View style={styles.rightContainer}>{rightComponent}</View>
     </View>
   );
 };
@@ -88,4 +83,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: spacing.sm,
   },
-}); 
+});

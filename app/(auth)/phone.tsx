@@ -18,7 +18,7 @@ import { Button } from '@/components/shared/Button';
 
 export default function PhoneLoginScreen() {
   const { theme } = useTheme();
-  const router = useRouter();
+  const router: any = useRouter();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -32,7 +32,7 @@ export default function PhoneLoginScreen() {
     setIsLoading(true);
     try {
       // TODO: Implement actual send OTP logic
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setStep('otp');
       Alert.alert('Success', 'OTP sent!');
     } catch (error) {
@@ -50,7 +50,7 @@ export default function PhoneLoginScreen() {
     setIsLoading(true);
     try {
       // TODO: Implement actual verify OTP logic
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Error', 'Invalid OTP. Please try again.');
@@ -60,7 +60,9 @@ export default function PhoneLoginScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
@@ -87,7 +89,12 @@ export default function PhoneLoginScreen() {
           <View style={styles.form}>
             {step === 'phone' ? (
               <>
-                <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    { borderColor: theme.colors.border },
+                  ]}
+                >
                   <Phone size={20} color={theme.colors.textLight} />
                   <TextInput
                     style={[styles.input, { color: theme.colors.text }]}
@@ -108,7 +115,12 @@ export default function PhoneLoginScreen() {
               </>
             ) : (
               <>
-                <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    { borderColor: theme.colors.border },
+                  ]}
+                >
                   <TextInput
                     style={[styles.input, { color: theme.colors.text }]}
                     placeholder="Enter OTP"
@@ -129,23 +141,34 @@ export default function PhoneLoginScreen() {
             )}
           </View>
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.colors.textLight }]}>
-              {step === 'phone' ? 'Already have an account? ' : 'Didn\'t receive OTP? '}
+            <Text
+              style={[styles.footerText, { color: theme.colors.textLight }]}
+            >
+              {step === 'phone'
+                ? 'Already have an account? '
+                : "Didn't receive OTP? "}
             </Text>
             <TouchableOpacity
               onPress={() =>
-                step === 'phone'
-                  ? router.push('/auth/login')
-                  : setStep('phone')
+                step === 'phone' ? router.push('/auth/login') : setStep('phone')
               }
             >
-              <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
+              <Text
+                style={[styles.footerLink, { color: theme.colors.primary }]}
+              >
                 {step === 'phone' ? 'Sign In' : 'Resend OTP'}
               </Text>
             </TouchableOpacity>
             {step === 'phone' && (
               <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                <Text style={[styles.footerLink, { color: theme.colors.primary, marginLeft: 16 }]}>Sign Up</Text>
+                <Text
+                  style={[
+                    styles.footerLink,
+                    { color: theme.colors.primary, marginLeft: 16 },
+                  ]}
+                >
+                  Sign Up
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -210,4 +233,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-}); 
+});

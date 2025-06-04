@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { borderRadius, spacing, typography } from '../theme';
+import { borderRadius, spacing, typography } from '../../theme';
 
 interface InputProps {
   value: string;
@@ -126,4 +126,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     fontFamily: typography.fontFamily.regular,
   },
-}); 
+});

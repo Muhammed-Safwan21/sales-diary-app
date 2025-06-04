@@ -30,18 +30,23 @@ export default function ForgotPasswordScreen() {
     setIsLoading(true);
     try {
       // TODO: Implement actual forgot password logic
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       Alert.alert('Success', 'Reset instructions sent!');
-      router.push('/auth/login');
+      router.push('/login');
     } catch (error) {
-      Alert.alert('Error', 'Failed to send reset instructions. Please try again.');
+      Alert.alert(
+        'Error',
+        'Failed to send reset instructions. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
@@ -64,7 +69,12 @@ export default function ForgotPasswordScreen() {
           </View>
 
           <View style={styles.form}>
-            <View style={[styles.inputContainer, { borderColor: theme.colors.border }]}>
+            <View
+              style={[
+                styles.inputContainer,
+                { borderColor: theme.colors.border },
+              ]}
+            >
               <Mail size={20} color={theme.colors.textLight} />
               <TextInput
                 style={[styles.input, { color: theme.colors.text }]}
@@ -84,11 +94,15 @@ export default function ForgotPasswordScreen() {
             />
           </View>
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.colors.textLight }]}>
+            <Text
+              style={[styles.footerText, { color: theme.colors.textLight }]}
+            >
               Remember your password?{' '}
             </Text>
-            <TouchableOpacity onPress={() => router.push('/auth/login')}>
-              <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
+            <TouchableOpacity onPress={() => router.push('/login')}>
+              <Text
+                style={[styles.footerLink, { color: theme.colors.primary }]}
+              >
                 Sign In
               </Text>
             </TouchableOpacity>
@@ -153,4 +167,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-}); 
+});

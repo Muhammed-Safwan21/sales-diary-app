@@ -1,69 +1,56 @@
+import { useTheme } from '@/context/ThemeContext';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  LogIn,
+  Mail,
+  Shield,
+  Sparkles,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  Platform,
-  KeyboardAvoidingView,
-  ScrollView,
-  Alert,
+  View,
 } from 'react-native';
-import { useTheme } from '@/context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { useRouter } from 'expo-router';
-import { 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowLeft, 
-  Sparkles,
-  LogIn,
-  Phone,
-  Chrome,
-  Shield
-} from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../../hooks/useAuth'; // Import the custom hook
 
 export default function LoginScreen() {
   const { theme, themeType }: any = useTheme();
-  const router = useRouter();
+  const router: any = useRouter();
+  const { login, isLoginLoading } = useAuth(); // Use the custom hook
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to login. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleLogin = () => {
+    login(email, password);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-      
+
       {/* Background gradient */}
       <LinearGradient
-        colors={themeType === 'dark' 
-          ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent'] 
-          : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+        colors={
+          themeType === 'dark'
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -75,19 +62,15 @@ export default function LoginScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoid}
         >
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
-            <Animated.View entering={FadeInUp.delay(100)} style={styles.headerSection}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.back()}
-              >
-                <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
-              </TouchableOpacity>
-
+            <Animated.View
+              entering={FadeInUp.delay(100)}
+              style={styles.headerSection}
+            >
               <View style={styles.logoContainer}>
                 <LinearGradient
                   colors={['#6366F1', '#8B5CF6']}
@@ -105,28 +88,43 @@ export default function LoginScreen() {
 
             {/* Login Form */}
             <Animated.View entering={FadeInUp.delay(200)}>
-              <BlurView intensity={themeType === 'dark' ? 20 : 80} tint={themeType} style={styles.formContainer}>
+              <BlurView
+                intensity={themeType === 'dark' ? 20 : 80}
+                tint={themeType}
+                style={styles.formContainer}
+              >
                 <View style={styles.formContent}>
                   {/* Email Input */}
                   <View style={styles.inputGroup}>
-                    <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
                       Email Address
                     </Text>
-                    <View style={[
-                      styles.inputContainer,
-                      {
-                        backgroundColor: themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.05)'
-                          : 'rgba(255, 255, 255, 0.8)',
-                        borderColor: themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(0, 0, 0, 0.06)',
-                      }
-                    ]}>
-                      <View style={[
-                        styles.inputIconContainer,
-                        { backgroundColor: `${theme.colors.primary}15` }
-                      ]}>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        {
+                          backgroundColor:
+                            themeType === 'dark'
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(255, 255, 255, 0.8)',
+                          borderColor:
+                            themeType === 'dark'
+                              ? 'rgba(255, 255, 255, 0.08)'
+                              : 'rgba(0, 0, 0, 0.06)',
+                        },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.inputIconContainer,
+                          { backgroundColor: `${theme.colors.primary}15` },
+                        ]}
+                      >
                         <Mail size={18} color={theme.colors.primary} />
                       </View>
                       <TextInput
@@ -137,30 +135,43 @@ export default function LoginScreen() {
                         onChangeText={setEmail}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        autoCorrect={false}
+                        editable={!isLoginLoading}
                       />
                     </View>
                   </View>
 
                   {/* Password Input */}
                   <View style={styles.inputGroup}>
-                    <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.inputLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
                       Password
                     </Text>
-                    <View style={[
-                      styles.inputContainer,
-                      {
-                        backgroundColor: themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.05)'
-                          : 'rgba(255, 255, 255, 0.8)',
-                        borderColor: themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(0, 0, 0, 0.06)',
-                      }
-                    ]}>
-                      <View style={[
-                        styles.inputIconContainer,
-                        { backgroundColor: `${theme.colors.accent}15` }
-                      ]}>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        {
+                          backgroundColor:
+                            themeType === 'dark'
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(255, 255, 255, 0.8)',
+                          borderColor:
+                            themeType === 'dark'
+                              ? 'rgba(255, 255, 255, 0.08)'
+                              : 'rgba(0, 0, 0, 0.06)',
+                        },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.inputIconContainer,
+                          { backgroundColor: `${theme.colors.accent}15` },
+                        ]}
+                      >
                         <Lock size={18} color={theme.colors.accent} />
                       </View>
                       <TextInput
@@ -170,13 +181,18 @@ export default function LoginScreen() {
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
+                        editable={!isLoginLoading}
                       />
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.eyeButton}
                         onPress={() => setShowPassword(!showPassword)}
+                        disabled={isLoginLoading}
                       >
                         {showPassword ? (
-                          <EyeOff size={18} color={theme.colors.textSecondary} />
+                          <EyeOff
+                            size={18}
+                            color={theme.colors.textSecondary}
+                          />
                         ) : (
                           <Eye size={18} color={theme.colors.textSecondary} />
                         )}
@@ -188,31 +204,43 @@ export default function LoginScreen() {
                   <TouchableOpacity
                     style={styles.forgotPassword}
                     onPress={() => router.push('/auth/forgot-password')}
+                    disabled={isLoginLoading}
                   >
-                    <Text style={[styles.forgotPasswordText, { color: theme.colors.primary }]}>
+                    <Text
+                      style={[
+                        styles.forgotPasswordText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
                       Forgot Password?
                     </Text>
                   </TouchableOpacity>
 
                   {/* Login Button */}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[
                       styles.loginButton,
-                      { 
+                      {
                         backgroundColor: theme.colors.primary,
                         shadowColor: theme.colors.primary,
-                      }
+                        opacity: isLoginLoading ? 0.7 : 1,
+                      },
                     ]}
                     onPress={handleLogin}
-                    disabled={isLoading}
+                    disabled={isLoginLoading}
                   >
                     <LinearGradient
-                      colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
+                      colors={[
+                        theme.colors.primary,
+                        theme.colors.primaryLight || theme.colors.primary,
+                      ]}
                       style={styles.loginGradient}
                     >
-                      {isLoading ? (
+                      {isLoginLoading ? (
                         <View style={styles.loadingContainer}>
-                          <Text style={styles.loginButtonText}>Signing In...</Text>
+                          <Text style={styles.loginButtonText}>
+                            Signing In...
+                          </Text>
                         </View>
                       ) : (
                         <>
@@ -229,87 +257,54 @@ export default function LoginScreen() {
             {/* Social Login */}
             <Animated.View entering={FadeInUp.delay(300)}>
               <View style={styles.dividerContainer}>
-                <View style={[styles.dividerLine, { backgroundColor: themeType === 'dark' 
-                  ? 'rgba(255, 255, 255, 0.1)' 
-                  : 'rgba(0, 0, 0, 0.1)'
-                }]} />
-                <Text style={[styles.dividerText, { color: theme.colors.textSecondary }]}>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    {
+                      backgroundColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.1)'
+                          : 'rgba(0, 0, 0, 0.1)',
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.dividerText,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   or continue with
                 </Text>
-                <View style={[styles.dividerLine, { backgroundColor: themeType === 'dark' 
-                  ? 'rgba(255, 255, 255, 0.1)' 
-                  : 'rgba(0, 0, 0, 0.1)'
-                }]} />
-              </View>
-
-              <View style={styles.socialButtons}>
-                <TouchableOpacity style={[
-                  styles.socialButton,
-                  {
-                    backgroundColor: themeType === 'dark'
-                      ? 'rgba(255, 255, 255, 0.05)'
-                      : 'rgba(255, 255, 255, 0.8)',
-                    borderColor: themeType === 'dark'
-                      ? 'rgba(255, 255, 255, 0.08)'
-                      : 'rgba(0, 0, 0, 0.06)',
-                  }
-                ]}>
-                  <LinearGradient
-                    colors={['#EA4335', '#FBBC04']}
-                    style={styles.socialIconContainer}
-                  >
-                    <Chrome size={20} color="#FFFFFF" />
-                  </LinearGradient>
-                  <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>
-                    Google
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
+                <View
                   style={[
-                    styles.socialButton,
+                    styles.dividerLine,
                     {
-                      backgroundColor: themeType === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(255, 255, 255, 0.8)',
-                      borderColor: themeType === 'dark'
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : 'rgba(0, 0, 0, 0.06)',
-                    }
+                      backgroundColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.1)'
+                          : 'rgba(0, 0, 0, 0.1)',
+                    },
                   ]}
-                  onPress={() => router.push('/auth/phone')}
-                >
-                  <LinearGradient
-                    colors={['#06D6A0', '#34D399']}
-                    style={styles.socialIconContainer}
-                  >
-                    <Phone size={20} color="#FFFFFF" />
-                  </LinearGradient>
-                  <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>
-                    Phone
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
             </Animated.View>
 
             {/* Footer */}
-            <Animated.View entering={FadeInDown.delay(400)} style={styles.footer}>
+            <Animated.View
+              entering={FadeInDown.delay(400)}
+              style={styles.footer}
+            >
               <View style={styles.securityBadge}>
                 <Shield size={16} color={theme.colors.success} />
-                <Text style={[styles.securityText, { color: theme.colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.securityText,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   Secured with 256-bit SSL encryption
                 </Text>
-              </View>
-              
-              <View style={styles.signupPrompt}>
-                <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
-                  Don't have an account?{' '}
-                </Text>
-                <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                  <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
-                    Sign Up
-                  </Text>
-                </TouchableOpacity>
               </View>
             </Animated.View>
           </ScrollView>
@@ -499,34 +494,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.1,
   },
-  socialButtons: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 12,
-  },
-  socialIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  socialButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
   footer: {
     alignItems: 'center',
     gap: 20,
@@ -544,11 +511,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     letterSpacing: -0.1,
-  },
-  signupPrompt: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
