@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import { ThemeType, ThemeConfig } from '@/types';
 import themes from '@/config/theme';
+import { ThemeConfig, ThemeType } from '@/types';
+import React, { createContext, useContext, useState } from 'react';
+import { useColorScheme } from 'react-native';
 
 interface ThemeContextType {
   theme: ThemeConfig;
@@ -25,14 +25,15 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const colorScheme = useColorScheme() as ThemeType;
+  // Always start with dark theme
   const [themeType, setThemeType] = useState<ThemeType>('dark');
 
-  useEffect(() => {
-    // Update theme when system theme changes
-    if (colorScheme) {
-      setThemeType(colorScheme);
-    }
-  }, [colorScheme]);
+  // Comment out or remove the useEffect if you want to ignore system theme
+  // useEffect(() => {
+  //   if (colorScheme) {
+  //     setThemeType(colorScheme);
+  //   }
+  // }, [colorScheme]);
 
   const toggleTheme = () => {
     setThemeType((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));

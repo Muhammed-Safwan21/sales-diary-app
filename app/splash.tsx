@@ -18,7 +18,7 @@ export default function SplashScreen() {
   const router: any = useRouter();
 
   const navigateToLogin = () => {
-    router.replace('/auth/login');
+    router.replace('/login');
   };
 
   useEffect(() => {

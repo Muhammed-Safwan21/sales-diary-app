@@ -13,25 +13,49 @@ import {
   Package,
   Search,
   Sparkles,
-  Wallet
+  Wallet,
 } from 'lucide-react-native';
 import React from 'react';
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
-  const { theme, themeType }:any = useTheme();
+  const { theme, themeType }: any = useTheme();
   const router = useRouter();
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-      
+
       {/* Ultra-modern header with extended gradient background */}
       <LinearGradient
-        colors={themeType === 'dark' 
-          ? ['#1A1B3A', '#2D1B69', '#3D2A7A', 'rgba(61, 42, 122, 0.6)', 'rgba(26, 27, 58, 0.3)', 'transparent'] 
-          : ['#6366F1', '#8B5CF6', '#EC4899', 'rgba(236, 72, 153, 0.4)', 'rgba(139, 92, 246, 0.2)', 'transparent']
+        colors={
+          themeType === 'dark'
+            ? [
+                '#1A1B3A',
+                '#2D1B69',
+                '#3D2A7A',
+                'rgba(61, 42, 122, 0.6)',
+                'rgba(26, 27, 58, 0.3)',
+                'transparent',
+              ]
+            : [
+                '#6366F1',
+                '#8B5CF6',
+                '#EC4899',
+                'rgba(236, 72, 153, 0.4)',
+                'rgba(139, 92, 246, 0.2)',
+                'transparent',
+              ]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -41,32 +65,43 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View style={styles.headerTop}>
               <View style={styles.greetingSection}>
-                <Text style={[styles.greeting, { color: 'rgba(255, 255, 255, 0.8)' }]}>
+                <Text
+                  style={[
+                    styles.greeting,
+                    { color: 'rgba(255, 255, 255, 0.8)' },
+                  ]}
+                >
                   Good morning ✨
                 </Text>
                 <Text style={[styles.userName, { color: '#FFFFFF' }]}>
                   Welcome back, Alex
                 </Text>
               </View>
-              
+
               <View style={styles.headerActions}>
-                <TouchableOpacity 
-                  style={[styles.headerButton, { 
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1,
-                  }]}
+                <TouchableOpacity
+                  style={[
+                    styles.headerButton,
+                    {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      borderWidth: 1,
+                    },
+                  ]}
                 >
                   <Search size={18} color="rgba(255, 255, 255, 0.9)" />
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
-                onPress={() => router.push('/notification')}
-                  style={[styles.headerButton, { 
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1,
-                  }]}
+
+                <TouchableOpacity
+                  onPress={() => router.push('/notification')}
+                  style={[
+                    styles.headerButton,
+                    {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      borderWidth: 1,
+                    },
+                  ]}
                 >
                   <Bell size={18} color="rgba(255, 255, 255, 0.9)" />
                   <View style={styles.notificationDot} />
@@ -76,13 +111,13 @@ export default function HomeScreen() {
           </View>
         </SafeAreaView>
       </LinearGradient>
-      
+
       {/* Floating business card - positioned in the gradient fade area */}
       <View style={styles.businessCardContainer}>
         <BusinessInfoCard />
       </View>
-      
-      <ScrollView 
+
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -95,7 +130,7 @@ export default function HomeScreen() {
               Quick Actions
             </Text>
           </View>
-          
+
           <View style={styles.actionGrid}>
             <QuickAction
               icon={<FileText size={24} color="#FFFFFF" />}
@@ -127,44 +162,59 @@ export default function HomeScreen() {
             />
           </View>
         </View>
-        
+
         {/* Recent Activity with glass card */}
-        <BlurView intensity={themeType === 'dark' ? 15 : 60} tint={themeType} style={styles.activitySection}>
+        <BlurView
+          intensity={themeType === 'dark' ? 15 : 60}
+          tint={themeType}
+          style={styles.activitySection}
+        >
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               Recent Activity
             </Text>
             <TouchableOpacity style={styles.viewAllButton}>
-              <Text style={[styles.viewAllText, { color: theme.colors.primary }]}>
+              <Text
+                style={[styles.viewAllText, { color: theme.colors.primary }]}
+              >
                 View All
               </Text>
               <ArrowUpRight size={16} color={theme.colors.primary} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.emptyState}>
             <LinearGradient
-              colors={themeType === 'dark' 
-                ? ['rgba(129, 140, 248, 0.1)', 'rgba(139, 92, 246, 0.1)']
-                : ['rgba(99, 102, 241, 0.1)', 'rgba(139, 92, 246, 0.1)']
+              colors={
+                themeType === 'dark'
+                  ? ['rgba(129, 140, 248, 0.1)', 'rgba(139, 92, 246, 0.1)']
+                  : ['rgba(99, 102, 241, 0.1)', 'rgba(139, 92, 246, 0.1)']
               }
               style={styles.emptyIconContainer}
             >
               <BarChart3 size={32} color={theme.colors.primary} />
             </LinearGradient>
-            
+
             <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
               Ready to start?
             </Text>
-            <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
+            <Text
+              style={[
+                styles.emptySubtitle,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
               Create your first invoice or add products to see activity here
             </Text>
-            
-            <TouchableOpacity 
-              style={[styles.actionButton, { 
-                backgroundColor: theme.colors.primary,
-                shadowColor: theme.colors.primary,
-              }]}
+
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: theme.colors.primary,
+                  shadowColor: theme.colors.primary,
+                },
+              ]}
             >
               <Text style={styles.actionButtonText}>Get Started</Text>
               <Sparkles size={16} color="#FFFFFF" />
@@ -342,4 +392,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-}); 
+});
