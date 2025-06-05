@@ -46,75 +46,78 @@ export const useAuth = () => {
   const { accessToken, refreshToken, user, isAuthenticated } = authState;
 
   // Login mutation
-  const loginMutation = useMutation({
-    mutationFn: async (credentials) => {
-      console.log('Login API URL:', API.BASE_URL + API.LOGIN);
-      const response = await apiClient.post(API.LOGIN, credentials);
-      console.log('Login response:', response);
-      return response;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      setIsLoading(true);
-    },
-    onSuccess: async (response) => {
-      try {
-        // Extract tokens from cookies
-        const cookies = response.headers['set-cookie'] || response.headers['Set-Cookie'];
-        console.log('Cookies from response:', cookies);
-        
-        const { accessToken, refreshToken } = extractTokensFromCookies(cookies);
-        
-        if (!accessToken || !refreshToken) {
-          throw new Error('Tokens not found in cookies');
-        }
-        
-        // Get user data from response body
-        const { user } = response.data || {};
-        
-        console.log('Extracted tokens:', { accessToken, refreshToken });
-        console.log('User from response:', user);
-        
-        // Store tokens and user data in Redux only
-        dispatch(setTokens({
-          accessToken,
-          refreshToken,
-          user,
-        }));
-
-        // Navigate to main app
-        router.replace('/(tabs)');
-
-        Alert.alert('Success', 'Login successful!');
-        
-      } catch (error) {
-        console.error('Error processing login response:', error);
-        Alert.alert('Error', 'Failed to process login response. Please try again.');
-      }
-    },
-    onError: (error:any) => {
-      console.error('Login error:', error);
+// Updated login mutation
+const loginMutation = useMutation({
+  mutationFn: async (credentials) => {
+    console.log('Login API URL:', API.BASE_URL + API.LOGIN);
+    const response = await apiClient.post(API.LOGIN, credentials);
+    console.log('Login response:', response);
+    return response;
+  },
+  onMutate: () => {
+    dispatch(setLoading(true));
+    setIsLoading(true);
+  },
+  onSuccess: async (response) => {
+    try {
+      // Extract tokens from cookies
+      const cookies = response.headers['set-cookie'] || response.headers['Set-Cookie'];
+      console.log('Cookies from response:', cookies);
       
-      // More specific error handling
-      let errorMessage = 'Login failed. Please try again.';
+      const { accessToken, refreshToken } = extractTokensFromCookies(cookies);
       
-      if (error?.response?.status === 401) {
-        errorMessage = 'Invalid email or password.';
-      } else if (error?.response?.status === 422) {
-        errorMessage = 'Please check your input and try again.';
-      } else if (error?.response?.status >= 500) {
-        errorMessage = 'Server error. Please try again later.';
-      } else if (error?.message) {
-        errorMessage = error.message;
+      if (!accessToken || !refreshToken) {
+        throw new Error('Tokens not found in cookies');
       }
       
-      Alert.alert('Login Failed', errorMessage);
-    },
-    onSettled: () => {
-      dispatch(setLoading(false));
-      setIsLoading(false);
-    },
-  });
+      // Get user data from response body
+      const userData = response.data?.data;
+
+      if (!userData) {
+        throw new Error('User data not found in response');
+      }
+
+      // Store tokens and user data in Redux
+      // The setTokens action will automatically separate the data into different states
+      dispatch(setTokens({
+        accessToken,
+        refreshToken,
+        user: userData, // This includes branchInfo which will be processed by the reducer
+      }));
+
+      // Navigate to main app
+      router.replace('/(tabs)');
+
+      Alert.alert('Success', 'Login successful!');
+      
+    } catch (error) {
+      console.error('Error processing login response:', error);
+      Alert.alert('Error', 'Failed to process login response. Please try again.');
+    }
+  },
+  onError: (error: any) => {
+    console.error('Login error:', error);
+    
+    // More specific error handling
+    let errorMessage = 'Login failed. Please try again.';
+    
+    if (error?.response?.status === 401) {
+      errorMessage = 'Invalid email or password.';
+    } else if (error?.response?.status === 422) {
+      errorMessage = 'Please check your input and try again.';
+    } else if (error?.response?.status >= 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else if (error?.message) {
+      errorMessage = error.message;
+    }
+    
+    Alert.alert('Login Failed', errorMessage);
+  },
+  onSettled: () => {
+    dispatch(setLoading(false));
+    setIsLoading(false);
+  },
+});
 
   // Login function
   const login = async (email:any, password:any) => {

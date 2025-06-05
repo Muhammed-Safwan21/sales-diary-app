@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
+  AlertCircle,
   Eye,
   EyeOff,
   Lock,
@@ -13,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -25,19 +27,72 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../../hooks/useAuth'; // Import the custom hook
+import { useAuth } from '../../../hooks/useAuth';
+
+// Form data interface
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+// Validation rules
+const validationRules = {
+  email: {
+    required: 'Email is required',
+    pattern: {
+      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      message: 'Please enter a valid email address',
+    },
+  },
+  password: {
+    required: 'Password is required',
+    minLength: {
+      value: 6,
+      message: 'Password must be at least 6 characters',
+    },
+  },
+};
 
 export default function LoginScreen() {
   const { theme, themeType }: any = useTheme();
   const router: any = useRouter();
-  const { login, isLoginLoading } = useAuth(); // Use the custom hook
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { login, isLoginLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
-    login(email, password);
+  // React Hook Form setup
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid, isDirty },
+    reset,
+    watch,
+  } = useForm<LoginFormData>({
+    mode: 'onBlur', // Validate on blur for better UX
+    reValidateMode: 'onChange', // Re-validate on change after first validation
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  // Watch form values for real-time updates
+  const watchedEmail = watch('email');
+  const watchedPassword = watch('password');
+
+  // Form submission handler
+  const onSubmit = (data: LoginFormData) => {
+    login(data.email, data.password);
   };
+
+  // Get input border style based on error state
+  const getInputBorderStyle = (hasError: boolean) => ({
+    borderColor: hasError 
+      ? '#EF4444' // Red color for error
+      : themeType === 'dark'
+        ? 'rgba(255, 255, 255, 0.08)'
+        : 'rgba(0, 0, 0, 0.06)',
+    borderWidth: hasError ? 0.5 : 1,
+  });
 
   return (
     <View
@@ -104,41 +159,62 @@ export default function LoginScreen() {
                     >
                       Email Address
                     </Text>
-                    <View
-                      style={[
-                        styles.inputContainer,
-                        {
-                          backgroundColor:
-                            themeType === 'dark'
-                              ? 'rgba(255, 255, 255, 0.05)'
-                              : 'rgba(255, 255, 255, 0.8)',
-                          borderColor:
-                            themeType === 'dark'
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : 'rgba(0, 0, 0, 0.06)',
-                        },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.inputIconContainer,
-                          { backgroundColor: `${theme.colors.primary}15` },
-                        ]}
-                      >
-                        <Mail size={18} color={theme.colors.primary} />
-                      </View>
-                      <TextInput
-                        style={[styles.input, { color: theme.colors.text }]}
-                        placeholder="Enter your email"
-                        placeholderTextColor={theme.colors.textSecondary}
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        editable={!isLoginLoading}
-                      />
-                    </View>
+                    <Controller
+                      control={control}
+                      name="email"
+                      rules={validationRules.email}
+                      render={({ field: { onChange, onBlur, value } }:any) => (
+                        <View
+                          style={[
+                            styles.inputContainer,
+                            {
+                              backgroundColor:
+                                themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : 'rgba(255, 255, 255, 0.8)',
+                            },
+                            getInputBorderStyle(!!errors.email),
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.inputIconContainer,
+                              { 
+                                backgroundColor: errors.email 
+                                  ? 'rgba(239, 68, 68, 0.15)' 
+                                  : `${theme.colors.primary}15` 
+                              },
+                            ]}
+                          >
+                            <Mail 
+                              size={18} 
+                              color={errors.email ? '#EF4444' : theme.colors.primary} 
+                            />
+                          </View>
+                          <TextInput
+                            style={[styles.input, { color: theme.colors.text }]}
+                            placeholder="Enter your email"
+                            placeholderTextColor={theme.colors.textSecondary}
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            editable={!isLoginLoading}
+                            returnKeyType="next"
+                          />
+                          {errors.email && (
+                            <AlertCircle size={18} color="#EF4444" />
+                          )}
+                        </View>
+                      )}
+                    />
+                    {errors.email && (
+                      <Animated.View entering={FadeInDown.duration(200)}>
+                        <Text style={styles.errorText}>{errors.email.message}</Text>
+                      </Animated.View>
+                    )}
                   </View>
 
                   {/* Password Input */}
@@ -151,53 +227,75 @@ export default function LoginScreen() {
                     >
                       Password
                     </Text>
-                    <View
-                      style={[
-                        styles.inputContainer,
-                        {
-                          backgroundColor:
-                            themeType === 'dark'
-                              ? 'rgba(255, 255, 255, 0.05)'
-                              : 'rgba(255, 255, 255, 0.8)',
-                          borderColor:
-                            themeType === 'dark'
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : 'rgba(0, 0, 0, 0.06)',
-                        },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.inputIconContainer,
-                          { backgroundColor: `${theme.colors.accent}15` },
-                        ]}
-                      >
-                        <Lock size={18} color={theme.colors.accent} />
-                      </View>
-                      <TextInput
-                        style={[styles.input, { color: theme.colors.text }]}
-                        placeholder="Enter your password"
-                        placeholderTextColor={theme.colors.textSecondary}
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry={!showPassword}
-                        editable={!isLoginLoading}
-                      />
-                      <TouchableOpacity
-                        style={styles.eyeButton}
-                        onPress={() => setShowPassword(!showPassword)}
-                        disabled={isLoginLoading}
-                      >
-                        {showPassword ? (
-                          <EyeOff
-                            size={18}
-                            color={theme.colors.textSecondary}
+                    <Controller
+                      control={control}
+                      name="password"
+                      rules={validationRules.password}
+                      render={({ field: { onChange, onBlur, value } }:any) => (
+                        <View
+                          style={[
+                            styles.inputContainer,
+                            {
+                              backgroundColor:
+                                themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : 'rgba(255, 255, 255, 0.8)',
+                            },
+                            getInputBorderStyle(!!errors.password),
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.inputIconContainer,
+                              { 
+                                backgroundColor: errors.password 
+                                  ? 'rgba(239, 68, 68, 0.15)' 
+                                  : `${theme.colors.accent}15` 
+                              },
+                            ]}
+                          >
+                            <Lock 
+                              size={18} 
+                              color={errors.password ? '#EF4444' : theme.colors.accent} 
+                            />
+                          </View>
+                          <TextInput
+                            style={[styles.input, { color: theme.colors.text }]}
+                            placeholder="Enter your password"
+                            placeholderTextColor={theme.colors.textSecondary}
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            secureTextEntry={!showPassword}
+                            editable={!isLoginLoading}
+                            returnKeyType="done"
+                            onSubmitEditing={handleSubmit(onSubmit)}
                           />
-                        ) : (
-                          <Eye size={18} color={theme.colors.textSecondary} />
-                        )}
-                      </TouchableOpacity>
-                    </View>
+                          <TouchableOpacity
+                            style={styles.eyeButton}
+                            onPress={() => setShowPassword(!showPassword)}
+                            disabled={isLoginLoading}
+                          >
+                            {showPassword ? (
+                              <EyeOff
+                                size={18}
+                                color={theme.colors.textSecondary}
+                              />
+                            ) : (
+                              <Eye size={18} color={theme.colors.textSecondary} />
+                            )}
+                          </TouchableOpacity>
+                          {errors.password && (
+                            <AlertCircle size={18} color="#EF4444" style={styles.errorIcon} />
+                          )}
+                        </View>
+                      )}
+                    />
+                    {errors.password && (
+                      <Animated.View entering={FadeInDown.duration(200)}>
+                        <Text style={styles.errorText}>{errors.password.message}</Text>
+                      </Animated.View>
+                    )}
                   </View>
 
                   {/* Forgot Password */}
@@ -226,7 +324,7 @@ export default function LoginScreen() {
                         opacity: isLoginLoading ? 0.7 : 1,
                       },
                     ]}
-                    onPress={handleLogin}
+                    onPress={handleSubmit(onSubmit)}
                     disabled={isLoginLoading}
                   >
                     <LinearGradient
@@ -415,7 +513,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    borderWidth: 1,
     paddingHorizontal: 16,
     height: 56,
     gap: 12,
@@ -434,6 +531,16 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 4,
+  },
+  errorIcon: {
+    marginLeft: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 6,
+    marginLeft: 4,
+    fontWeight: '500',
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -520,5 +627,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
+  },
+  debugContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+  },
+  debugText: {
+    fontSize: 10,
+    color: '#888',
+    marginBottom: 4,
   },
 });
