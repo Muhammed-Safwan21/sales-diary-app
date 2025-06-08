@@ -53,8 +53,8 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
+console.log("error.response?.statuserror.response?.statuserror.response?.status",error.response?.status)
+    if (error.response?.status === 401 || error.response?.status === 403 && !originalRequest._retry) {
       if (isRefreshing) {
         // If we're already refreshing, queue this request
         return new Promise((resolve, reject) => {
@@ -79,6 +79,7 @@ apiClient.interceptors.response.use(
             refreshToken,
           });
 
+          console.log("response.dataresponse.data-------->>>",response.data)
           const { accessToken } = response.data;
           store.dispatch(setAccessToken(accessToken));
           
