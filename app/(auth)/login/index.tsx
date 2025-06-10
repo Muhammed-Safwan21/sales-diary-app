@@ -86,11 +86,11 @@ export default function LoginScreen() {
 
   // Get input border style based on error state
   const getInputBorderStyle = (hasError: boolean) => ({
-    borderColor: hasError 
+    borderColor: hasError
       ? '#EF4444' // Red color for error
       : themeType === 'dark'
-        ? 'rgba(255, 255, 255, 0.08)'
-        : 'rgba(0, 0, 0, 0.06)',
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(0, 0, 0, 0.06)',
     borderWidth: hasError ? 0.5 : 1,
   });
 
@@ -163,7 +163,7 @@ export default function LoginScreen() {
                       control={control}
                       name="email"
                       rules={validationRules.email}
-                      render={({ field: { onChange, onBlur, value } }:any) => (
+                      render={({ field: { onChange, onBlur, value } }: any) => (
                         <View
                           style={[
                             styles.inputContainer,
@@ -179,16 +179,18 @@ export default function LoginScreen() {
                           <View
                             style={[
                               styles.inputIconContainer,
-                              { 
-                                backgroundColor: errors.email 
-                                  ? 'rgba(239, 68, 68, 0.15)' 
-                                  : `${theme.colors.primary}15` 
+                              {
+                                backgroundColor: errors.email
+                                  ? 'rgba(239, 68, 68, 0.15)'
+                                  : `${theme.colors.primary}15`,
                               },
                             ]}
                           >
-                            <Mail 
-                              size={18} 
-                              color={errors.email ? '#EF4444' : theme.colors.primary} 
+                            <Mail
+                              size={18}
+                              color={
+                                errors.email ? '#EF4444' : theme.colors.primary
+                              }
                             />
                           </View>
                           <TextInput
@@ -212,7 +214,9 @@ export default function LoginScreen() {
                     />
                     {errors.email && (
                       <Animated.View entering={FadeInDown.duration(200)}>
-                        <Text style={styles.errorText}>{errors.email.message}</Text>
+                        <Text style={styles.errorText}>
+                          {errors.email.message}
+                        </Text>
                       </Animated.View>
                     )}
                   </View>
@@ -231,7 +235,7 @@ export default function LoginScreen() {
                       control={control}
                       name="password"
                       rules={validationRules.password}
-                      render={({ field: { onChange, onBlur, value } }:any) => (
+                      render={({ field: { onChange, onBlur, value } }: any) => (
                         <View
                           style={[
                             styles.inputContainer,
@@ -247,16 +251,20 @@ export default function LoginScreen() {
                           <View
                             style={[
                               styles.inputIconContainer,
-                              { 
-                                backgroundColor: errors.password 
-                                  ? 'rgba(239, 68, 68, 0.15)' 
-                                  : `${theme.colors.accent}15` 
+                              {
+                                backgroundColor: errors.password
+                                  ? 'rgba(239, 68, 68, 0.15)'
+                                  : `${theme.colors.accent}15`,
                               },
                             ]}
                           >
-                            <Lock 
-                              size={18} 
-                              color={errors.password ? '#EF4444' : theme.colors.accent} 
+                            <Lock
+                              size={18}
+                              color={
+                                errors.password
+                                  ? '#EF4444'
+                                  : theme.colors.accent
+                              }
                             />
                           </View>
                           <TextInput
@@ -282,18 +290,27 @@ export default function LoginScreen() {
                                 color={theme.colors.textSecondary}
                               />
                             ) : (
-                              <Eye size={18} color={theme.colors.textSecondary} />
+                              <Eye
+                                size={18}
+                                color={theme.colors.textSecondary}
+                              />
                             )}
                           </TouchableOpacity>
                           {errors.password && (
-                            <AlertCircle size={18} color="#EF4444" style={styles.errorIcon} />
+                            <AlertCircle
+                              size={18}
+                              color="#EF4444"
+                              style={styles.errorIcon}
+                            />
                           )}
                         </View>
                       )}
                     />
                     {errors.password && (
                       <Animated.View entering={FadeInDown.duration(200)}>
-                        <Text style={styles.errorText}>{errors.password.message}</Text>
+                        <Text style={styles.errorText}>
+                          {errors.password.message}
+                        </Text>
                       </Animated.View>
                     )}
                   </View>

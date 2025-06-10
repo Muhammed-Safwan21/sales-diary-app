@@ -3,7 +3,14 @@ const API = {
 
     LOGIN:"auth/login",
     REFRESH:"auth/refresh",
-    PARTIES:"/contacts",
+    PARTIES:"contacts",
+
+
+    UNITS:"units",
+    PRODUCT_CATEGORIES:"product-categories",
+    TAX:"tax",
+    HSN_SAC:"hsn-sac",
+    PRODUCTS:"products"
 }
 
 export default API

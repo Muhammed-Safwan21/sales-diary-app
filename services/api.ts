@@ -16,7 +16,6 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const state:any = store.getState();
-    console.log("statestatestatestate",state)
     const token = state.auth.accessToken;
     
     if (token) {
@@ -53,7 +52,6 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error) => {
     const originalRequest = error.config;
-console.log("error.response?.statuserror.response?.statuserror.response?.status",error.response?.status)
     if (error.response?.status === 401 || error.response?.status === 403 && !originalRequest._retry) {
       if (isRefreshing) {
         // If we're already refreshing, queue this request
