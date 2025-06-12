@@ -24,6 +24,7 @@ import {
   Image as ImageIcon,
   IndianRupee,
   Info,
+  MoreHorizontal,
   Package,
   Save,
   Sparkles,
@@ -31,8 +32,9 @@ import {
   TrendingUp,
   Upload,
   X,
+  QrCode,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
@@ -47,13 +49,17 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Linking from 'expo-linking';
 interface FormData {
   name: string;
+  itemCode: string;
+  barcode: string;
   category: string;
   categoryId: string;
   hsnCode: string;
@@ -61,6 +67,7 @@ interface FormData {
   purchasePrice: string;
   sellingPrice: string;
   stock: string;
+  openingRate: string;
   unit: string;
   unitId: string;
   lowStockAlert: string;
@@ -114,7 +121,6 @@ interface HSNCode {
   category?: string;
 }
 
-// Product API interfaces
 interface ProductVariant {
   name: string;
   code: string;
@@ -155,19 +161,19 @@ export default function AddItemScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  // Get adminId and branchId from Redux
   const adminId = useSelector((state: any) => state.auth?.user?.id);
   const branchId = useSelector((state: any) => state.auth?.branchInfo?.id);
 
-  // Fixed modal states - separate state for each modal
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showHSNModal, setShowHSNModal] = useState(false);
   const [showTaxModal, setShowTaxModal] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-
+  const [showMoreSections, setShowMoreSections] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isScanned, setIsScanned] = useState(false); // Add new state
   const {
     control,
     handleSubmit,
@@ -177,6 +183,8 @@ export default function AddItemScreen() {
   } = useForm<FormData>({
     defaultValues: {
       name: '',
+      itemCode: '',
+      barcode: '',
       category: 'Select Category',
       categoryId: '',
       hsnCode: '',
@@ -184,6 +192,7 @@ export default function AddItemScreen() {
       purchasePrice: '',
       sellingPrice: '',
       stock: '',
+      openingRate: '',
       unit: 'Select Unit',
       unitId: '',
       lowStockAlert: '',
@@ -202,25 +211,17 @@ export default function AddItemScreen() {
   const selectedGstRate = watch('gstRate');
   const selectedHsnCode = watch('hsnCode');
 
-  // Product creation mutation
   const createProductMutation = useMutation({
     mutationFn: async (productData: CreateProductRequest) => {
       return await apiClient.post(API.PRODUCTS || '/products', productData);
     },
     onSuccess: (response) => {
-      console.log('Product created successfully:', response);
-      // Invalidate products query to refresh the list
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY.PRODUCTS] });
-
       Alert.alert('Success', 'Product created successfully!', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
+        { text: 'OK', onPress: () => router.back() },
       ]);
     },
     onError: (error: any) => {
-      console.error('Error creating product:', error);
       const errorMessage =
         error?.response?.data?.message || 'Failed to create product';
       Alert.alert('Error', errorMessage);
@@ -240,7 +241,6 @@ export default function AddItemScreen() {
   const handleHSNSelect = (hsn: HSNCode) => {
     setValue('hsnCode', hsn.code, { shouldValidate: true });
     setValue('hsnCodeId', hsn.id, { shouldValidate: true });
-    // Optionally set GST rate if HSN comes with it
     if (hsn.gstRate !== undefined) {
       setValue('gstRate', `${hsn.gstRate}%`, { shouldValidate: true });
       setValue('taxPercentage', hsn.gstRate.toString(), {
@@ -250,7 +250,6 @@ export default function AddItemScreen() {
   };
 
   const handleTaxSelect = (tax: TaxRate) => {
-    console.log('Selected tax:', tax);
     setValue('gstRate', `${tax.percentage}%`, { shouldValidate: true });
     setValue('taxPercentage', tax.percentage, { shouldValidate: true });
   };
@@ -258,21 +257,18 @@ export default function AddItemScreen() {
   const calculateProfit = () => {
     const purchase = parseFloat(purchasePrice) || 0;
     const selling = parseFloat(sellingPrice) || 0;
-
-    if (purchase === 0 || selling === 0) return { amount: 0, percentage: 0 };
-
-    const profit = selling - purchase;
-    const percentage = (profit / purchase) * 100;
-
-    return {
-      amount: profit,
-      percentage: parseFloat(percentage.toFixed(2)),
-    };
+    return purchase === 0 || selling === 0
+      ? { amount: 0, percentage: 0 }
+      : {
+          amount: selling - purchase,
+          percentage: parseFloat(
+            (((selling - purchase) / purchase) * 100).toFixed(2)
+          ),
+        };
   };
 
   const profit = calculateProfit();
 
-  // Generate SKU and barcode
   const generateSKU = (name: string, categoryId: string): string => {
     const nameCode = name.substring(0, 3).toUpperCase();
     const catCode = categoryId ? categoryId.substring(0, 2) : 'XX';
@@ -289,24 +285,182 @@ export default function AddItemScreen() {
     );
   };
 
-  // Calculate tax amount
   const calculateTaxAmount = (
     price: number,
     taxPercentage: number,
     includeTax: boolean
   ): number => {
-    if (includeTax) {
-      // Price includes tax, so tax amount = price - (price / (1 + tax%/100))
-      return price - price / (1 + taxPercentage / 100);
-    } else {
-      // Price excludes tax, so tax amount = price * (tax%/100)
-      return price * (taxPercentage / 100);
+    return includeTax
+      ? price - price / (1 + taxPercentage / 100)
+      : price * (taxPercentage / 100);
+  };
+
+  // const handleBarCodeScanned = ({ data }: { data: string }) => {
+  //   setValue('barcode', data, { shouldValidate: true });
+  //   setShowBarcodeScanner(false);
+  //   Alert.alert('Success', `Barcode scanned: ${data}`);
+  // };
+
+  const handleBarCodeScanned = ({ data }: { data: string }) => {
+    if (isScanned) return;
+    setIsScanned(true);
+    setShowBarcodeScanner(false);
+    setValue('barcode', data, { shouldValidate: true });
+    console.log('Barcode set:', data); // Debug log
+    Alert.alert('Success', `Barcode scanned: ${data}`, [
+      {
+        text: 'OK',
+        onPress: () => {
+          setIsScanned(false);
+          console.log('Form barcode value:', watch('barcode')); // Debug form state
+        },
+      },
+    ]);
+  };
+
+  // const scanBarcode = async () => {
+  //   try {
+  //     if (!permission) {
+  //       // Request permission if it hasn't been requested yet
+  //       const { status, canAskAgain } = await requestPermission();
+  //       if (status !== 'granted') {
+  //         if (canAskAgain) {
+  //           Alert.alert(
+  //             'Permission Required',
+  //             'Camera permission is required to scan barcodes. Please allow camera access.',
+  //             [
+  //               { text: 'Cancel', style: 'cancel' },
+  //               { text: 'Try Again', onPress: scanBarcode },
+  //             ]
+  //           );
+  //         } else {
+  //           Alert.alert(
+  //             'Permission Required',
+  //             'Camera permission was denied. Please enable it in Settings to scan barcodes.',
+  //             [
+  //               { text: 'Cancel', style: 'cancel' },
+  //               {
+  //                 text: 'Open Settings',
+  //                 onPress: () => Linking.openSettings(),
+  //               },
+  //             ]
+  //           );
+  //         }
+  //         return;
+  //       }
+  //     } else if (!permission.granted) {
+  //       // Handle case where permission was previously denied
+  //       if (permission.canAskAgain) {
+  //         const { status } = await requestPermission();
+  //         if (status !== 'granted') {
+  //           Alert.alert(
+  //             'Permission Required',
+  //             'Camera permission is required to scan barcodes. Please allow camera access.',
+  //             [
+  //               { text: 'Cancel', style: 'cancel' },
+  //               { text: 'Try Again', onPress: scanBarcode },
+  //             ]
+  //           );
+  //           return;
+  //         }
+  //       } else {
+  //         Alert.alert(
+  //           'Permission Required',
+  //           'Camera permission was denied. Please enable it in Settings to scan barcodes.',
+  //           [
+  //             { text: 'Cancel', style: 'cancel' },
+  //             { text: 'Open Settings', onPress: () => Linking.openSettings() },
+  //           ]
+  //         );
+  //         return;
+  //       }
+  //     }
+  //     // Permission granted, open scanner
+  //     setShowBarcodeScanner(true);
+  //   } catch (error) {
+  //     console.error('Error requesting camera permission:', error);
+  //     Alert.alert(
+  //       'Error',
+  //       'Failed to request camera permission. Please try again.'
+  //     );
+  //   }
+  // };
+
+  const scanBarcode = async () => {
+    try {
+      console.log('Requesting camera permission:', permission); // Debug
+      if (!permission) {
+        const { status, canAskAgain } = await requestPermission();
+        console.log(
+          'Permission status:',
+          status,
+          'Can ask again:',
+          canAskAgain
+        ); // Debug
+        if (status !== 'granted') {
+          if (canAskAgain) {
+            Alert.alert(
+              'Permission Required',
+              'Camera permission is required to scan barcodes. Please allow camera access.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Try Again', onPress: scanBarcode },
+              ]
+            );
+          } else {
+            Alert.alert(
+              'Permission Required',
+              'Camera permission was denied. Please enable it in Settings to scan barcodes.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Open Settings',
+                  onPress: () => Linking.openSettings(),
+                },
+              ]
+            );
+          }
+          return;
+        }
+      } else if (!permission.granted) {
+        if (permission.canAskAgain) {
+          const { status } = await requestPermission();
+          console.log('Retry permission status:', status); // Debug
+          if (status !== 'granted') {
+            Alert.alert(
+              'Permission Required',
+              'Camera permission is required to scan barcodes. Please allow camera access.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Try Again', onPress: scanBarcode },
+              ]
+            );
+            return;
+          }
+        } else {
+          Alert.alert(
+            'Permission Required',
+            'Camera permission was denied. Please enable it in Settings to scan barcodes.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          );
+          return;
+        }
+      }
+      console.log('Opening barcode scanner'); // Debug
+      setShowBarcodeScanner(true);
+    } catch (error) {
+      console.error('Error requesting camera permission:', error);
+      Alert.alert(
+        'Error',
+        'Failed to request camera permission. Please try again.'
+      );
     }
   };
 
   const onSubmit = (data: FormData) => {
-    // Validationclg
-    console.log('sdfsfd');
     if (!adminId || !branchId) {
       Alert.alert('Error', 'User information not found. Please login again.');
       return;
@@ -327,31 +481,30 @@ export default function AddItemScreen() {
     const salePrice = parseFloat(data.sellingPrice) || 0;
     const quantity = parseInt(data.stock) || 0;
     const reorderQuantity = parseInt(data.lowStockAlert) || 0;
+    const openingRate = parseFloat(data.openingRate) || 0;
 
-    // Calculate tax amount based on includeTax setting
     const taxAmount = calculateTaxAmount(
       salePrice,
       numericTaxPercentage,
       data.includeGst
     );
 
-    // Create variant object
     const variant: ProductVariant = {
       name: data.name,
-      code: generateSKU(data.name, data.categoryId),
+      code: data.itemCode || generateSKU(data.name, data.categoryId),
       description: data.description || '',
       rate: salePrice,
       taxPercentage: numericTaxPercentage,
       taxAmount: taxAmount,
       quantity: quantity,
       openingQuantity: quantity,
-      openingRate: costPrice,
+      openingRate: openingRate,
       salePrice: salePrice,
       costPrice: costPrice,
       reorderQuantity: reorderQuantity,
       imageUrl: uploadedImages[0]?.url || '',
-      sku: generateSKU(data.name, data.categoryId),
-      barcode: generateBarcode(),
+      sku: data.itemCode || generateSKU(data.name, data.categoryId),
+      barcode: data.barcode || generateBarcode(),
       includeTax: data.includeGst,
       status: quantity > 0 ? 'STOCK' : 'OUT_OF_STOCK',
       branchId: Number(branchId),
@@ -360,7 +513,6 @@ export default function AddItemScreen() {
       unitId: Number(data.unitId),
     };
 
-    // Create product object
     const productData: CreateProductRequest = {
       name: data.name,
       description: data.description || '',
@@ -373,26 +525,40 @@ export default function AddItemScreen() {
       variants: [variant],
     };
 
-    console.log('Creating product with data:', productData);
-
-    // Submit the product
     createProductMutation.mutate(productData);
   };
 
-  // Image upload functionality (keeping your existing implementation)
   const pickImage = async () => {
     try {
+      console.log('Requesting media library permission');
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log('Media library permission result:', permissionResult);
 
-      if (permissionResult.granted === false) {
-        Alert.alert(
-          'Permission Required',
-          'Permission to access camera roll is required!'
-        );
+      if (!permissionResult.granted) {
+        if (permissionResult.canAskAgain) {
+          Alert.alert(
+            'Permission Required',
+            'Permission to access your photo library is required to select images. Please allow access.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Try Again', onPress: pickImage },
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Permission Required',
+            'Photo library access was denied. Please enable it in Settings to select images.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          );
+        }
         return;
       }
 
+      console.log('Launching image library');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -401,11 +567,14 @@ export default function AddItemScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
+        console.log('Image selected:', result.assets[0].uri);
         await uploadImage(result.assets[0]);
+      } else {
+        console.log('Image selection canceled');
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert('Error', 'Failed to select image. Please try again.');
     }
   };
 
@@ -413,8 +582,7 @@ export default function AddItemScreen() {
     try {
       const permissionResult =
         await ImagePicker.requestCameraPermissionsAsync();
-
-      if (permissionResult.granted === false) {
+      if (!permissionResult.granted) {
         Alert.alert(
           'Permission Required',
           'Permission to access camera is required!'
@@ -432,7 +600,6 @@ export default function AddItemScreen() {
         await uploadImage(result.assets[0]);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
       Alert.alert('Error', 'Failed to take photo');
     }
   };
@@ -441,7 +608,6 @@ export default function AddItemScreen() {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const formData = new FormData();
-
       const fileExtension =
         imageAsset.uri.split('.').pop()?.toLowerCase() || 'jpg';
       const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
@@ -459,7 +625,6 @@ export default function AddItemScreen() {
 
       xhr.open('POST', 'https://api.ybill.in/v1/files/upload');
       xhr.setRequestHeader('Accept', '*/*');
-
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
@@ -478,7 +643,6 @@ export default function AddItemScreen() {
           );
         }
       };
-
       xhr.onerror = () => reject(new Error('Network error occurred'));
       xhr.ontimeout = () => reject(new Error('Request timed out'));
       xhr.timeout = 30000;
@@ -490,7 +654,6 @@ export default function AddItemScreen() {
     try {
       setIsUploading(true);
       let responseData;
-
       try {
         const formData = new FormData();
         const fileExtension =
@@ -518,13 +681,14 @@ export default function AddItemScreen() {
         });
 
         const responseText = await response.text();
-
         if (!response.ok) {
-          throw new Error(`Fetch failed: HTTP ${response.status}`);
+          throw new Error(
+            `Fetch failed: HTTP ${response.status} - ${responseText}`
+          );
         }
-
         responseData = JSON.parse(responseText);
       } catch (fetchError) {
+        console.error('Fetch upload failed, trying XHR:', fetchError);
         responseData = await uploadImageXHR(imageAsset);
       }
 
@@ -537,9 +701,9 @@ export default function AddItemScreen() {
             `Upload failed: ${JSON.stringify(responseData)}`
         );
       }
-    } catch (error) {
-      console.error('Upload failed:', error);
-      Alert.alert('Upload Error', 'Failed to upload image. Please try again.');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      Alert.alert('Upload Error', `Failed to upload image: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -551,9 +715,8 @@ export default function AddItemScreen() {
       {
         text: 'Remove',
         style: 'destructive',
-        onPress: () => {
-          setUploadedImages((prev) => prev.filter((_, i) => i !== index));
-        },
+        onPress: () =>
+          setUploadedImages((prev) => prev.filter((_, i) => i !== index)),
       },
     ]);
   };
@@ -566,7 +729,6 @@ export default function AddItemScreen() {
     ]);
   };
 
-  // Form input components (keeping your existing implementations)
   const renderFormInput = (
     name: keyof FormData,
     label: string,
@@ -634,6 +796,114 @@ export default function AddItemScreen() {
       )}
     </View>
   );
+
+  const renderBarcodeInput = () => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <QrCode size={16} color={theme.colors.primary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          Barcode
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name="barcode"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <View style={styles.barcodeContainer}>
+            <TextInput
+              style={[
+                styles.barcodeInput,
+                errors.barcode && styles.inputError,
+                {
+                  backgroundColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(255, 255, 255, 0.8)',
+                  borderColor: errors.barcode
+                    ? theme.colors.error
+                    : themeType === 'dark'
+                    ? 'rgba(255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+                  color: theme.colors.text,
+                },
+              ]}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="Enter or scan barcode"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+            <TouchableOpacity
+              style={[
+                styles.scanButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={scanBarcode}
+            >
+              <QrCode size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+      {errors.barcode && (
+        <Text style={styles.errorText}>{errors.barcode?.message}</Text>
+      )}
+    </View>
+  );
+
+  // const renderBarcodeInput = () => (
+  //   <View style={styles.formGroup}>
+  //     <View style={styles.labelContainer}>
+  //       <QrCode size={16} color={theme.colors.primary} />
+  //       <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+  //         Barcode
+  //       </Text>
+  //     </View>
+  //     <Controller
+  //       control={control}
+  //       name="barcode"
+  //       render={({ field: { onChange, onBlur, value } }) => (
+  //         <View style={styles.barcodeContainer}>
+  //           <TextInput
+  //             style={[
+  //               styles.barcodeInput,
+  //               errors.barcode && styles.inputError,
+  //               {
+  //                 backgroundColor:
+  //                   themeType === 'dark'
+  //                     ? 'rgba(255, 255, 255, 0.05)'
+  //                     : 'rgba(255, 255, 255, 0.8)',
+  //                 borderColor: errors.barcode
+  //                   ? '#EF4444'
+  //                   : themeType === 'dark'
+  //                   ? 'rgba(255, 255, 255, 0.08)'
+  //                   : 'rgba(0, 0, 0, 0.06)',
+  //                 color: theme.colors.text,
+  //               },
+  //             ]}
+  //             value={value}
+  //             onChangeText={onChange}
+  //             onBlur={onBlur}
+  //             placeholder="Enter or scan barcode"
+  //             placeholderTextColor={theme.colors.textSecondary}
+  //           />
+  //           <TouchableOpacity
+  //             style={[
+  //               styles.scanButton,
+  //               { backgroundColor: theme.colors.primary },
+  //             ]}
+  //             onPress={scanBarcode}
+  //           >
+  //             <QrCode size={18} color="#FFFFFF" />
+  //           </TouchableOpacity>
+  //         </View>
+  //       )}
+  //     />
+  //     {errors.barcode && (
+  //       <Text style={styles.errorText}>{errors.barcode?.message}</Text>
+  //     )}
+  //   </View>
+  // );
 
   const renderPriceInput = (
     name: keyof FormData,
@@ -712,7 +982,6 @@ export default function AddItemScreen() {
     </View>
   );
 
-  // Selector components (keeping your existing implementations)
   const renderUnitSelector = () => (
     <View style={styles.formGroup}>
       <View style={styles.labelContainer}>
@@ -870,7 +1139,7 @@ export default function AddItemScreen() {
                 },
               ]}
             >
-              {value || 'Select HSN Code'}
+              {value || 'HSN Code'}
             </Text>
             <ChevronDown size={18} color={theme.colors.textSecondary} />
           </TouchableOpacity>
@@ -927,7 +1196,6 @@ export default function AddItemScreen() {
     </View>
   );
 
-  // Image section component (keeping your existing implementation)
   const renderImageSection = () => (
     <View style={styles.imageSection}>
       <View style={styles.imageSectionHeader}>
@@ -936,8 +1204,6 @@ export default function AddItemScreen() {
           Product Images
         </Text>
       </View>
-
-      {/* Uploaded Images Grid */}
       {uploadedImages.length > 0 && (
         <View style={styles.uploadedImagesContainer}>
           <ScrollView
@@ -977,8 +1243,6 @@ export default function AddItemScreen() {
           </ScrollView>
         </View>
       )}
-
-      {/* Upload Button */}
       <TouchableOpacity
         style={[
           styles.imageButton,
@@ -1031,7 +1295,6 @@ export default function AddItemScreen() {
           </Text>
         </View>
       </TouchableOpacity>
-
       {uploadedImages.length > 0 && (
         <Text
           style={[styles.imageCount, { color: theme.colors.textSecondary }]}
@@ -1048,8 +1311,6 @@ export default function AddItemScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-
-      {/* Ultra-modern header with gradient */}
       <LinearGradient
         colors={
           themeType === 'dark'
@@ -1068,12 +1329,10 @@ export default function AddItemScreen() {
             >
               <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
             </TouchableOpacity>
-
             <View style={styles.headerTitleContainer}>
               <Package size={20} color="#FFFFFF" />
               <Text style={styles.headerTitle}>Add New Item</Text>
             </View>
-
             <View style={styles.placeholder} />
           </View>
         </SafeAreaView>
@@ -1088,7 +1347,6 @@ export default function AddItemScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Basic Information */}
           <Animated.View entering={FadeInUp.delay(100)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -1103,7 +1361,6 @@ export default function AddItemScreen() {
                   Basic Information
                 </Text>
               </View>
-
               {renderFormInput(
                 'name',
                 'Item Name',
@@ -1113,14 +1370,21 @@ export default function AddItemScreen() {
                 false,
                 true
               )}
-
+              {renderFormInput(
+                'itemCode',
+                'Item Code',
+                'Enter item code',
+                <Hash size={16} color={theme.colors.primary} />,
+                'default',
+                false,
+                false
+              )}
+              {renderBarcodeInput()}
               {renderCategorySelector()}
-
               <View style={styles.formRow}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                   {renderHSNSelector()}
                 </View>
-
                 <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
                   {renderUnitSelector()}
                 </View>
@@ -1128,7 +1392,6 @@ export default function AddItemScreen() {
             </BlurView>
           </Animated.View>
 
-          {/* Pricing Information */}
           <Animated.View entering={FadeInUp.delay(200)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -1143,7 +1406,6 @@ export default function AddItemScreen() {
                   Pricing Information
                 </Text>
               </View>
-
               <View style={styles.formRow}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                   {renderPriceInput(
@@ -1153,7 +1415,6 @@ export default function AddItemScreen() {
                     true
                   )}
                 </View>
-
                 <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
                   {renderPriceInput(
                     'sellingPrice',
@@ -1163,8 +1424,6 @@ export default function AddItemScreen() {
                   )}
                 </View>
               </View>
-
-              {/* Profit Display */}
               {purchasePrice && sellingPrice && (
                 <View
                   style={[
@@ -1192,7 +1451,6 @@ export default function AddItemScreen() {
                     end={{ x: 1, y: 1 }}
                     style={styles.profitGradientOverlay}
                   />
-
                   <View style={styles.profitContent}>
                     <View style={styles.profitItem}>
                       <View style={styles.profitHeader}>
@@ -1232,7 +1490,6 @@ export default function AddItemScreen() {
                         ₹{Math.abs(profit.amount).toFixed(2)}
                       </Text>
                     </View>
-
                     <View
                       style={[
                         styles.profitDivider,
@@ -1244,7 +1501,6 @@ export default function AddItemScreen() {
                         },
                       ]}
                     />
-
                     <View style={styles.profitItem}>
                       <View style={styles.profitHeader}>
                         <BarChart3
@@ -1286,9 +1542,7 @@ export default function AddItemScreen() {
                   </View>
                 </View>
               )}
-
               {renderTaxSelector()}
-
               <View style={styles.switchContainer}>
                 <View style={styles.switchLabelContainer}>
                   <IndianRupee size={16} color={theme.colors.primary} />
@@ -1320,93 +1574,120 @@ export default function AddItemScreen() {
             </BlurView>
           </Animated.View>
 
-          {/* Stock Information */}
-          <Animated.View entering={FadeInUp.delay(300)}>
-            <BlurView
-              intensity={themeType === 'dark' ? 15 : 80}
-              tint={themeType}
-              style={styles.section}
+          <TouchableOpacity
+            style={styles.moreButton}
+            onPress={() => setShowMoreSections(!showMoreSections)}
+          >
+            <Text
+              style={[styles.moreButtonText, { color: theme.colors.primary }]}
             >
-              <View style={styles.sectionHeader}>
-                <BarChart3 size={18} color={theme.colors.secondary} />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+              {showMoreSections
+                ? 'Hide Additional Details'
+                : 'Show More Details'}
+            </Text>
+            <MoreHorizontal size={20} color={theme.colors.primary} />
+          </TouchableOpacity>
+
+          {showMoreSections && (
+            <>
+              <Animated.View entering={FadeInUp.delay(300)}>
+                <BlurView
+                  intensity={themeType === 'dark' ? 15 : 80}
+                  tint={themeType}
+                  style={styles.section}
                 >
-                  Stock Information
-                </Text>
-              </View>
-
-              <View style={styles.formRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                  {renderFormInput(
-                    'stock',
-                    'Opening Stock',
-                    '0',
-                    <Package size={16} color={theme.colors.primary} />,
-                    'numeric',
-                    false,
-                    false,
-                    {
-                      pattern: {
-                        value: /^\d*$/,
-                        message: 'Please enter a valid number',
-                      },
-                    }
+                  <View style={styles.sectionHeader}>
+                    <BarChart3 size={18} color={theme.colors.secondary} />
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      Stock Information
+                    </Text>
+                  </View>
+                  <View style={styles.formRow}>
+                    <View
+                      style={[styles.formGroup, { flex: 1, marginRight: 8 }]}
+                    >
+                      {renderFormInput(
+                        'stock',
+                        'Opening Stock',
+                        '0',
+                        <Package size={16} color={theme.colors.primary} />,
+                        'numeric',
+                        false,
+                        false,
+                        {
+                          pattern: {
+                            value: /^\d*$/,
+                            message: 'Please enter a valid number',
+                          },
+                        }
+                      )}
+                    </View>
+                    <View
+                      style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}
+                    >
+                      {renderFormInput(
+                        'lowStockAlert',
+                        'Low Stock Alert',
+                        '0',
+                        <AlertTriangle size={16} color="#F59E0B" />,
+                        'numeric',
+                        false,
+                        false,
+                        {
+                          pattern: {
+                            value: /^\d*$/,
+                            message: 'Please enter a valid number',
+                          },
+                        }
+                      )}
+                    </View>
+                  </View>
+                  {renderPriceInput(
+                    'openingRate',
+                    'Opening Rate',
+                    '0.00',
+                    false
                   )}
-                </View>
+                </BlurView>
+              </Animated.View>
 
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                  {renderFormInput(
-                    'lowStockAlert',
-                    'Low Stock Alert',
-                    '0',
-                    <AlertTriangle size={16} color="#F59E0B" />,
-                    'numeric',
-                    false,
-                    false,
-                    {
-                      pattern: {
-                        value: /^\d*$/,
-                        message: 'Please enter a valid number',
-                      },
-                    }
-                  )}
-                </View>
-              </View>
-            </BlurView>
-          </Animated.View>
-
-          {/* Additional Information */}
-          <Animated.View entering={FadeInUp.delay(400)}>
-            <BlurView
-              intensity={themeType === 'dark' ? 15 : 80}
-              tint={themeType}
-              style={styles.section}
-            >
-              <View style={styles.sectionHeader}>
-                <Sparkles size={18} color={theme.colors.accent} />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+              <Animated.View entering={FadeInUp.delay(400)}>
+                <BlurView
+                  intensity={themeType === 'dark' ? 15 : 80}
+                  tint={themeType}
+                  style={styles.section}
                 >
-                  Additional Information
-                </Text>
-              </View>
-
-              {renderFormInput(
-                'description',
-                'Description',
-                'Enter item description (optional)',
-                <FileText size={16} color={theme.colors.secondary} />,
-                'default',
-                true
-              )}
-
-              {renderImageSection()}
-            </BlurView>
-          </Animated.View>
+                  <View style={styles.sectionHeader}>
+                    <Sparkles size={18} color={theme.colors.accent} />
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      Additional Information
+                    </Text>
+                  </View>
+                  {renderFormInput(
+                    'description',
+                    'Description',
+                    'Enter item description (optional)',
+                    <FileText size={16} color={theme.colors.secondary} />,
+                    'default',
+                    true
+                  )}
+                  {renderImageSection()}
+                </BlurView>
+              </Animated.View>
+            </>
+          )}
         </ScrollView>
 
-        {/* Footer */}
         <BlurView
           intensity={themeType === 'dark' ? 20 : 80}
           tint={themeType}
@@ -1444,8 +1725,153 @@ export default function AddItemScreen() {
         </BlurView>
       </KeyboardAvoidingView>
 
-      {/* All Modals */}
-      {/* Category Selection Modal */}
+      {/* <Modal visible={showBarcodeScanner} animationType="slide">
+        <View style={styles.scannerContainer}>
+          {permission?.granted ? (
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: [
+                  'upc_a',
+                  'upc_e',
+                  'ean13',
+                  'ean8',
+                  'code39',
+                  'code93',
+                  'code128',
+                  'codabar',
+                  'itf14',
+                  'qr',
+                ],
+              }}
+              onBarcodeScanned={handleBarCodeScanned}
+            />
+          ) : (
+            <View style={styles.cameraPermissionContainer}>
+              <Text style={styles.cameraPermissionText}>
+                Camera permission is required to scan barcodes.
+              </Text>
+              {permission?.canAskAgain ? (
+                <TouchableOpacity
+                  style={[
+                    styles.scanButton,
+                    { backgroundColor: theme.colors.primary },
+                  ]}
+                  onPress={scanBarcode}
+                >
+                  <Text style={styles.cameraPermissionButtonText}>
+                    Request Permission
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.scanButton,
+                    { backgroundColor: theme.colors.primary },
+                  ]}
+                  onPress={() => Linking.openSettings()}
+                >
+                  <Text style={styles.cameraPermissionButtonText}>
+                    Open Settings
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          <TouchableOpacity
+            style={[
+              styles.closeScannerButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+            onPress={() => setShowBarcodeScanner(false)}
+          >
+            <X size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </Modal> */}
+
+      <Modal
+        visible={showBarcodeScanner}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowBarcodeScanner(false);
+          setIsScanned(false);
+        }}
+      >
+        <View style={styles.scannerContainer}>
+          {permission?.granted && !isScanned ? (
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: [
+                  'upc_a',
+                  'upc_e',
+                  'ean13',
+                  'ean8',
+                  'code39',
+                  'code93',
+                  'code128',
+                  'codabar',
+                  'itf14',
+                  'qr',
+                ],
+              }}
+              onBarcodeScanned={handleBarCodeScanned}
+            />
+          ) : (
+            <View style={styles.cameraPermissionContainer}>
+              <Text style={styles.cameraPermissionText}>
+                {permission?.granted
+                  ? 'Processing barcode...'
+                  : 'Camera permission is required to scan barcodes.'}
+              </Text>
+              {!permission?.granted && (
+                <>
+                  {permission?.canAskAgain ? (
+                    <TouchableOpacity
+                      style={[
+                        styles.scanButton,
+                        { backgroundColor: theme.colors.primary },
+                      ]}
+                      onPress={scanBarcode}
+                    >
+                      <Text style={styles.cameraPermissionButtonText}>
+                        Request Permission
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.scanButton,
+                        { backgroundColor: theme.colors.primary },
+                      ]}
+                      onPress={() => Linking.openSettings()}
+                    >
+                      <Text style={styles.cameraPermissionButtonText}>
+                        Open Settings
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+          <TouchableOpacity
+            style={[
+              styles.closeScannerButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+            onPress={() => {
+              setShowBarcodeScanner(false);
+              setIsScanned(false);
+            }}
+          >
+            <X size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
       <CategorySelectionModal
         visible={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
@@ -1454,24 +1880,18 @@ export default function AddItemScreen() {
           selectedCategory !== 'Select Category' ? selectedCategory : undefined
         }
       />
-
-      {/* HSN Selection Modal */}
       <HSNSelectionModal
         visible={showHSNModal}
         onClose={() => setShowHSNModal(false)}
         onSelectHSN={handleHSNSelect}
         selectedHSN={selectedHsnCode}
       />
-
-      {/* Unit Selection Modal */}
       <UnitSelectionModal
         visible={showUnitModal}
         onClose={() => setShowUnitModal(false)}
         onSelectUnit={handleUnitSelect}
         selectedUnit={selectedUnit !== 'Select Unit' ? selectedUnit : undefined}
       />
-
-      {/* Tax Selection Modal */}
       <TaxSelectionModal
         visible={showTaxModal}
         onClose={() => setShowTaxModal(false)}
@@ -1497,7 +1917,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingVertical: 16,
   },
   backButton: {
     width: 40,
@@ -1532,7 +1951,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
     paddingBottom: 120,
   },
   section: {
@@ -1622,6 +2040,57 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
+  barcodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barcodeInput: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  scanButton: {
+    padding: 12,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraPermissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  cameraPermissionText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  cameraPermissionButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  closeScannerButton: {
+    position: 'absolute',
+    top: 50,
+    right: 30,
+    padding: 12,
+    borderRadius: 12,
+  },
   selectContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1692,7 +2161,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  // Image upload styles
   imageSection: {
     marginTop: 8,
   },
@@ -1829,5 +2297,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.1,
+  },
+  moreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginBottom: 20,
+    gap: 8,
+  },
+  moreButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
