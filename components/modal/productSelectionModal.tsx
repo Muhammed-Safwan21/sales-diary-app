@@ -2,33 +2,29 @@ import API from '@/config/api';
 import QUERY_KEY from '@/config/queryKey';
 import { useTheme } from '@/context/ThemeContext';
 import { apiClient } from '@/services/api';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Check,
-  Package,
-  Plus,
-  Search,
-  X,
   Loader,
-  IndianRupee,
-  Hash,
-  Tag,
+  Package,
+  Search,
+  X
 } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   FadeIn,

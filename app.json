@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "This app requires camera access to scan barcodes for adding items.",
-        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to select product images.",
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to select product images."
       }
     },
     "web": {
@@ -27,6 +27,15 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c8a16411-e2be-4069-9e91-26ab119f07ea"
+      }
+    },
+    "android": {
+      "package": "com.ybill"
     }
   }
 }

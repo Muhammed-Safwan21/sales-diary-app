@@ -1670,9 +1670,9 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as Print from 'expo-print';
+// import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+// import * as FileSystem from 'expo-file-system';
 import * as Linking from 'expo-linking';
 import {
   ArrowLeft,
@@ -2079,7 +2079,7 @@ export default function SalesReportScreen() {
   });
 
   // PDF Functions
-  const generatePDF = async (): Promise<string | null> => {
+  const generatePDF = async (): Promise<any> => {
     try {
       setIsGeneratingPDF(true);
       const pdfOptions = {
@@ -2090,13 +2090,13 @@ export default function SalesReportScreen() {
         themeType: themeType || 'light',
       };
 
-      const html = generatePDFHTML(pdfOptions);
-      const { uri } = await Print.printToFileAsync({
-        html,
-        base64: false,
-        margins: { left: 20, top: 20, right: 20, bottom: 20 },
-      });
-      return uri;
+      // const html = generatePDFHTML(pdfOptions);
+      // const { uri } = await Print.printToFileAsync({
+      //   html,
+      //   base64: false,
+      //   margins: { left: 20, top: 20, right: 20, bottom: 20 },
+      // });
+      // return uri;
     } catch (error) {
       console.error('Error generating PDF:', error);
       Alert.alert('Error', 'Failed to generate PDF report');
@@ -2114,21 +2114,21 @@ export default function SalesReportScreen() {
       const fileName = `sales_report_${
         new Date().toISOString().split('T')[0]
       }.pdf`;
-      const newUri = `${FileSystem.documentDirectory}${fileName}`;
-      await FileSystem.copyAsync({ from: pdfUri, to: newUri });
+      // const newUri = `${FileSystem.documentDirectory}${fileName}`;
+      // await FileSystem.copyAsync({ from: pdfUri, to: newUri });
 
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(newUri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save Sales Report',
-          UTI: 'com.adobe.pdf',
-        });
-      } else {
-        Alert.alert('PDF Generated', `Report saved to: ${newUri}`, [
-          { text: 'OK' },
-        ]);
-      }
+      // const canShare = await Sharing.isAvailableAsync();
+      // if (canShare) {
+      //   await Sharing.shareAsync(newUri, {
+      //     mimeType: 'application/pdf',
+      //     dialogTitle: 'Save Sales Report',
+      //     UTI: 'com.adobe.pdf',
+      //   });
+      // } else {
+      //   Alert.alert('PDF Generated', `Report saved to: ${newUri}`, [
+      //     { text: 'OK' },
+      //   ]);
+      // }
     } catch (error) {
       console.error('Error downloading PDF:', error);
       Alert.alert('Error', 'Failed to download PDF report');
@@ -2140,55 +2140,55 @@ export default function SalesReportScreen() {
       const pdfUri = await generatePDF();
       if (!pdfUri) return;
 
-      const fileName = `sales_report_${
-        new Date().toISOString().split('T')[0]
-      }.pdf`;
-      const newUri = `${FileSystem.documentDirectory}${fileName}`;
-      await FileSystem.copyAsync({ from: pdfUri, to: newUri });
+      // const fileName = `sales_report_${
+      //   new Date().toISOString().split('T')[0]
+      // }.pdf`;
+      // const newUri = `${FileSystem.documentDirectory}${fileName}`;
+      // await FileSystem.copyAsync({ from: pdfUri, to: newUri });
 
       const totalSales = summaryData[0]?.value || '₹0';
       const totalOrders = filteredSalesData.length;
       const message = `📊 Sales Report Summary\n\n📅 Period: ${selectedDateRange}\n💰 Total Sales: ${totalSales}\n📦 Total Orders: ${totalOrders}\n📈 Status: ${selectedStatus}\n\nFind the detailed PDF report attached.`;
 
-      if (Platform.OS === 'ios') {
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(newUri, {
-            mimeType: 'application/pdf',
-            dialogTitle: 'Share Sales Report',
-            UTI: 'com.adobe.pdf',
-          });
-        }
-      } else {
-        const whatsappURL = `whatsapp://send?text=${encodeURIComponent(
-          message
-        )}`;
-        const canOpenWhatsApp = await Linking.canOpenURL(whatsappURL);
+      // if (Platform.OS === 'ios') {
+      //   const canShare = await Sharing.isAvailableAsync();
+      //   if (canShare) {
+      //     await Sharing.shareAsync(newUri, {
+      //       mimeType: 'application/pdf',
+      //       dialogTitle: 'Share Sales Report',
+      //       UTI: 'com.adobe.pdf',
+      //     });
+      //   }
+      // } else {
+      //   const whatsappURL = `whatsapp://send?text=${encodeURIComponent(
+      //     message
+      //   )}`;
+      //   const canOpenWhatsApp = await Linking.canOpenURL(whatsappURL);
 
-        if (canOpenWhatsApp) {
-          await Sharing.shareAsync(newUri, {
-            mimeType: 'application/pdf',
-            dialogTitle: 'Share to WhatsApp',
-          });
+      //   if (canOpenWhatsApp) {
+      //     await Sharing.shareAsync(newUri, {
+      //       mimeType: 'application/pdf',
+      //       dialogTitle: 'Share to WhatsApp',
+      //     });
 
-          Alert.alert(
-            'Share to WhatsApp',
-            'PDF saved! You can now attach it in WhatsApp.',
-            [
-              {
-                text: 'Open WhatsApp',
-                onPress: () => Linking.openURL(whatsappURL),
-              },
-              { text: 'Cancel', style: 'cancel' },
-            ]
-          );
-        } else {
-          await Sharing.shareAsync(newUri, {
-            mimeType: 'application/pdf',
-            dialogTitle: 'Share Sales Report',
-          });
-        }
-      }
+      //     Alert.alert(
+      //       'Share to WhatsApp',
+      //       'PDF saved! You can now attach it in WhatsApp.',
+      //       [
+      //         {
+      //           text: 'Open WhatsApp',
+      //           onPress: () => Linking.openURL(whatsappURL),
+      //         },
+      //         { text: 'Cancel', style: 'cancel' },
+      //       ]
+      //     );
+      //   } else {
+      //     await Sharing.shareAsync(newUri, {
+      //       mimeType: 'application/pdf',
+      //       dialogTitle: 'Share Sales Report',
+      //     });
+      //   }
+      // }
     } catch (error) {
       console.error('Error sharing to WhatsApp:', error);
       Alert.alert('Error', 'Failed to share report to WhatsApp');

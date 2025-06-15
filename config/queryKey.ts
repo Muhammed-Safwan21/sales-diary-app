@@ -3,7 +3,8 @@ const QUERY_KEY = {
     PRODUCT_CATEGORIES:"product-categories",
     TAX:"tax",
     HSN_SAC:"hsn-sac",
-    PRODUCTS:"products"
+    PRODUCTS:"products",
+    PARTIES:"parties"
 
 }
 

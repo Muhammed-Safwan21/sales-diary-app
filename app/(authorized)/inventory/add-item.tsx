@@ -295,11 +295,6 @@ export default function AddItemScreen() {
       : price * (taxPercentage / 100);
   };
 
-  // const handleBarCodeScanned = ({ data }: { data: string }) => {
-  //   setValue('barcode', data, { shouldValidate: true });
-  //   setShowBarcodeScanner(false);
-  //   Alert.alert('Success', `Barcode scanned: ${data}`);
-  // };
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (isScanned) return;
@@ -317,74 +312,6 @@ export default function AddItemScreen() {
       },
     ]);
   };
-
-  // const scanBarcode = async () => {
-  //   try {
-  //     if (!permission) {
-  //       // Request permission if it hasn't been requested yet
-  //       const { status, canAskAgain } = await requestPermission();
-  //       if (status !== 'granted') {
-  //         if (canAskAgain) {
-  //           Alert.alert(
-  //             'Permission Required',
-  //             'Camera permission is required to scan barcodes. Please allow camera access.',
-  //             [
-  //               { text: 'Cancel', style: 'cancel' },
-  //               { text: 'Try Again', onPress: scanBarcode },
-  //             ]
-  //           );
-  //         } else {
-  //           Alert.alert(
-  //             'Permission Required',
-  //             'Camera permission was denied. Please enable it in Settings to scan barcodes.',
-  //             [
-  //               { text: 'Cancel', style: 'cancel' },
-  //               {
-  //                 text: 'Open Settings',
-  //                 onPress: () => Linking.openSettings(),
-  //               },
-  //             ]
-  //           );
-  //         }
-  //         return;
-  //       }
-  //     } else if (!permission.granted) {
-  //       // Handle case where permission was previously denied
-  //       if (permission.canAskAgain) {
-  //         const { status } = await requestPermission();
-  //         if (status !== 'granted') {
-  //           Alert.alert(
-  //             'Permission Required',
-  //             'Camera permission is required to scan barcodes. Please allow camera access.',
-  //             [
-  //               { text: 'Cancel', style: 'cancel' },
-  //               { text: 'Try Again', onPress: scanBarcode },
-  //             ]
-  //           );
-  //           return;
-  //         }
-  //       } else {
-  //         Alert.alert(
-  //           'Permission Required',
-  //           'Camera permission was denied. Please enable it in Settings to scan barcodes.',
-  //           [
-  //             { text: 'Cancel', style: 'cancel' },
-  //             { text: 'Open Settings', onPress: () => Linking.openSettings() },
-  //           ]
-  //         );
-  //         return;
-  //       }
-  //     }
-  //     // Permission granted, open scanner
-  //     setShowBarcodeScanner(true);
-  //   } catch (error) {
-  //     console.error('Error requesting camera permission:', error);
-  //     Alert.alert(
-  //       'Error',
-  //       'Failed to request camera permission. Please try again.'
-  //     );
-  //   }
-  // };
 
   const scanBarcode = async () => {
     try {
@@ -851,59 +778,6 @@ export default function AddItemScreen() {
     </View>
   );
 
-  // const renderBarcodeInput = () => (
-  //   <View style={styles.formGroup}>
-  //     <View style={styles.labelContainer}>
-  //       <QrCode size={16} color={theme.colors.primary} />
-  //       <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-  //         Barcode
-  //       </Text>
-  //     </View>
-  //     <Controller
-  //       control={control}
-  //       name="barcode"
-  //       render={({ field: { onChange, onBlur, value } }) => (
-  //         <View style={styles.barcodeContainer}>
-  //           <TextInput
-  //             style={[
-  //               styles.barcodeInput,
-  //               errors.barcode && styles.inputError,
-  //               {
-  //                 backgroundColor:
-  //                   themeType === 'dark'
-  //                     ? 'rgba(255, 255, 255, 0.05)'
-  //                     : 'rgba(255, 255, 255, 0.8)',
-  //                 borderColor: errors.barcode
-  //                   ? '#EF4444'
-  //                   : themeType === 'dark'
-  //                   ? 'rgba(255, 255, 255, 0.08)'
-  //                   : 'rgba(0, 0, 0, 0.06)',
-  //                 color: theme.colors.text,
-  //               },
-  //             ]}
-  //             value={value}
-  //             onChangeText={onChange}
-  //             onBlur={onBlur}
-  //             placeholder="Enter or scan barcode"
-  //             placeholderTextColor={theme.colors.textSecondary}
-  //           />
-  //           <TouchableOpacity
-  //             style={[
-  //               styles.scanButton,
-  //               { backgroundColor: theme.colors.primary },
-  //             ]}
-  //             onPress={scanBarcode}
-  //           >
-  //             <QrCode size={18} color="#FFFFFF" />
-  //           </TouchableOpacity>
-  //         </View>
-  //       )}
-  //     />
-  //     {errors.barcode && (
-  //       <Text style={styles.errorText}>{errors.barcode?.message}</Text>
-  //     )}
-  //   </View>
-  // );
 
   const renderPriceInput = (
     name: keyof FormData,
@@ -1724,72 +1598,6 @@ export default function AddItemScreen() {
           </TouchableOpacity>
         </BlurView>
       </KeyboardAvoidingView>
-
-      {/* <Modal visible={showBarcodeScanner} animationType="slide">
-        <View style={styles.scannerContainer}>
-          {permission?.granted ? (
-            <CameraView
-              style={styles.camera}
-              facing="back"
-              barcodeScannerSettings={{
-                barcodeTypes: [
-                  'upc_a',
-                  'upc_e',
-                  'ean13',
-                  'ean8',
-                  'code39',
-                  'code93',
-                  'code128',
-                  'codabar',
-                  'itf14',
-                  'qr',
-                ],
-              }}
-              onBarcodeScanned={handleBarCodeScanned}
-            />
-          ) : (
-            <View style={styles.cameraPermissionContainer}>
-              <Text style={styles.cameraPermissionText}>
-                Camera permission is required to scan barcodes.
-              </Text>
-              {permission?.canAskAgain ? (
-                <TouchableOpacity
-                  style={[
-                    styles.scanButton,
-                    { backgroundColor: theme.colors.primary },
-                  ]}
-                  onPress={scanBarcode}
-                >
-                  <Text style={styles.cameraPermissionButtonText}>
-                    Request Permission
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.scanButton,
-                    { backgroundColor: theme.colors.primary },
-                  ]}
-                  onPress={() => Linking.openSettings()}
-                >
-                  <Text style={styles.cameraPermissionButtonText}>
-                    Open Settings
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-          <TouchableOpacity
-            style={[
-              styles.closeScannerButton,
-              { backgroundColor: theme.colors.primary },
-            ]}
-            onPress={() => setShowBarcodeScanner(false)}
-          >
-            <X size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </Modal> */}
 
       <Modal
         visible={showBarcodeScanner}
