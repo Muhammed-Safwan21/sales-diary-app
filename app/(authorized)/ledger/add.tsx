@@ -1,6 +1,8 @@
+import API from '@/config/api';
+import QUERY_KEY from '@/config/queryKey';
 import { useTheme } from '@/context/ThemeContext';
 import { apiClient } from '@/services/api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -8,16 +10,16 @@ import { StatusBar } from 'expo-status-bar';
 import {
   AlertCircle,
   ArrowLeft,
-  Building2,
-  CreditCard,
-  Hash,
-  IndianRupee,
-  Landmark,
-  Save,
+  BookOpen,
+  ChevronDown,
   FileText,
+  FolderOpen,
+  IndianRupee,
   Plus,
+  Save,
+  Tag,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -34,49 +36,37 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 
+// Category Selection Modal Component
+import LedgerCategorySelectionModal from '@/components/modal/ledgerCategorySelectionModal';
+import LedgerGroupSelectionModal from '@/components/modal/ledgerGroupSelectionModel';
+
 // Form data interface
-interface BankAccountFormData {
-  accountName: string;
-  bankName: string;
-  branchName: string;
-  ifscCode: string;
-  accountType: string;
+interface LedgerFormData {
+  name: string;
+  category: string;
+  group: string;
   openingBalance: string;
+  description: string;
 }
 
 // Validation rules
 const validationRules = {
-  accountName: {
-    required: 'Account name is required',
+  name: {
+    required: 'Ledger name is required',
     minLength: {
       value: 2,
-      message: 'Account name must be at least 2 characters',
+      message: 'Ledger name must be at least 2 characters',
     },
   },
-  accountNumber: {
-    required: 'Account number is required',
-    minLength: {
-      value: 8,
-      message: 'Account number must be at least 8 digits',
-    },
-    pattern: {
-      value: /^[0-9]{8,18}$/,
-      message: 'Please enter a valid account number (8-18 digits)',
-    },
+  category: {
+    required: 'Category is required',
+    validate: (value: string) =>
+      value !== 'Select Category' || 'Please select a category',
   },
-  bankName: {
-    required: 'Bank name is required',
-    minLength: {
-      value: 2,
-      message: 'Bank name must be at least 2 characters',
-    },
-  },
-  ifscCode: {
-    required: 'IFSC code is required',
-    // pattern: {
-    //   value: /^[A-Z]{4}0[A-Z0-9]{6}$/,
-    //   message: 'Please enter a valid IFSC code (e.g., SBIN0001234)',
-    // },
+  group: {
+    required: 'Group is required',
+    validate: (value: string) =>
+      value !== 'Select Group' || 'Please select a group',
   },
   openingBalance: {
     pattern: {
@@ -86,12 +76,18 @@ const validationRules = {
   },
 };
 
-export default function AddBankAccountScreen() {
+export default function AddLedgerScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const { branchInfo, financialYear, user } = useSelector((state: any) => state.auth);
+
+  // Modal states
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('Select Category');
+  const [selectedGroup, setSelectedGroup] = useState('Select Group');
 
   // React Hook Form setup
   const {
@@ -101,33 +97,32 @@ export default function AddBankAccountScreen() {
     reset,
     setValue,
     watch,
-  } = useForm<BankAccountFormData>({
+  } = useForm<LedgerFormData>({
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {
-      accountName: '',
-      bankName: '',
-      branchName: '',
-      ifscCode: '',
-      accountType: 'Savings',
+      name: '',
+      category: 'Select Category',
+      group: 'Select Group',
       openingBalance: '0',
+      description: '',
     },
   });
 
-  // Create bank account mutation
-  const { mutate: createBankAccount, isPending } = useMutation({
-    mutationFn: async (bankData: any) => {
-      console.log('Creating bank account with data:', bankData);
-      const response = await apiClient.post('/chart-of-accounts', bankData);
-      console.log('Bank account creation response:', response);
+  // Create ledger mutation
+  const { mutate: createLedger, isPending } = useMutation({
+    mutationFn: async (ledgerData: any) => {
+      console.log('Creating ledger with data:', ledgerData);
+      const response = await apiClient.post('/chart-of-accounts', ledgerData);
+      console.log('Ledger creation response:', response);
       return response.data;
     },
     onSuccess: (data) => {
-      console.log('Bank account created successfully:', data);
-      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      console.log('Ledger created successfully:', data);
+      queryClient.invalidateQueries({ queryKey: ['ledgers'] });
+      queryClient.invalidateQueries({ queryKey: ['chart-of-accounts'] });
 
-      Alert.alert('Success', 'Bank account added successfully!', [
+      Alert.alert('Success', 'Ledger added successfully!', [
         {
           text: 'OK',
           onPress: () => router.back(),
@@ -135,8 +130,8 @@ export default function AddBankAccountScreen() {
       ]);
     },
     onError: (error: any) => {
-      console.error('Bank account creation error:', JSON.stringify(error));
-      let errorMessage = 'Failed to add bank account. Please try again.';
+      console.error('Ledger creation error:', JSON.stringify(error));
+      let errorMessage = 'Failed to add ledger. Please try again.';
 
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -150,24 +145,37 @@ export default function AddBankAccountScreen() {
     },
   });
 
+  // Handle category selection
+  const handleCategorySelect = (category: any) => {
+    setSelectedCategory(category.name);
+    setValue('category', category.name);
+    setShowCategoryModal(false);
+  };
+
+  // Handle group selection
+  const handleGroupSelect = (group: any) => {
+    setSelectedGroup(group.name);
+    setValue('group', group.name);
+    setShowGroupModal(false);
+  };
+
   // Form submission handler
-  const onSubmit = (data: BankAccountFormData) => {
+  const onSubmit = (data: LedgerFormData) => {
     // Prepare data for API
-    const bankAccountPayload: any = {
-      accountHolder: data.accountName.trim(),
-      name: data.bankName.trim(),
-      bankBranch: data.branchName.trim() || '',
-      ifscCode: data.ifscCode.trim().toUpperCase(),
-      accountType: data.accountType,
+    const ledgerPayload: any = {
+      name: data.name.trim(),
+      category: data.category,
+      group: data.group,
       openingBalance: parseFloat(data.openingBalance) || 0,
-      ledgerType: "BANK",
+      description: data.description.trim(),
+      ledgerType: "GENERAL",
       
       // Required fields from Redux state
       adminId: Number(user?.id) || parseInt(user?.adminId) || 1,
       branchId: Number(branchInfo?.id) || parseInt(branchInfo?.branchId) || 1,
       financialYearId: Number(financialYear?.id) || parseInt(financialYear?.financialYearId) || 1,
     };
-    createBankAccount(bankAccountPayload);
+    createLedger(ledgerPayload);
   };
 
   // Get input border style based on error state
@@ -181,7 +189,7 @@ export default function AddBankAccountScreen() {
   });
 
   const renderFormInput = (
-    name: keyof BankAccountFormData,
+    name: keyof LedgerFormData,
     label: string,
     placeholder: string,
     icon: React.ReactNode,
@@ -261,14 +269,147 @@ export default function AddBankAccountScreen() {
     </View>
   );
 
-  const formatCurrency = (amount: string) => {
-    const numAmount = parseFloat(amount) || 0;
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(numAmount);
-  };
+  const renderCategorySelect = () => (
+    <View style={styles.inputGroup}>
+      <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+        Category <Text style={{ color: '#EF4444' }}>*</Text>
+      </Text>
+      <Controller
+        control={control}
+        name="category"
+        rules={validationRules.category}
+        render={({ field: { value } }) => (
+          <TouchableOpacity
+            style={[
+              styles.selectContainer,
+              errors.category && styles.inputError,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor: errors.category
+                  ? '#EF4444'
+                  : themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+            onPress={() => setShowCategoryModal(true)}
+            disabled={isPending}
+          >
+            <View style={styles.selectContent}>
+              <View
+                style={[
+                  styles.selectIconContainer,
+                  { 
+                    backgroundColor: errors.category 
+                      ? 'rgba(239, 68, 68, 0.15)' 
+                      : `${theme.colors.primary}15` 
+                  },
+                ]}
+              >
+                <Tag 
+                  size={18} 
+                  color={errors.category ? '#EF4444' : theme.colors.primary} 
+                />
+              </View>
+              <Text
+                style={[
+                  styles.selectText,
+                  {
+                    color:
+                      value === 'Select Category'
+                        ? theme.colors.textSecondary
+                        : theme.colors.text,
+                  },
+                ]}
+              >
+                {value}
+              </Text>
+            </View>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      />
+      {errors.category && (
+        <Animated.View entering={FadeInDown.duration(200)}>
+          <Text style={styles.errorText}>{errors.category?.message}</Text>
+        </Animated.View>
+      )}
+    </View>
+  );
+
+  const renderGroupSelect = () => (
+    <View style={styles.inputGroup}>
+      <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+        Group <Text style={{ color: '#EF4444' }}>*</Text>
+      </Text>
+      <Controller
+        control={control}
+        name="group"
+        rules={validationRules.group}
+        render={({ field: { value } }) => (
+          <TouchableOpacity
+            style={[
+              styles.selectContainer,
+              errors.group && styles.inputError,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor: errors.group
+                  ? '#EF4444'
+                  : themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+            onPress={() => setShowGroupModal(true)}
+            disabled={isPending}
+          >
+            <View style={styles.selectContent}>
+              <View
+                style={[
+                  styles.selectIconContainer,
+                  { 
+                    backgroundColor: errors.group 
+                      ? 'rgba(239, 68, 68, 0.15)' 
+                      : `${theme.colors.accent}15` 
+                  },
+                ]}
+              >
+                <FolderOpen 
+                  size={18} 
+                  color={errors.group ? '#EF4444' : theme.colors.accent} 
+                />
+              </View>
+              <Text
+                style={[
+                  styles.selectText,
+                  {
+                    color:
+                      value === 'Select Group'
+                        ? theme.colors.textSecondary
+                        : theme.colors.text,
+                  },
+                ]}
+              >
+                {value}
+              </Text>
+            </View>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      />
+      {errors.group && (
+        <Animated.View entering={FadeInDown.duration(200)}>
+          <Text style={styles.errorText}>{errors.group?.message}</Text>
+        </Animated.View>
+      )}
+    </View>
+  );
 
   return (
     <View
@@ -298,8 +439,8 @@ export default function AddBankAccountScreen() {
             </TouchableOpacity>
 
             <View style={styles.headerTitleContainer}>
-              <Plus size={20} color="#FFFFFF" />
-              <Text style={styles.headerTitle}>Add Bank Account</Text>
+              <BookOpen size={20} color="#FFFFFF" />
+              <Text style={styles.headerTitle}>Add Ledger</Text>
             </View>
 
             <View style={styles.placeholder} />
@@ -316,7 +457,7 @@ export default function AddBankAccountScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Account Details Section */}
+          {/* Basic Information Section */}
           <Animated.View entering={FadeInUp.delay(100)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -335,172 +476,29 @@ export default function AddBankAccountScreen() {
               />
 
               <View style={styles.sectionHeader}>
-                <CreditCard size={18} color={theme.colors.primary} />
+                <FileText size={18} color={theme.colors.primary} />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
-                  Account Details
+                  Basic Information
                 </Text>
               </View>
 
               {renderFormInput(
-                'accountName',
-                'Account Name',
-                'Enter account holder name',
-                <CreditCard size={18} />,
+                'name',
+                'Ledger Name',
+                'Enter ledger name',
+                <BookOpen size={18} />,
                 'default',
                 'words',
                 false,
                 true,
-                validationRules.accountName
+                validationRules.name
               )}
 
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
-                  Account Type
-                </Text>
-                <Controller
-                  control={control}
-                  name="accountType"
-                  render={({ field: { onChange, value } }) => (
-                    <View style={styles.accountTypeContainer}>
-                      {['Savings', 'Current', 'Other'].map((type) => (
-                        <TouchableOpacity
-                          key={type}
-                          style={[
-                            styles.accountTypeButton,
-                            {
-                              backgroundColor: value === type 
-                                ? theme.colors.primary 
-                                : themeType === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.05)'
-                                  : 'rgba(255, 255, 255, 0.8)',
-                              borderColor: value === type 
-                                ? theme.colors.primary 
-                                : 'rgba(255, 255, 255, 0.1)',
-                            }
-                          ]}
-                          onPress={() => onChange(type)}
-                          disabled={isPending}
-                        >
-                          <Text style={[
-                            styles.accountTypeText,
-                            { 
-                              color: value === type 
-                                ? '#FFFFFF' 
-                                : theme.colors.text 
-                            }
-                          ]}>
-                            {type}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                />
-              </View>
-            </BlurView>
-          </Animated.View>
+              {renderCategorySelect()}
 
-          {/* Bank Information Section */}
-          <Animated.View entering={FadeInUp.delay(200)}>
-            <BlurView
-              intensity={themeType === 'dark' ? 15 : 80}
-              tint={themeType}
-              style={styles.section}
-            >
-              <LinearGradient
-                colors={[
-                  `${theme.colors.accent}08`,
-                  `${theme.colors.accent}04`,
-                  'transparent',
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.sectionGradientOverlay}
-              />
-
-              <View style={styles.sectionHeader}>
-                <Building2 size={18} color={theme.colors.accent} />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Bank Information
-                </Text>
-              </View>
-
-              {renderFormInput(
-                'bankName',
-                'Bank Name',
-                'Enter bank name',
-                <Building2 size={18} />,
-                'default',
-                'words',
-                false,
-                true,
-                validationRules.bankName
-              )}
-
-              {renderFormInput(
-                'branchName',
-                'Branch Name',
-                'Enter branch name',
-                <Landmark size={18} />
-              )}
-
-              {renderFormInput(
-                'ifscCode',
-                'IFSC Code',
-                'Enter IFSC code',
-                <Hash size={18} />,
-                'default',
-                'characters',
-                false,
-                true,
-                validationRules.ifscCode
-              )}
-            </BlurView>
-          </Animated.View>
-
-          {/* Financial Information Section */}
-          <Animated.View entering={FadeInUp.delay(300)}>
-            <BlurView
-              intensity={themeType === 'dark' ? 15 : 80}
-              tint={themeType}
-              style={styles.section}
-            >
-              <LinearGradient
-                colors={[
-                  `${theme.colors.success}08`,
-                  `${theme.colors.success}04`,
-                  'transparent',
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.sectionGradientOverlay}
-              />
-
-              <View style={styles.sectionHeader}>
-                <IndianRupee size={18} color={theme.colors.success} />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Financial Information
-                </Text>
-              </View>
-
-              {renderFormInput(
-                'openingBalance',
-                'Opening Balance',
-                'Enter opening balance',
-                <IndianRupee size={18} />,
-                'numeric',
-                'none',
-                false,
-                false,
-                { pattern: validationRules.openingBalance.pattern }
-              )}
-
+              {renderGroupSelect()}
             </BlurView>
           </Animated.View>
         </ScrollView>
@@ -538,7 +536,7 @@ export default function AddBankAccountScreen() {
                 ) : (
                   <>
                     <Save size={20} color="#FFFFFF" />
-                    <Text style={styles.saveButtonText}>Save Bank Account</Text>
+                    <Text style={styles.saveButtonText}>Save Ledger</Text>
                   </>
                 )}
               </LinearGradient>
@@ -546,6 +544,22 @@ export default function AddBankAccountScreen() {
           </View>
         </BlurView>
       </KeyboardAvoidingView>
+
+      {/* Category Selection Modal */}
+      <LedgerCategorySelectionModal
+        visible={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onSelectCategory={handleCategorySelect}
+        selectedCategory={selectedCategory !== 'Select Category' ? selectedCategory : undefined}
+      />
+
+      {/* Group Selection Modal */}
+      <LedgerGroupSelectionModal
+        visible={showGroupModal}
+        onClose={() => setShowGroupModal(false)}
+        onSelectGroup={handleGroupSelect}
+        selectedGroup={selectedGroup !== 'Select Group' ? selectedGroup : undefined}
+      />
     </View>
   );
 }
@@ -678,40 +692,36 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '500',
   },
-  accountTypeContainer: {
+  selectContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  accountTypeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    minWidth: 80,
     alignItems: 'center',
-  },
-  accountTypeText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  balanceDisplay: {
-    marginBottom: 20,
-  },
-  balanceCard: {
-    padding: 16,
+    justifyContent: 'space-between',
     borderRadius: 16,
-    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+  },
+  selectContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  selectIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  balanceLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
+  selectText: {
+    fontSize: 15,
+    fontWeight: '500',
+    flex: 1,
   },
-  balanceAmount: {
-    fontSize: 20,
-    fontWeight: '700',
+  inputError: {
+    borderColor: '#EF4444',
+    borderWidth: 1.5,
   },
   footer: {
     borderTopLeftRadius: 24,

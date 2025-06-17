@@ -169,6 +169,16 @@ export default function CreateScreen() {
         gradient: ['#06B6D4', '#22D3EE'],
       },
     ],
+    ledger : [
+      {
+        id: 'addLedger',
+        title: 'Add Ledger',
+        description: 'Create ledger entries',
+        icon: <FileText size={22} />,
+        route: '/ledger/add',
+        gradient: ['#8B5CF6', '#A78BFA'],
+      },
+    ],
     others: [
       {
         id: 'journal',

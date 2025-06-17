@@ -11,7 +11,9 @@ const API = {
     TAX:"tax",
     HSN_SAC:"hsn-sac",
     PRODUCTS:"products",
-    INVOICES:"invoices"
+    INVOICES:"invoices",
+
+    ACCOUNT_CATEGORIES:"acount-categories/",
 }
 
 export default API
