@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Switch,
   Platform,
+  Alert,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,9 +33,11 @@ import {
   Crown,
   Shield,
   ArrowUpRight,
+  Printer,
 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useAuth } from '@/hooks/useAuth';
+import { printThermalReceipt, useBluetoothPrinter } from '@/hooks/useBlutoothPrinter';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -49,7 +52,74 @@ interface SettingsItemProps {
 export default function MoreScreen() {
   const { theme, themeType, toggleTheme }: any = useTheme();
   const router = useRouter();
-  const { logout } = useAuth(); // Use the custom hook
+  const { logout } = useAuth();
+  
+  // Use our improved Bluetooth hook
+  const {
+    isConnecting,
+    connectedDevice,
+    handleConnectPrinter,
+    disconnectPrinter,
+    checkConnection,
+  } :any = useBluetoothPrinter();
+
+  const handlePrintDemo = async () => {
+    try {
+      // Check connection first
+      const isConnected = await checkConnection();
+      if (!isConnected) {
+        Alert.alert(
+          'Printer Not Connected',
+          'Please connect to a printer first.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Connect Now', onPress: handleConnectPrinter },
+          ]
+        );
+        return;
+      }
+
+      // Sample data for demo bill
+      const demoData = {
+        orderId: 'DEMO001',
+        tokenNo: '123',
+        staff: 'Demo Staff',
+        orderItems: [
+          {
+            idescription: 'Chicken Biryani',
+            vat: 5,
+            quantity: 2,
+            sp_price: 250,
+          },
+          {
+            idescription: 'Mutton Curry',
+            vat: 5,
+            quantity: 1,
+            sp_price: 300,
+          },
+          {
+            idescription: 'Naan Bread',
+            vat: 5,
+            quantity: 3,
+            sp_price: 50,
+          },
+        ],
+        total: 950,
+        barcodeId: 'DEMO123456',
+      };
+
+      const demoTable = {
+        table_number: 'T01',
+      };
+
+      // Print using our improved function
+      await printThermalReceipt(demoData, demoTable, {});
+      
+    } catch (error) {
+      console.error('Print demo error:', error);
+      Alert.alert('Print Error', 'Failed to print demo bill. Please check printer connection.');
+    }
+  };
 
   const SettingsItem: React.FC<SettingsItemProps> = ({
     icon,
@@ -361,6 +431,59 @@ export default function MoreScreen() {
           />
         </View>
 
+        {/* Printer Settings Section */}
+        <View style={styles.settingsSection}>
+          <View style={styles.sectionHeader}>
+            <Printer size={18} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Printer Settings
+            </Text>
+          </View>
+
+          {/* Connection Status */}
+          {connectedDevice && (
+            <View style={styles.connectionStatus}>
+              <Text style={[styles.connectionText, { color: theme.colors.success }]}>
+                ✅ Connected to: {connectedDevice.device_name || connectedDevice.name}
+              </Text>
+              <TouchableOpacity
+                style={styles.disconnectButton}
+                onPress={disconnectPrinter}
+              >
+                <Text style={styles.disconnectText}>Disconnect</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <SettingsItem
+            icon={<Printer size={20} />}
+            title={connectedDevice ? "Change Printer" : "Connect Printer"}
+            description={
+              isConnecting 
+                ? "Connecting..." 
+                : connectedDevice 
+                  ? `Connected to ${connectedDevice.device_name || connectedDevice.name}`
+                  : "Connect to a Bluetooth thermal printer"
+            }
+            onPress={handleConnectPrinter}
+            delay={400}
+            gradient={['#3B82F6', '#60A5FA']}
+          />
+
+          <SettingsItem
+            icon={<Printer size={20} />}
+            title="Print Demo Bill"
+            description={
+              connectedDevice 
+                ? "Print a sample bill to test printer connection"
+                : "Connect a printer first to test printing"
+            }
+            onPress={handlePrintDemo}
+            delay={450}
+            gradient={connectedDevice ? ['#10B981', '#34D399'] : ['#6B7280', '#9CA3AF']}
+          />
+        </View>
+
         {/* Logout Button */}
         <Animated.View entering={FadeInDown.delay(650)}>
           <TouchableOpacity
@@ -406,10 +529,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: -0.3,
   },
   scrollView: {
     flex: 1,
@@ -417,43 +539,41 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
     paddingBottom: 40,
   },
   profileSection: {
     borderRadius: 20,
-    padding: 20,
-    marginBottom: 32,
+    marginBottom: 24,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
   },
   profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 20,
   },
   profileImageContainer: {
     width: 64,
     height: 64,
-    borderRadius: 20,
-    justifyContent: 'center',
+    borderRadius: 32,
     alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   profileInitials: {
     fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
   },
   onlineIndicator: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#22C55E',
+    bottom: 2,
+    right: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#10B981',
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
@@ -463,37 +583,34 @@ const styles = StyleSheet.create({
   },
   businessName: {
     fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.3,
+    fontWeight: '600',
     marginBottom: 4,
   },
   businessEmail: {
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: -0.1,
+    fontSize: 14,
     marginBottom: 8,
   },
   subscriptionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     alignSelf: 'flex-start',
     gap: 4,
   },
   subscriptionText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: '#F59E0B',
   },
   editButton: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
+    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   settingsSection: {
     marginBottom: 32,
@@ -501,13 +618,12 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     marginBottom: 16,
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontWeight: '600',
   },
   settingsItem: {
     marginBottom: 12,
@@ -517,19 +633,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-      },
-    }),
   },
   settingsGradientOverlay: {
     position: 'absolute',
@@ -541,84 +644,88 @@ const styles = StyleSheet.create({
   settingsItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    position: 'relative',
-    zIndex: 2,
+    padding: 16,
+    flex: 1,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    marginRight: 16,
   },
   settingsTextContainer: {
     flex: 1,
+    marginLeft: 12,
   },
   settingsItemTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
-    letterSpacing: -0.2,
     marginBottom: 2,
   },
   settingsItemDescription: {
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
   rightElementContainer: {
     position: 'absolute',
-    right: 20,
+    right: 16,
     top: '50%',
     transform: [{ translateY: -12 }],
     width: 24,
     height: 24,
     borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 3,
+    justifyContent: 'center',
+  },
+  // Connection status styles
+  connectionStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  connectionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
+  },
+  disconnectButton: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  disconnectText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '600',
   },
   logoutButton: {
-    marginVertical: 16,
+    marginTop: 16,
+    marginBottom: 32,
     borderRadius: 16,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#EF4444',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
-      },
-    }),
   },
   logoutGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    padding: 16,
     gap: 8,
   },
   logoutText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-    letterSpacing: -0.1,
   },
   versionText: {
     textAlign: 'center',
     fontSize: 12,
-    fontWeight: '500',
-    marginTop: 16,
-    letterSpacing: -0.1,
+    marginBottom: 20,
   },
 });

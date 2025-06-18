@@ -12,8 +12,11 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "This app requires camera access to scan barcodes for adding items.",
-        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to select product images."
-      }
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library to select product images.",
+        "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to thermal printers.",
+        "NSBluetoothPeripheralUsageDescription": "This app uses Bluetooth to connect to thermal printers."
+      },
+      "bundleIdentifier": "com.ybill"
     },
     "web": {
       "bundler": "metro",
@@ -23,7 +26,17 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 33,
+            "targetSdkVersion": 33,
+            "buildToolsVersion": "33.0.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -35,7 +48,15 @@
       }
     },
     "android": {
-      "package": "com.ybill"
+      "package": "com.ybill",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     }
   }
 }
