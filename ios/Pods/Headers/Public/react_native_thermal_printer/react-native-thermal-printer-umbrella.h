@@ -1,0 +1,1 @@
+../../../Target Support Files/react-native-thermal-printer/react-native-thermal-printer-umbrella.h

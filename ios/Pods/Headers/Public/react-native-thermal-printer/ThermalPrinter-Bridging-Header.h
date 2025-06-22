@@ -1,0 +1,1 @@
+../../../../../node_modules/react-native-thermal-printer/ios/ThermalPrinter-Bridging-Header.h

@@ -1,0 +1,19 @@
+{
+  "name": "react-native-thermal-printer",
+  "version": "2.3.6",
+  "summary": "native bridge for thermal printer",
+  "homepage": "https://github.com/AllInOneYT/react-native-thermal-printer#readme",
+  "license": "MIT",
+  "authors": "Edy Gunawan <gunawanedy40@gmail.com> (https://github.com/AllInOneYT)",
+  "platforms": {
+    "ios": "10.0"
+  },
+  "source": {
+    "git": "https://github.com/AllInOneYT/react-native-thermal-printer.git",
+    "tag": "2.3.6"
+  },
+  "source_files": "ios/**/*.{h,m,mm,swift}",
+  "dependencies": {
+    "React-Core": []
+  }
+}

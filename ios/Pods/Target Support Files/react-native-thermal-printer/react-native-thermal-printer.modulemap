@@ -1,0 +1,6 @@
+module react_native_thermal_printer {
+  umbrella header "react-native-thermal-printer-umbrella.h"
+
+  export *
+  module * { export * }
+}
