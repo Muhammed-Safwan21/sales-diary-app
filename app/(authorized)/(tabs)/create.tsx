@@ -48,7 +48,7 @@ export default function CreateScreen() {
     { id: 'sales', label: 'Sales', icon: <FileText size={16} /> },
     { id: 'purchase', label: 'Purchase', icon: <Receipt size={16} /> },
     { id: 'items', label: 'Items', icon: <Package size={16} /> },
-    { id: 'parties', label: 'Parties', icon: <Users size={16} /> },
+    // { id: 'parties', label: 'Parties', icon: <Users size={16} /> },
     { id: 'banking', label: 'Banking', icon: <CreditCard size={16} /> },
     { id: 'ledger', label: 'Ledger', icon: <CreditCard size={16} /> },
     { id: 'others', label: 'Others', icon: <Wallet size={16} /> },
@@ -61,7 +61,7 @@ export default function CreateScreen() {
         title: 'Invoice',
         description: 'Create GST or non-GST invoices',
         icon: <FileText size={22} />,
-        route: '/invoice/create',
+        route: '/invoice',
         gradient: ['#6366F1', '#8B5CF6'],
       },
       {
@@ -69,7 +69,7 @@ export default function CreateScreen() {
         title: 'Payment In',
         description: 'Record payments from customers',
         icon: <CreditCard size={22} />,
-        route: '/payments/add?type=in',
+        route: '/payments',
         gradient: ['#06D6A0', '#34D399'],
       },
       {
@@ -77,7 +77,7 @@ export default function CreateScreen() {
         title: 'Sales Return',
         description: 'Create sales returns',
         icon: <Receipt size={22} />,
-        route: '/sales/return/create',
+        route: '/sales-return',
         gradient: ['#F59E0B', '#FBBF24'],
       },
       {
@@ -85,7 +85,7 @@ export default function CreateScreen() {
         title: 'Estimate',
         description: 'Create quotations for customers',
         icon: <FileBarChart size={22} />,
-        route: '/estimate/create',
+        route: '/estimate',
         gradient: ['#EC4899', '#F472B6'],
       },
     ],
@@ -95,7 +95,7 @@ export default function CreateScreen() {
         title: 'Purchase Bill',
         description: 'Record purchases from suppliers',
         icon: <Receipt size={22} />,
-        route: '/purchase/bill/create',
+        route: '/purchase/bill',
         gradient: ['#8B5CF6', '#A78BFA'],
       },
       {
@@ -169,7 +169,7 @@ export default function CreateScreen() {
         gradient: ['#06B6D4', '#22D3EE'],
       },
     ],
-    ledger : [
+    ledger: [
       {
         id: 'addLedger',
         title: 'Add Ledger',

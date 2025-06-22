@@ -87,26 +87,31 @@ export default function PaymentForm() {
       <View style={styles.labelContainer}>
         {icon}
         <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-          {label}{required && <Text style={{ color: '#EF4444' }}>*</Text>}
+          {label}
+          {required && <Text style={{ color: '#EF4444' }}>*</Text>}
         </Text>
       </View>
-      <View style={[
-        styles.inputContainer,
-        multiline && styles.multilineContainer,
-        {
-          backgroundColor: themeType === 'dark'
-            ? 'rgba(255, 255, 255, 0.05)'
-            : 'rgba(255, 255, 255, 0.8)',
-          borderColor: themeType === 'dark'
-            ? 'rgba(255, 255, 255, 0.08)'
-            : 'rgba(0, 0, 0, 0.06)',
-        }
-      ]}>
+      <View
+        style={[
+          styles.inputContainer,
+          multiline && styles.multilineContainer,
+          {
+            backgroundColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.05)'
+                : 'rgba(255, 255, 255, 0.8)',
+            borderColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.08)'
+                : 'rgba(0, 0, 0, 0.06)',
+          },
+        ]}
+      >
         <TextInput
           style={[
             styles.textInput,
             multiline && styles.multilineInput,
-            { color: theme.colors.text }
+            { color: theme.colors.text },
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -122,14 +127,17 @@ export default function PaymentForm() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-      
+
       {/* Ultra-modern header with gradient */}
       <LinearGradient
-        colors={themeType === 'dark' 
-          ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent'] 
-          : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+        colors={
+          themeType === 'dark'
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -137,13 +145,13 @@ export default function PaymentForm() {
       >
         <SafeAreaView>
           <View style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
             >
               <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
             </TouchableOpacity>
-            
+
             <View style={styles.headerTitleContainer}>
               {isPaymentIn ? (
                 <TrendingUp size={20} color="#FFFFFF" />
@@ -154,7 +162,7 @@ export default function PaymentForm() {
                 {isPaymentIn ? 'Payment In' : 'Payment Out'}
               </Text>
             </View>
-            
+
             <View style={styles.placeholder} />
           </View>
         </SafeAreaView>
@@ -164,61 +172,91 @@ export default function PaymentForm() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           {/* Payment Summary Card */}
           <Animated.View entering={FadeInUp.delay(100)}>
-            <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.summaryCard}>
+            <BlurView
+              intensity={themeType === 'dark' ? 15 : 80}
+              tint={themeType}
+              style={styles.summaryCard}
+            >
               <LinearGradient
-                colors={isPaymentIn 
-                  ? ['rgba(16, 185, 129, 0.15)', 'rgba(16, 185, 129, 0.05)', 'transparent']
-                  : ['rgba(239, 68, 68, 0.15)', 'rgba(239, 68, 68, 0.05)', 'transparent']
+                colors={
+                  isPaymentIn
+                    ? [
+                        'rgba(16, 185, 129, 0.15)',
+                        'rgba(16, 185, 129, 0.05)',
+                        'transparent',
+                      ]
+                    : [
+                        'rgba(239, 68, 68, 0.15)',
+                        'rgba(239, 68, 68, 0.05)',
+                        'transparent',
+                      ]
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.summaryGradientOverlay}
               />
-              
+
               <View style={styles.summaryContent}>
                 <View style={styles.summaryHeader}>
-                  <View style={[
-                    styles.summaryIconContainer,
-                    { 
-                      backgroundColor: isPaymentIn 
-                        ? 'rgba(16, 185, 129, 0.2)' 
-                        : 'rgba(239, 68, 68, 0.2)',
-                    }
-                  ]}>
+                  <View
+                    style={[
+                      styles.summaryIconContainer,
+                      {
+                        backgroundColor: isPaymentIn
+                          ? 'rgba(16, 185, 129, 0.2)'
+                          : 'rgba(239, 68, 68, 0.2)',
+                      },
+                    ]}
+                  >
                     {isPaymentIn ? (
                       <TrendingUp size={24} color="#10B981" />
                     ) : (
                       <TrendingDown size={24} color="#EF4444" />
                     )}
                   </View>
-                  
+
                   <View style={styles.summaryText}>
-                    <Text style={[styles.summaryTitle, { color: theme.colors.text }]}>
+                    <Text
+                      style={[
+                        styles.summaryTitle,
+                        { color: theme.colors.text },
+                      ]}
+                    >
                       {isPaymentIn ? 'Receiving Payment' : 'Making Payment'}
                     </Text>
-                    <Text style={[styles.summarySubtitle, { color: theme.colors.textSecondary }]}>
+                    <Text
+                      style={[
+                        styles.summarySubtitle,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
                       {isPaymentIn ? 'Money coming in' : 'Money going out'}
                     </Text>
                   </View>
                 </View>
-                
+
                 {paymentForm.amount && (
                   <View style={styles.amountPreview}>
-                    <IndianRupee size={16} color={isPaymentIn ? '#10B981' : '#EF4444'} />
-                    <Text style={[
-                      styles.amountPreviewText, 
-                      { color: isPaymentIn ? '#10B981' : '#EF4444' }
-                    ]}>
+                    <IndianRupee
+                      size={16}
+                      color={isPaymentIn ? '#10B981' : '#EF4444'}
+                    />
+                    <Text
+                      style={[
+                        styles.amountPreviewText,
+                        { color: isPaymentIn ? '#10B981' : '#EF4444' },
+                      ]}
+                    >
                       {parseFloat(paymentForm.amount).toLocaleString('en-IN', {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        maximumFractionDigits: 2,
                       })}
                     </Text>
                   </View>
@@ -229,10 +267,16 @@ export default function PaymentForm() {
 
           {/* Payment Details */}
           <Animated.View entering={FadeInUp.delay(200)}>
-            <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.section}>
+            <BlurView
+              intensity={themeType === 'dark' ? 15 : 80}
+              tint={themeType}
+              style={styles.section}
+            >
               <View style={styles.sectionHeader}>
                 <IndianRupee size={18} color={theme.colors.primary} />
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
                   Payment Details
                 </Text>
               </View>
@@ -241,38 +285,49 @@ export default function PaymentForm() {
               <View style={styles.formGroup}>
                 <View style={styles.labelContainer}>
                   <IndianRupee size={16} color={theme.colors.primary} />
-                  <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
                     Amount<Text style={{ color: '#EF4444' }}>*</Text>
                   </Text>
                 </View>
                 <View style={styles.amountInputContainer}>
-                  <View style={[
-                    styles.currencyContainer,
-                    {
-                      backgroundColor: `${theme.colors.primary}15`,
-                      borderColor: `${theme.colors.primary}20`,
-                    }
-                  ]}>
+                  <View
+                    style={[
+                      styles.currencyContainer,
+                      {
+                        backgroundColor: `${theme.colors.primary}15`,
+                        borderColor: `${theme.colors.primary}20`,
+                      },
+                    ]}
+                  >
                     <IndianRupee size={16} color={theme.colors.primary} />
                   </View>
                   <TextInput
                     style={[
                       styles.amountInput,
                       {
-                        backgroundColor: themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.05)'
-                          : 'rgba(255, 255, 255, 0.8)',
-                        borderColor: themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(0, 0, 0, 0.06)',
+                        backgroundColor:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(255, 255, 255, 0.8)',
+                        borderColor:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(0, 0, 0, 0.06)',
                         color: theme.colors.text,
-                      }
+                      },
                     ]}
                     placeholder="0.00"
                     placeholderTextColor={theme.colors.textSecondary}
                     keyboardType="numeric"
                     value={paymentForm.amount}
-                    onChangeText={(text) => setPaymentForm({ ...paymentForm, amount: text })}
+                    onChangeText={(text) =>
+                      setPaymentForm({ ...paymentForm, amount: text })
+                    }
                   />
                 </View>
               </View>
@@ -281,7 +336,12 @@ export default function PaymentForm() {
               <View style={styles.formGroup}>
                 <View style={styles.labelContainer}>
                   <Calendar size={16} color={theme.colors.secondary} />
-                  <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
                     Date<Text style={{ color: '#EF4444' }}>*</Text>
                   </Text>
                 </View>
@@ -289,23 +349,27 @@ export default function PaymentForm() {
                   style={[
                     styles.dateContainer,
                     {
-                      backgroundColor: themeType === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(255, 255, 255, 0.8)',
-                      borderColor: themeType === 'dark'
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : 'rgba(0, 0, 0, 0.06)',
-                    }
+                      backgroundColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : 'rgba(255, 255, 255, 0.8)',
+                      borderColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'rgba(0, 0, 0, 0.06)',
+                    },
                   ]}
                   onPress={() => setShowDatePicker(true)}
                 >
                   <View style={styles.dateContent}>
                     <Clock size={16} color={theme.colors.textSecondary} />
-                    <Text style={[styles.dateText, { color: theme.colors.text }]}>
+                    <Text
+                      style={[styles.dateText, { color: theme.colors.text }]}
+                    >
                       {paymentForm.date.toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',
-                        year: 'numeric'
+                        year: 'numeric',
                       })}
                     </Text>
                   </View>
@@ -330,25 +394,31 @@ export default function PaymentForm() {
 
           {/* Payment Method */}
           <Animated.View entering={FadeInUp.delay(300)}>
-            <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.section}>
+            <BlurView
+              intensity={themeType === 'dark' ? 15 : 80}
+              tint={themeType}
+              style={styles.section}
+            >
               <View style={styles.sectionHeader}>
                 <CreditCard size={18} color={theme.colors.accent} />
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
                   Payment Method
                 </Text>
               </View>
 
-              <ScrollView 
-                horizontal 
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.paymentMethodsContainer}
               >
                 {paymentModes.map((mode, index) => {
                   const IconComponent = mode.icon;
                   const isSelected = paymentForm.paymentMode === mode.id;
-                  
+
                   return (
-                    <Animated.View 
+                    <Animated.View
                       key={mode.id}
                       entering={FadeInDown.delay(350 + index * 50)}
                     >
@@ -356,41 +426,50 @@ export default function PaymentForm() {
                         style={[
                           styles.paymentMethodTag,
                           {
-                            backgroundColor: isSelected 
+                            backgroundColor: isSelected
                               ? mode.color
                               : themeType === 'dark'
-                                ? 'rgba(255, 255, 255, 0.05)'
-                                : 'rgba(255, 255, 255, 0.8)',
-                            borderColor: isSelected 
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(255, 255, 255, 0.8)',
+                            borderColor: isSelected
                               ? mode.color
                               : themeType === 'dark'
-                                ? 'rgba(255, 255, 255, 0.08)'
-                                : 'rgba(0, 0, 0, 0.06)',
-                          }
+                              ? 'rgba(255, 255, 255, 0.08)'
+                              : 'rgba(0, 0, 0, 0.06)',
+                          },
                         ]}
-                        onPress={() => setPaymentForm({ ...paymentForm, paymentMode: mode.id })}
+                        onPress={() =>
+                          setPaymentForm({
+                            ...paymentForm,
+                            paymentMode: mode.id,
+                          })
+                        }
                       >
-                        <View style={[
-                          styles.methodIconSmall,
-                          { 
-                            backgroundColor: isSelected 
-                              ? 'rgba(255, 255, 255, 0.2)'
-                              : `${mode.color}15`,
-                          }
-                        ]}>
-                          <IconComponent 
-                            size={14} 
-                            color={isSelected ? '#FFFFFF' : mode.color} 
+                        <View
+                          style={[
+                            styles.methodIconSmall,
+                            {
+                              backgroundColor: isSelected
+                                ? 'rgba(255, 255, 255, 0.2)'
+                                : `${mode.color}15`,
+                            },
+                          ]}
+                        >
+                          <IconComponent
+                            size={14}
+                            color={isSelected ? '#FFFFFF' : mode.color}
                           />
                         </View>
-                        
-                        <Text style={[
-                          styles.methodTagText,
-                          { 
-                            color: isSelected ? '#FFFFFF' : theme.colors.text,
-                            fontWeight: isSelected ? '600' : '500',
-                          }
-                        ]}>
+
+                        <Text
+                          style={[
+                            styles.methodTagText,
+                            {
+                              color: isSelected ? '#FFFFFF' : theme.colors.text,
+                              fontWeight: isSelected ? '600' : '500',
+                            },
+                          ]}
+                        >
                           {mode.label}
                         </Text>
                       </TouchableOpacity>
@@ -403,10 +482,16 @@ export default function PaymentForm() {
 
           {/* Additional Information */}
           <Animated.View entering={FadeInUp.delay(300)}>
-            <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.section}>
+            <BlurView
+              intensity={themeType === 'dark' ? 15 : 80}
+              tint={themeType}
+              style={styles.section}
+            >
               <View style={styles.sectionHeader}>
                 <Sparkles size={18} color={theme.colors.secondary} />
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
                   Additional Information
                 </Text>
               </View>
@@ -433,21 +518,24 @@ export default function PaymentForm() {
         </ScrollView>
 
         {/* Footer */}
-        <BlurView intensity={themeType === 'dark' ? 20 : 80} tint={themeType} style={styles.footer}>
-          <TouchableOpacity 
+        <BlurView
+          intensity={themeType === 'dark' ? 20 : 80}
+          tint={themeType}
+          style={styles.footer}
+        >
+          <TouchableOpacity
             style={[
               styles.submitButton,
-              { 
+              {
                 backgroundColor: isPaymentIn ? '#10B981' : '#EF4444',
                 shadowColor: isPaymentIn ? '#10B981' : '#EF4444',
-              }
+              },
             ]}
             onPress={handleSubmit}
           >
             <LinearGradient
-              colors={isPaymentIn 
-                ? ['#10B981', '#059669']
-                : ['#EF4444', '#DC2626']
+              colors={
+                isPaymentIn ? ['#10B981', '#059669'] : ['#EF4444', '#DC2626']
               }
               style={styles.submitGradient}
             >

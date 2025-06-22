@@ -317,7 +317,7 @@ export default function HomeScreen() {
               icon={<FileText size={24} color="#FFFFFF" />}
               title="New Invoice"
               subtitle="Create & send invoices"
-              route="/invoice/create"
+              route="/invoice/form/create"
               gradient={['#6366F1', '#8B5CF6']}
             />
             <QuickAction
@@ -331,7 +331,7 @@ export default function HomeScreen() {
               icon={<CreditCard size={24} color="#FFFFFF" />}
               title="Payment"
               subtitle="Record transactions"
-              route="/payments/add"
+              route="/payments/form/create"
               gradient={['#06D6A0', '#34D399']}
             />
             <QuickAction
@@ -462,7 +462,7 @@ export default function HomeScreen() {
                       shadowColor: theme.colors.primary,
                     },
                   ]}
-                  onPress={() => router.push('/invoice/create')}
+                  onPress={() => router.push('/invoice/form/create')}
                 >
                   <Text style={styles.actionButtonText}>Get Started</Text>
                   <Sparkles size={16} color="#FFFFFF" />
