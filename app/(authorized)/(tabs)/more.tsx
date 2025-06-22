@@ -260,7 +260,7 @@ export default function MoreScreen() {
           <SettingsItem
             icon={<CreditCard size={20} />}
             title="Subscription"
-            description="Silver Plan • Valid till 01 Dec 2024"
+            description="Silver Plan • Valid till 31 Dec 2025"
             onPress={() => {}}
             delay={250}
             gradient={['#F59E0B', '#FBBF24']}
@@ -270,7 +270,7 @@ export default function MoreScreen() {
             icon={<FileText size={20} />}
             title="Invoice Settings"
             description="Customize invoice format and terms"
-            onPress={() => {}}
+            onPress={() => router.push('/invoice-settings')}
             delay={300}
             gradient={['#EC4899', '#F472B6']}
           />
