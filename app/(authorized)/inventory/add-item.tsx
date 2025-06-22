@@ -216,12 +216,14 @@ export default function AddItemScreen() {
       return await apiClient.post(API.PRODUCTS || '/products', productData);
     },
     onSuccess: (response) => {
+      console.log('responseresponseresponse', response);
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY.PRODUCTS] });
       Alert.alert('Success', 'Product created successfully!', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     },
     onError: (error: any) => {
+      console.log('errorerrorerror', error);
       const errorMessage =
         error?.response?.data?.message || 'Failed to create product';
       Alert.alert('Error', errorMessage);
@@ -294,7 +296,6 @@ export default function AddItemScreen() {
       ? price - price / (1 + taxPercentage / 100)
       : price * (taxPercentage / 100);
   };
-
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (isScanned) return;
@@ -777,7 +778,6 @@ export default function AddItemScreen() {
       )}
     </View>
   );
-
 
   const renderPriceInput = (
     name: keyof FormData,

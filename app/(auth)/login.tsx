@@ -1,3 +1,266 @@
+// // import React, { useState } from 'react';
+// // import {
+// //   View,
+// //   Text,
+// //   Button,
+// //   FlatList,
+// //   TouchableOpacity,
+// //   StyleSheet,
+// //   Alert,
+// // } from 'react-native';
+// // import ThermalPrinterModule from 'react-native-thermal-printer';
+
+// // export default function App() {
+// //   const [devices, setDevices] = useState([]);
+// //   const [isScanning, setIsScanning] = useState(false);
+
+// //   const scanDevices = async () => {
+// //     try {
+// //       setIsScanning(true);
+// //       const results: any = await ThermalPrinterModule.getBluetoothDeviceList();
+// //       setDevices(results);
+// //       setIsScanning(false);
+// //     } catch (error) {
+// //       console.error('Scan error:', error);
+// //       Alert.alert('Error', 'Failed to scan Bluetooth devices.');
+// //       setIsScanning(false);
+// //     }
+// //   };
+
+// //   const connectAndPrint = async (device: any) => {
+// //     try {
+// //       const isConnected = await ThermalPrinterModule.connectBluetooth(
+// //         device.macAddress
+// //       );
+// //       if (!isConnected) {
+// //         Alert.alert('Connection Failed', 'Could not connect to printer');
+// //         return;
+// //       }
+
+// //       const payload = `
+// // <C>🍎 Store Receipt 🍎</C>\n
+// // <L>Item        $     Qty</L>\n
+// // <L>Apples      1.00   3</L>\n
+// // <L>Bananas     0.50   4</L>\n
+// // <L>Oranges     0.75   2</L>\n
+// // <L>TOTAL       $6.50</L>\n
+// // <C>Thank You!</C>\n
+// // `;
+
+// //       await ThermalPrinterModule.printBluetooth({
+// //         payload,
+// //         printerWidthMM: 58,
+// //         charactersPerLine: 32,
+// //       });
+
+// //       Alert.alert('Printed!', 'Receipt printed successfully.');
+// //     } catch (error) {
+// //       console.error('Print error:', error);
+// //       Alert.alert('Error', 'Failed to print.');
+// //     }
+// //   };
+
+// //   return (
+// //     <View style={styles.container}>
+// //       <Text style={styles.title}>Bluetooth Thermal Printer</Text>
+// //       <Button
+// //         title={isScanning ? 'Scanning...' : 'Scan for Printers'}
+// //         onPress={scanDevices}
+// //         disabled={isScanning}
+// //       />
+
+// //       <FlatList
+// //         data={devices}
+// //         keyExtractor={(item: any) => item.macAddress}
+// //         renderItem={({ item }) => (
+// //           <TouchableOpacity
+// //             style={styles.deviceItem}
+// //             onPress={() => connectAndPrint(item)}
+// //           >
+// //             <Text>{item.deviceName || 'Unknown Device'}</Text>
+// //             <Text style={styles.mac}>{item.macAddress}</Text>
+// //           </TouchableOpacity>
+// //         )}
+// //         ListEmptyComponent={
+// //           isScanning ? null : (
+// //             <Text style={styles.empty}>No devices found.</Text>
+// //           )
+// //         }
+// //       />
+// //     </View>
+// //   );
+// // }
+
+// // const styles = StyleSheet.create({
+// //   container: {
+// //     flex: 1,
+// //     paddingTop: 60,
+// //     paddingHorizontal: 20,
+// //   },
+// //   title: {
+// //     fontSize: 22,
+// //     fontWeight: 'bold',
+// //     marginBottom: 20,
+// //   },
+// //   deviceItem: {
+// //     padding: 12,
+// //     marginVertical: 8,
+// //     backgroundColor: '#eee',
+// //     borderRadius: 8,
+// //   },
+// //   mac: {
+// //     fontSize: 12,
+// //     color: '#666',
+// //   },
+// //   empty: {
+// //     textAlign: 'center',
+// //     marginTop: 20,
+// //     color: '#aaa',
+// //   },
+// // });
+// import React, { useState } from 'react';
+// import {
+//   View,
+//   Text,
+//   Button,
+//   FlatList,
+//   TouchableOpacity,
+//   StyleSheet,
+//   Alert,
+// } from 'react-native';
+// import ThermalPrinterModule from 'react-native-thermal-printer';
+
+// export default function App() {
+//   const [devices, setDevices] = useState([]);
+//   const [isScanning, setIsScanning] = useState(false);
+
+//   const scanDevices = async () => {
+//     try {
+//       setIsScanning(true);
+//       const results: any = await ThermalPrinterModule.getBluetoothDeviceList();
+//       setDevices(results);
+//       setIsScanning(false);
+//     } catch (error) {
+//       console.error('Scan error:', error);
+//       Alert.alert('Error', 'Failed to scan Bluetooth devices.');
+//       setIsScanning(false);
+//     }
+//   };
+
+//   //   const connectAndPrint = async (device: any) => {
+//   //     try {
+//   //       await ThermalPrinterModule.connectPrinter(device.macAddress);
+
+//   //       const payload = `
+//   // <C>🍎 Store Receipt 🍎</C>\n
+//   // <L>Item        $     Qty</L>\n
+//   // <L>Apples      1.00   3</L>\n
+//   // <L>Bananas     0.50   4</L>\n
+//   // <L>Oranges     0.75   2</L>\n
+//   // <L>TOTAL       $6.50</L>\n
+//   // <C>Thank You!</C>\n
+//   // `;
+
+//   //       await ThermalPrinterModule.printBluetooth({
+//   //         payload,
+//   //         printerWidthMM: 58,
+//   //       });
+
+//   //       Alert.alert('Printed!', 'Receipt printed successfully.');
+//   //     } catch (error) {
+//   //       console.error('Print error:', error);
+//   //       Alert.alert('Error', 'Failed to connect or print.');
+//   //     }
+//   //   };
+
+//   const connectAndPrint = async (device: any) => {
+//     try {
+//       const payload = `
+// <C>🍎 Store Receipt 🍎</C>\n
+// <L>Item        $     Qty</L>\n
+// <L>Apples      1.00   3</L>\n
+// <L>Bananas     0.50   4</L>\n
+// <L>Oranges     0.75   2</L>\n
+// <L>TOTAL       $6.50</L>\n
+// <C>Thank You!</C>\n
+// `;
+
+//       await ThermalPrinterModule.printBluetooth({
+//         macAddress: device.macAddress,
+//         payload,
+//         printerWidthMM: 58,
+//         printerNbrCharactersPerLine: 32,
+//         autoCut: true,
+//         openCashbox: false,
+//         mmFeedPaper: 20,
+//         printerDpi: 203,
+//       });
+
+//       Alert.alert('Printed!', 'Receipt printed successfully.');
+//     } catch (error) {
+//       console.error('Print error:', error);
+//       Alert.alert('Error', 'Failed to print on device: ' + device.macAddress);
+//     }
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.title}>Bluetooth Thermal Printer</Text>
+//       <Button
+//         title={isScanning ? 'Scanning...' : 'Scan for Printers'}
+//         onPress={scanDevices}
+//         disabled={isScanning}
+//       />
+
+//       <FlatList
+//         data={devices}
+//         keyExtractor={(item: any) => item.macAddress}
+//         renderItem={({ item }) => (
+//           <TouchableOpacity
+//             style={styles.deviceItem}
+//             onPress={() => connectAndPrint(item)}
+//           >
+//             <Text>{item.deviceName || 'Unknown Device'}</Text>
+//             <Text style={styles.mac}>{item.macAddress}</Text>
+//           </TouchableOpacity>
+//         )}
+//         ListEmptyComponent={
+//           isScanning ? null : (
+//             <Text style={styles.empty}>No devices found.</Text>
+//           )
+//         }
+//       />
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     paddingTop: 60,
+//     paddingHorizontal: 20,
+//   },
+//   title: {
+//     fontSize: 22,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//   },
+//   deviceItem: {
+//     padding: 12,
+//     marginVertical: 8,
+//     backgroundColor: '#eee',
+//     borderRadius: 8,
+//   },
+//   mac: {
+//     fontSize: 12,
+//     color: '#666',
+//   },
+//   empty: {
+//     textAlign: 'center',
+//     marginTop: 20,
+//     color: '#aaa',
+//   },
+// });
 import { useTheme } from '@/context/ThemeContext';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
