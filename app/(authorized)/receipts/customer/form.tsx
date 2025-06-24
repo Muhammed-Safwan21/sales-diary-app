@@ -44,7 +44,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-interface Supplier {
+interface Customer {
   id: string;
   name: string;
   email?: string;
@@ -52,34 +52,34 @@ interface Supplier {
   outstandingAmount: number;
 }
 
-interface PurchaseInvoice {
+interface Invoice {
   id: string;
   invoiceNumber: string;
   date: string;
   amount: number;
   outstandingAmount: number;
-  supplierId: string;
+  customerId: string;
   status: 'pending' | 'partial' | 'paid';
 }
 
-interface PaymentForm {
+interface ReceiptForm {
   amount: string;
   date: Date;
   paymentMode: string;
   reference: string;
   notes: string;
-  supplierId: string;
+  customerId: string;
   invoiceId: string;
 }
 
-export default function PaymentForm() {
+export default function CustomerReceiptForm() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const { type } = useLocalSearchParams();
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
 
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -92,13 +92,13 @@ export default function PaymentForm() {
     paymentMode: 'cash',
     reference: '',
     notes: '',
-    supplierId: '',
+    customerId: '',
     invoiceId: '',
     accountId: '', // Add this line
   });
 
   // Mock data - replace with your actual data source
-  const suppliers: Supplier[] = [
+  const customers: Customer[] = [
     {
       id: '1',
       name: 'ABC Electronics Ltd.',
@@ -136,14 +136,14 @@ export default function PaymentForm() {
     },
   ];
 
-  const purchaseInvoices: PurchaseInvoice[] = [
+  const invoices: Invoice[] = [
     {
       id: '1',
       invoiceNumber: 'INV-2024-001',
       date: '2024-01-15',
       amount: 25000,
       outstandingAmount: 25000,
-      supplierId: '1',
+      customerId: '1',
       status: 'pending',
     },
     {
@@ -152,7 +152,7 @@ export default function PaymentForm() {
       date: '2024-01-18',
       amount: 20000,
       outstandingAmount: 15000,
-      supplierId: '1',
+      customerId: '1',
       status: 'partial',
     },
     {
@@ -161,7 +161,7 @@ export default function PaymentForm() {
       date: '2024-01-20',
       amount: 28500,
       outstandingAmount: 28500,
-      supplierId: '2',
+      customerId: '2',
       status: 'pending',
     },
     {
@@ -170,7 +170,7 @@ export default function PaymentForm() {
       date: '2024-01-22',
       amount: 35000,
       outstandingAmount: 35000,
-      supplierId: '3',
+      customerId: '3',
       status: 'pending',
     },
     {
@@ -179,7 +179,7 @@ export default function PaymentForm() {
       date: '2024-01-25',
       amount: 32200,
       outstandingAmount: 32200,
-      supplierId: '3',
+      customerId: '3',
       status: 'pending',
     },
     {
@@ -188,7 +188,7 @@ export default function PaymentForm() {
       date: '2024-01-28',
       amount: 15800,
       outstandingAmount: 15800,
-      supplierId: '4',
+      customerId: '4',
       status: 'pending',
     },
     {
@@ -197,7 +197,7 @@ export default function PaymentForm() {
       date: '2024-02-01',
       amount: 48000,
       outstandingAmount: 48000,
-      supplierId: '5',
+      customerId: '5',
       status: 'pending',
     },
     {
@@ -206,7 +206,7 @@ export default function PaymentForm() {
       date: '2024-02-05',
       amount: 44300,
       outstandingAmount: 44300,
-      supplierId: '5',
+      customerId: '5',
       status: 'pending',
     },
   ];
@@ -220,27 +220,27 @@ export default function PaymentForm() {
   ];
 
   const isPaymentIn = type === 'in';
-  const selectedSupplier = suppliers.find(
-    (s) => s.id === paymentForm.supplierId
+  const selectedCustomer = customers.find(
+    (s) => s.id === paymentForm.customerId
   );
-  const selectedInvoice = purchaseInvoices.find(
+  const selectedInvoice = invoices.find(
     (i) => i.id === paymentForm.invoiceId
   );
 
-  // Filter invoices by selected supplier
-  const filteredInvoices = purchaseInvoices.filter(
+  // Filter invoices by selected customer
+  const filteredInvoices = invoices.filter(
     (invoice) =>
-      invoice.supplierId === paymentForm.supplierId && invoice.status !== 'paid'
+      invoice.customerId === paymentForm.customerId && invoice.status !== 'paid'
   );
 
-  // Filter suppliers based on search query
-  const filteredSuppliers = suppliers.filter(
-    (supplier) =>
-      supplier.name.toLowerCase().includes(supplierSearchQuery.toLowerCase()) ||
-      supplier.email
+  // Filter customers based on search query
+  const filteredCustomers = customers.filter(
+    (customer) =>
+      customer.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+      customer.email
         ?.toLowerCase()
-        .includes(supplierSearchQuery.toLowerCase()) ||
-      supplier.phone?.includes(supplierSearchQuery)
+        .includes(customerSearchQuery.toLowerCase()) ||
+      customer.phone?.includes(customerSearchQuery)
   );
 
   // Filter invoices based on search query
@@ -250,18 +250,18 @@ export default function PaymentForm() {
       .includes(invoiceSearchQuery.toLowerCase())
   );
 
-  const handleSupplierSelect = (supplier: Supplier) => {
+  const handleCustomerSelect = (customer: Customer) => {
     setPaymentForm({
       ...paymentForm,
-      supplierId: supplier.id,
-      invoiceId: '', // Reset invoice when supplier changes
-      amount: '', // Reset amount when supplier changes
+      customerId: customer.id,
+      invoiceId: '', // Reset invoice when customer changes
+      amount: '', // Reset amount when customer changes
     });
-    setShowSupplierModal(false);
-    setSupplierSearchQuery('');
+    setShowCustomerModal(false);
+    setCustomerSearchQuery('');
   };
 
-  const handleInvoiceSelect = (invoice: PurchaseInvoice) => {
+  const handleInvoiceSelect = (invoice: Invoice) => {
     setPaymentForm({
       ...paymentForm,
       invoiceId: invoice.id,
@@ -273,7 +273,7 @@ export default function PaymentForm() {
 
   const handleSubmit = () => {
     console.log('Payment submitted:', paymentForm);
-    console.log('Selected Supplier:', selectedSupplier);
+    console.log('Selected Customer:', selectedCustomer);
     console.log('Selected Invoice:', selectedInvoice);
     router.back();
   };
@@ -331,7 +331,7 @@ export default function PaymentForm() {
     </View>
   );
 
-  const renderSupplierItem = ({ item }: { item: Supplier }) => (
+  const renderCustomerItem = ({ item }: { item: Customer }) => (
     <TouchableOpacity
       style={[
         styles.modalItem,
@@ -346,7 +346,7 @@ export default function PaymentForm() {
               : 'rgba(0, 0, 0, 0.06)',
         },
       ]}
-      onPress={() => handleSupplierSelect(item)}
+      onPress={() => handleCustomerSelect(item)}
     >
       <View style={styles.modalItemContent}>
         <View style={styles.modalItemHeader}>
@@ -384,7 +384,7 @@ export default function PaymentForm() {
     </TouchableOpacity>
   );
 
-  const renderInvoiceItem = ({ item }: { item: PurchaseInvoice }) => (
+  const renderInvoiceItem = ({ item }: { item: Invoice }) => (
     <TouchableOpacity
       style={[
         styles.modalItem,
@@ -635,13 +635,15 @@ export default function PaymentForm() {
             </TouchableOpacity>
 
             <View style={styles.headerTitleContainer}>
-              {isPaymentIn ? (
+              {/* {isPaymentIn ? (
                 <TrendingUp size={20} color="#FFFFFF" />
               ) : (
                 <TrendingDown size={20} color="#FFFFFF" />
-              )}
+              )} */}
+                <TrendingUp size={20} color="#FFFFFF" />
               <Text style={styles.headerTitle}>
-                {isPaymentIn ? 'Payment In' : 'Payment Out'}
+                {/* {isPaymentIn ? 'Payment In' : 'Payment Out'} */}
+                Payment In
               </Text>
             </View>
 
@@ -697,11 +699,12 @@ export default function PaymentForm() {
                       },
                     ]}
                   >
-                    {isPaymentIn ? (
+                    {/* {isPaymentIn ? (
                       <TrendingUp size={24} color="#10B981" />
                     ) : (
                       <TrendingDown size={24} color="#EF4444" />
-                    )}
+                    )} */}
+                      <TrendingUp size={24} color="#10B981" />
                   </View>
 
                   <View style={styles.summaryText}>
@@ -711,7 +714,8 @@ export default function PaymentForm() {
                         { color: theme.colors.text },
                       ]}
                     >
-                      {isPaymentIn ? 'Receiving Payment' : 'Making Payment'}
+                      {/* {isPaymentIn ? 'Receiving Payment' : 'Making Payment'} */}
+                      Receiving Payment
                     </Text>
                     <Text
                       style={[
@@ -719,9 +723,9 @@ export default function PaymentForm() {
                         { color: theme.colors.textSecondary },
                       ]}
                     >
-                      {selectedSupplier
-                        ? `To: ${selectedSupplier.name}`
-                        : 'Select supplier below'}
+                      {selectedCustomer
+                        ? `To: ${selectedCustomer.name}`
+                        : 'Select customer below'}
                     </Text>
                   </View>
                 </View>
@@ -749,7 +753,7 @@ export default function PaymentForm() {
             </BlurView>
           </Animated.View>
 
-          {/* Supplier Selection */}
+          {/* Customer Selection */}
           <Animated.View entering={FadeInUp.delay(150)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -761,11 +765,11 @@ export default function PaymentForm() {
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
-                  Supplier Selection
+                  Customer Selection
                 </Text>
               </View>
 
-              {/* Supplier Selector */}
+              {/* Customer Selector */}
               <View style={styles.formGroup}>
                 <View style={styles.labelContainer}>
                   <Users size={16} color={theme.colors.primary} />
@@ -775,7 +779,7 @@ export default function PaymentForm() {
                       { color: theme.colors.textSecondary },
                     ]}
                   >
-                    Supplier<Text style={{ color: '#EF4444' }}>*</Text>
+                    Customer<Text style={{ color: '#EF4444' }}>*</Text>
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -792,28 +796,28 @@ export default function PaymentForm() {
                           : 'rgba(0, 0, 0, 0.06)',
                     },
                   ]}
-                  onPress={() => setShowSupplierModal(true)}
+                  onPress={() => setShowCustomerModal(true)}
                 >
                   <View style={styles.selectorContent}>
                     <Text
                       style={[
                         styles.selectorText,
                         {
-                          color: selectedSupplier
+                          color: selectedCustomer
                             ? theme.colors.text
                             : theme.colors.textSecondary,
                         },
                       ]}
                     >
-                      {selectedSupplier
-                        ? selectedSupplier.name
-                        : 'Select Supplier'}
+                      {selectedCustomer
+                        ? selectedCustomer.name
+                        : 'Select Customer'}
                     </Text>
-                    {selectedSupplier && (
+                    {selectedCustomer && (
                       <View style={styles.outstandingBadge}>
                         <IndianRupee size={10} color="#F59E0B" />
                         <Text style={styles.outstandingText}>
-                          {selectedSupplier.outstandingAmount.toLocaleString(
+                          {selectedCustomer.outstandingAmount.toLocaleString(
                             'en-IN'
                           )}
                         </Text>
@@ -824,8 +828,8 @@ export default function PaymentForm() {
                 </TouchableOpacity>
               </View>
 
-              {/* Invoice Selector - Only show if supplier is selected */}
-              {paymentForm.supplierId && (
+              {/* Invoice Selector - Only show if customer is selected */}
+              {paymentForm.customerId && (
                 <View style={styles.formGroup}>
                   <View style={styles.labelContainer}>
                     <Receipt size={16} color={theme.colors.secondary} />
@@ -1267,7 +1271,7 @@ export default function PaymentForm() {
                 backgroundColor: isPaymentIn ? '#10B981' : '#EF4444',
                 shadowColor: isPaymentIn ? '#10B981' : '#EF4444',
                 opacity:
-                  !paymentForm.supplierId ||
+                  !paymentForm.customerId ||
                   !paymentForm.invoiceId ||
                   !paymentForm.amount
                     ? 0.6
@@ -1276,7 +1280,7 @@ export default function PaymentForm() {
             ]}
             onPress={handleSubmit}
             disabled={
-              !paymentForm.supplierId ||
+              !paymentForm.customerId ||
               !paymentForm.invoiceId ||
               !paymentForm.amount
             }
@@ -1298,10 +1302,10 @@ export default function PaymentForm() {
 
       {/* Supplier Selection Modal */}
       <Modal
-        visible={showSupplierModal}
+        visible={showCustomerModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowSupplierModal(false)}
+        onRequestClose={() => setShowCustomerModal(false)}
       >
         <View style={styles.modalOverlay}>
           <BlurView
@@ -1311,11 +1315,11 @@ export default function PaymentForm() {
           >
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-                Select Supplier
+                Select Customer
               </Text>
               <TouchableOpacity
                 style={styles.modalCloseButton}
-                onPress={() => setShowSupplierModal(false)}
+                onPress={() => setShowCustomerModal(false)}
               >
                 <X size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
@@ -1340,17 +1344,17 @@ export default function PaymentForm() {
               <Search size={16} color={theme.colors.textSecondary} />
               <TextInput
                 style={[styles.searchInput, { color: theme.colors.text }]}
-                placeholder="Search suppliers..."
+                placeholder="Search customers..."
                 placeholderTextColor={theme.colors.textSecondary}
-                value={supplierSearchQuery}
-                onChangeText={setSupplierSearchQuery}
+                value={customerSearchQuery}
+                onChangeText={setCustomerSearchQuery}
               />
             </View>
 
             <FlatList
-              data={filteredSuppliers}
+              data={filteredCustomers}
               keyExtractor={(item) => item.id}
-              renderItem={renderSupplierItem}
+              renderItem={renderCustomerItem}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalList}
             />

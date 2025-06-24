@@ -72,7 +72,7 @@ interface PaymentForm {
   invoiceId: string;
 }
 
-export default function PaymentForm() {
+export default function SupplierPaymentForm() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const { type } = useLocalSearchParams();

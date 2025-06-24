@@ -62,7 +62,7 @@ interface PurchaseInvoice {
   status: 'pending' | 'partial' | 'paid';
 }
 
-interface PaymentForm {
+interface RefundForm {
   amount: string;
   date: Date;
   paymentMode: string;
@@ -72,7 +72,7 @@ interface PaymentForm {
   invoiceId: string;
 }
 
-export default function PaymentForm() {
+export default function SupplierRefundForm() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const { type } = useLocalSearchParams();

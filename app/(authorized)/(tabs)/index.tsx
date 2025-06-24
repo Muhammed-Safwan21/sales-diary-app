@@ -338,7 +338,7 @@ export default function HomeScreen() {
               icon={<Wallet size={24} color="#FFFFFF" />}
               title="Expense"
               subtitle="Track business costs"
-              route="/expenses/add"
+              route="/payments/others/add"
               gradient={['#F59E0B', '#FBBF24']}
             />
           </View>
