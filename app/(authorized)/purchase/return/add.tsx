@@ -533,7 +533,7 @@ export default function PurchaseReturnScreen() {
           </TouchableOpacity>
         )}
       </View>
-
+  
       {/* Product Name */}
       <TextInput
         style={[
@@ -556,54 +556,13 @@ export default function PurchaseReturnScreen() {
         value={item.productName}
         onChangeText={(text) => updateItem(item.id, "productName", text)}
       />
-
-      {/* First Row: Quantity, Unit Price, Tax Rate */}
+  
+      {/* First Row: Quantity, Unit Price, Tax % */}
       <View style={styles.itemRow}>
-        <TextInput
-          style={[
-            styles.itemInputSmall,
-            {
-              backgroundColor:
-                themeType === "dark"
-                  ? "rgba(255, 255, 255, 0.05)"
-                  : "rgba(255, 255, 255, 0.8)",
-              borderColor:
-                themeType === "dark"
-                  ? "rgba(255, 255, 255, 0.08)"
-                  : "rgba(0, 0, 0, 0.06)",
-              color: theme.colors.text,
-            },
-          ]}
-          placeholder="Qty"
-          placeholderTextColor={theme.colors.textSecondary}
-          keyboardType="numeric"
-          value={item.quantity}
-          onChangeText={(text) => updateItem(item.id, "quantity", text)}
-        />
-
-        <TextInput
-          style={[
-            styles.itemInputMedium,
-            {
-              backgroundColor:
-                themeType === "dark"
-                  ? "rgba(255, 255, 255, 0.05)"
-                  : "rgba(255, 255, 255, 0.8)",
-              borderColor:
-                themeType === "dark"
-                  ? "rgba(255, 255, 255, 0.08)"
-                  : "rgba(0, 0, 0, 0.06)",
-              color: theme.colors.text,
-            },
-          ]}
-          placeholder="Unit Price"
-          placeholderTextColor={theme.colors.textSecondary}
-          keyboardType="numeric"
-          value={item.unitPrice}
-          onChangeText={(text) => updateItem(item.id, "unitPrice", text)}
-        />
-
-        <View style={styles.inputWithIcon}>
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Qty
+          </Text>
           <TextInput
             style={[
               styles.itemInputSmall,
@@ -617,26 +576,85 @@ export default function PurchaseReturnScreen() {
                     ? "rgba(255, 255, 255, 0.08)"
                     : "rgba(0, 0, 0, 0.06)",
                 color: theme.colors.text,
-                paddingRight: 24,
               },
             ]}
-            placeholder="Tax%"
+            placeholder="0"
             placeholderTextColor={theme.colors.textSecondary}
             keyboardType="numeric"
-            value={item.taxRate}
-            onChangeText={(text) => updateItem(item.id, "taxRate", text)}
+            value={item.quantity}
+            onChangeText={(text) => updateItem(item.id, "quantity", text)}
           />
-          <Percent
-            size={12}
-            color={theme.colors.textSecondary}
-            style={styles.percentIcon}
+        </View>
+  
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Price
+          </Text>
+          <TextInput
+            style={[
+              styles.itemInputMedium,
+              {
+                backgroundColor:
+                  themeType === "dark"
+                    ? "rgba(255, 255, 255, 0.05)"
+                    : "rgba(255, 255, 255, 0.8)",
+                borderColor:
+                  themeType === "dark"
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.06)",
+                color: theme.colors.text,
+              },
+            ]}
+            placeholder="0.00"
+            placeholderTextColor={theme.colors.textSecondary}
+            keyboardType="numeric"
+            value={item.unitPrice}
+            onChangeText={(text) => updateItem(item.id, "unitPrice", text)}
           />
+        </View>
+  
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Tax %
+          </Text>
+          <View style={styles.inputWithIcon}>
+            <TextInput
+              style={[
+                styles.itemInputSmall,
+                {
+                  backgroundColor:
+                    themeType === "dark"
+                      ? "rgba(255, 255, 255, 0.05)"
+                      : "rgba(255, 255, 255, 0.8)",
+                  borderColor:
+                    themeType === "dark"
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "rgba(0, 0, 0, 0.06)",
+                  color: theme.colors.text,
+                  paddingRight: 24,
+                },
+              ]}
+              placeholder="0"
+              placeholderTextColor={theme.colors.textSecondary}
+              keyboardType="numeric"
+              value={item.taxRate}
+              onChangeText={(text) => updateItem(item.id, "taxRate", text)}
+            />
+            <Percent
+              size={12}
+              color={theme.colors.textSecondary}
+              style={styles.percentIcon}
+            />
+          </View>
         </View>
       </View>
 
-      {/* Second Row: Discount Rate, Tax Amount, Discount Amount */}
+      {/* Second Row: Discount %, Discount Amount */}
       <View style={styles.itemRow}>
-        <View style={styles.inputWithIcon}>
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          Tax Amt
+          </Text>
           <TextInput
             style={[
               styles.itemInputSmall,
@@ -650,84 +668,151 @@ export default function PurchaseReturnScreen() {
                     ? "rgba(255, 255, 255, 0.08)"
                     : "rgba(0, 0, 0, 0.06)",
                 color: theme.colors.text,
-                paddingRight: 24,
               },
             ]}
-            placeholder="Disc%"
+            readOnly
+            placeholder="0"
+            placeholderTextColor={theme.colors.textSecondary}
+            keyboardType="numeric"
+            value={item.taxAmount?.toString() || ""}
+            onChangeText={(text) => {
+              // Update discount amount as direct input
+              const discountAmount = parseFloat(text) || 0;
+              const updatedItem = { ...item, discountAmount };
+              
+              // Recalculate discount percentage if needed
+              const quantity = parseFloat(item.quantity) || 0;
+              const unitPrice = parseFloat(item.unitPrice) || 0;
+              const subtotal = quantity * unitPrice;
+              
+              if (subtotal > 0) {
+                updatedItem.discountRate = ((discountAmount / subtotal) * 100).toString();
+              }
+              
+              const finalItem = calculateItemTotals(updatedItem);
+              
+              setReturnForm({
+                ...returnForm,
+                items: returnForm.items.map(existingItem => 
+                  existingItem.id === item.id ? finalItem : existingItem
+                ),
+              });
+            }}
+          />
+        </View>
+  
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          Discount %
+          </Text>
+          <TextInput
+            style={[
+              styles.itemInputMedium,
+              {
+                backgroundColor:
+                  themeType === "dark"
+                    ? "rgba(255, 255, 255, 0.05)"
+                    : "rgba(255, 255, 255, 0.8)",
+                borderColor:
+                  themeType === "dark"
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.06)",
+                color: theme.colors.text,
+              },
+            ]}
+            placeholder="0.00"
             placeholderTextColor={theme.colors.textSecondary}
             keyboardType="numeric"
             value={item.discountRate}
             onChangeText={(text) => updateItem(item.id, "discountRate", text)}
-          />
-          <Percent
-            size={12}
-            color={theme.colors.textSecondary}
-            style={styles.percentIcon}
+            
           />
         </View>
-
-        <View style={styles.calculatedField}>
-          <Text
-            style={[
-              styles.calculatedLabel,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Tax Amt
+  
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          Discount Amt
           </Text>
-          <Text
-            style={[styles.calculatedValue, { color: theme.colors.secondary }]}
-          >
-            ₹{item.taxAmount.toFixed(2)}
-          </Text>
-        </View>
-
-        <View style={styles.calculatedField}>
-          <Text
-            style={[
-              styles.calculatedLabel,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Disc Amt
-          </Text>
-          <Text style={[styles.calculatedValue, { color: "#EF4444" }]}>
-            ₹{item.discountAmount.toFixed(2)}
-          </Text>
+          <View style={styles.inputWithIcon}>
+            <TextInput
+              style={[
+                styles.itemInputSmall,
+                {
+                  backgroundColor:
+                    themeType === "dark"
+                      ? "rgba(255, 255, 255, 0.05)"
+                      : "rgba(255, 255, 255, 0.8)",
+                  borderColor:
+                    themeType === "dark"
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "rgba(0, 0, 0, 0.06)",
+                  color: theme.colors.text,
+                  paddingRight: 24,
+                },
+              ]}
+              placeholder="0"
+              placeholderTextColor={theme.colors.textSecondary}
+              keyboardType="numeric"
+              value={item.discountAmount?.toString() || ""}
+              onChangeText={(text) => {
+                // Update discount amount as direct input
+                const discountAmount = parseFloat(text) || 0;
+                const updatedItem = { ...item, discountAmount };
+                
+                // Recalculate discount percentage if needed
+                const quantity = parseFloat(item.quantity) || 0;
+                const unitPrice = parseFloat(item.unitPrice) || 0;
+                const subtotal = quantity * unitPrice;
+                
+                if (subtotal > 0) {
+                  updatedItem.discountRate = ((discountAmount / subtotal) * 100).toString();
+                }
+                
+                const finalItem = calculateItemTotals(updatedItem);
+                
+                setReturnForm({
+                  ...returnForm,
+                  items: returnForm.items.map(existingItem => 
+                    existingItem.id === item.id ? finalItem : existingItem
+                  ),
+                });
+              }}
+            />
+            <Percent
+              size={12}
+              color={theme.colors.textSecondary}
+              style={styles.percentIcon}
+            />
+          </View>
         </View>
       </View>
-
-      {/* Third Row: Subtotal and Total */}
-      <View style={styles.itemRow}>
-        <View style={styles.calculatedField}>
-          <Text
-            style={[
-              styles.calculatedLabel,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Subtotal
+  
+      {/* Third Row: Tax Amount and Total (Display Only) */}
+      <View style={styles.displayRow}>
+        <View style={styles.displayField}>
+          <Text style={[styles.displayLabel, { color: theme.colors.textSecondary }]}>
+            Item Total
           </Text>
-          <Text style={[styles.calculatedValue, { color: theme.colors.text }]}>
-            ₹{item.subtotal.toFixed(2)}
-          </Text>
+          {/* <Text style={[styles.displayLabel, { color: theme.colors.textSecondary }]}>
+            Sub total: ₹{item.subtotal.toFixed(2)}
+          </Text> */}
         </View>
-
+  
         <View
           style={[
             styles.totalContainer,
-            { backgroundColor: `#F97316${themeType === "dark" ? "15" : "10"}` },
+            { backgroundColor: `${theme.colors.primary}${themeType === "dark" ? "15" : "10"}` },
           ]}
         >
-          <IndianRupee size={14} color="#F97316" />
-          <Text style={[styles.totalValue, { color: "#F97316" }]}>
+          <IndianRupee size={14} color={theme.colors.primary} />
+          <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
             {item.total.toFixed(2)}
           </Text>
         </View>
       </View>
     </View>
   );
-
+  
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -1440,6 +1525,39 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 14,
     fontWeight: "500",
+    flex: 1,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  displayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
+  },
+  displayField: {
+    flex: 1,
+    alignItems: "center",
+  },
+  displayLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  displayValue: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  spacer: {
     flex: 1,
   },
 });
