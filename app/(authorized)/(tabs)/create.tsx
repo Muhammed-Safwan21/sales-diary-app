@@ -105,7 +105,7 @@ export default function CreateScreen() {
         title: 'Purchase Order',
         description: 'Create purchase orders for suppliers',
         icon: <ClipboardList size={22} />,
-        route: '/purchase/order/create',
+        route: '/purchase/order',
         gradient: ['#06B6D4', '#22D3EE'],
       },
       {
@@ -113,7 +113,7 @@ export default function CreateScreen() {
         title: 'Purchase Return',
         description: 'Create purchase returns',
         icon: <Receipt size={22} />,
-        route: '/purchase/return/add',
+        route: '/purchase/return',
         gradient: ['#F97316', '#FB923C'],
       },
       // {

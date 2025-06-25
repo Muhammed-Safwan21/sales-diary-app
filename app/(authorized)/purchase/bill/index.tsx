@@ -9,17 +9,15 @@ import {
   Calendar,
   CheckCircle,
   Clock,
-  Edit3,
   FileText,
   IndianRupee,
   Plus,
-  Trash2,
   User,
+  ChevronRight,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   RefreshControl,
   ScrollView,
@@ -132,33 +130,9 @@ export default function PurchaseBillListingScreen() {
     }
   };
 
-  const handleDeletePurchaseBill = (billId: string, billNumber: string) => {
-    Alert.alert(
-      'Delete Purchase Bill',
-      `Are you sure you want to delete ${billNumber}? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setPurchaseBills(
-              purchaseBills.filter((bill) => bill.id !== billId)
-            );
-          },
-        },
-      ]
-    );
-  };
-
-  const handleEditPurchaseBill = (billId: string) => {
-    // Navigate to edit screen
-    // router.push(`/purchase-bill/form/${billId}`);
-  };
-
   const handleViewPurchaseBill = (billId: string) => {
     // Navigate to view screen
-    // router.push('/purchase-bill/preview');
+    router.push(`/purchase/bill/${billId}`);
   };
 
   const onRefresh = () => {
@@ -190,16 +164,42 @@ export default function PurchaseBillListingScreen() {
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
+            activeOpacity={0.7}
           >
             <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
           </TouchableOpacity>
 
           <View style={styles.headerTitleContainer}>
-            <FileText size={20} color="#FFFFFF" />
+            <FileText size={22} color="#FFFFFF" />
             <Text style={styles.headerTitle}>Purchase Bills</Text>
           </View>
 
           <View style={styles.headerRightSpacer} />
+        </View>
+
+        {/* Summary Cards */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryRow}>
+            <BlurView
+              intensity={themeType === 'dark' ? 20 : 80}
+              tint={themeType}
+              style={styles.summaryCard}
+            >
+              <Text style={styles.summaryLabel}>Total Bills</Text>
+              <Text style={styles.summaryValue}>{purchaseBills.length}</Text>
+            </BlurView>
+            
+            <BlurView
+              intensity={themeType === 'dark' ? 20 : 80}
+              tint={themeType}
+              style={styles.summaryCard}
+            >
+              <Text style={styles.summaryLabel}>Total Amount</Text>
+              <Text style={styles.summaryValue}>
+                ₹{purchaseBills.reduce((sum, bill) => sum + bill.amount, 0).toLocaleString('en-IN')}
+              </Text>
+            </BlurView>
+          </View>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -248,16 +248,22 @@ export default function PurchaseBillListingScreen() {
                     ? theme.colors.primary
                     : themeType === 'dark'
                     ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(255, 255, 255, 0.7)',
+                    : 'rgba(255, 255, 255, 0.8)',
                 borderColor:
                   selectedFilter === filter.key
                     ? theme.colors.primary
                     : themeType === 'dark'
                     ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(255, 255, 255, 0.3)',
+                    : 'rgba(255, 255, 255, 0.5)',
+                shadowColor: selectedFilter === filter.key ? theme.colors.primary : 'transparent',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: selectedFilter === filter.key ? 0.3 : 0,
+                shadowRadius: 4,
+                elevation: selectedFilter === filter.key ? 4 : 0,
               },
             ]}
             onPress={() => setSelectedFilter(filter.key)}
+            activeOpacity={0.8}
           >
             <Text
               style={[
@@ -267,7 +273,7 @@ export default function PurchaseBillListingScreen() {
                     selectedFilter === filter.key
                       ? '#FFFFFF'
                       : theme.colors.text,
-                  fontWeight: selectedFilter === filter.key ? '600' : '500',
+                  fontWeight: selectedFilter === filter.key ? '700' : '600',
                 },
               ]}
             >
@@ -280,7 +286,7 @@ export default function PurchaseBillListingScreen() {
                   {
                     backgroundColor:
                       selectedFilter === filter.key
-                        ? 'rgba(255, 255, 255, 0.2)'
+                        ? 'rgba(255, 255, 255, 0.25)'
                         : `${theme.colors.primary}20`,
                   },
                 ]}
@@ -312,41 +318,31 @@ export default function PurchaseBillListingScreen() {
       entering={FadeInDown.delay(index * 50).springify()}
       style={styles.cardContainer}
     >
-      <BlurView
-        intensity={themeType === 'dark' ? 15 : 80}
-        tint={themeType}
-        style={[
-          styles.billCard,
-          {
-            borderColor:
-              themeType === 'dark'
-                ? 'rgba(255, 255, 255, 0.1)'
-                : 'rgba(255, 255, 255, 0.3)',
-          },
-        ]}
+      <TouchableOpacity
+        onPress={() => handleViewPurchaseBill(bill.id)}
+        activeOpacity={0.95}
+        style={styles.cardTouchable}
       >
-        <LinearGradient
-          colors={[
-            `${theme.colors.primary}08`,
-            `${theme.colors.primary}02`,
-            'transparent',
+        <BlurView
+          intensity={themeType === 'dark' ? 20 : 85}
+          tint={themeType}
+          style={[
+            styles.billCard,
+            {
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12)'
+                  : 'rgba(255, 255, 255, 0.4)',
+            },
           ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.cardGradientOverlay}
-        />
-
-        <TouchableOpacity
-          style={styles.cardContent}
-          onPress={() => handleViewPurchaseBill(bill.id)}
-          activeOpacity={0.8}
         >
-          <View style={styles.cardHeader}>
-            <View style={styles.billNumberContainer}>
+          <View style={styles.cardContent}>
+            {/* Top Row - Bill Number and Status */}
+            <View style={styles.topRow}>
               <Text style={[styles.billNumber, { color: theme.colors.text }]}>
                 {bill.billNumber}
               </Text>
-              <View style={styles.statusContainer}>
+              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(bill.status)}15` }]}>
                 {getStatusIcon(bill.status)}
                 <Text
                   style={[
@@ -359,116 +355,80 @@ export default function PurchaseBillListingScreen() {
               </View>
             </View>
 
-            <View style={styles.cardActions}>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  styles.editButton,
-                  { backgroundColor: `${theme.colors.primary}15` },
-                ]}
-                onPress={() => handleEditPurchaseBill(bill.id)}
-              >
-                <Edit3 size={14} color={theme.colors.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  styles.deleteButton,
-                  { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
-                ]}
-                onPress={() =>
-                  handleDeletePurchaseBill(bill.id, bill.billNumber)
-                }
-              >
-                <Trash2 size={14} color="#EF4444" />
-              </TouchableOpacity>
+            {/* Supplier Row */}
+            <View style={styles.supplierRow}>
+              <User size={14} color={theme.colors.textSecondary} />
+              <Text style={[styles.supplierName, { color: theme.colors.textSecondary }]}>
+                {bill.supplierName}
+              </Text>
             </View>
-          </View>
 
-          <View style={styles.supplierContainer}>
-            <User size={12} color={theme.colors.textSecondary} />
-            <Text style={[styles.supplierName, { color: theme.colors.text }]}>
-              {bill.supplierName}
-            </Text>
-          </View>
-
-          <View style={styles.cardDetails}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailItem}>
-                <Calendar size={10} color={theme.colors.textSecondary} />
-                <Text
-                  style={[
-                    styles.detailText,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  {new Date(bill.billDate).toLocaleDateString()}
+            {/* Bottom Row - Date, Amount and chevron */}
+            <View style={styles.bottomRow}>
+              <View style={styles.dateContainer}>
+                <Calendar size={14} color={theme.colors.textSecondary} />
+                <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
+                  {new Date(bill.billDate).toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                  })}
                 </Text>
               </View>
-              <View style={styles.detailItem}>
-                <Text
-                  style={[
-                    styles.itemsCount,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  {bill.items} {bill.items === 1 ? 'item' : 'items'}
-                </Text>
+              
+              <View style={styles.rightSection}>
+                <View style={styles.amountContainer}>
+                  <IndianRupee size={16} color={theme.colors.primary} />
+                  <Text style={[styles.amount, { color: theme.colors.primary }]}>
+                    {bill.amount.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color={theme.colors.textSecondary} />
               </View>
             </View>
 
-            <View style={styles.amountContainer}>
-              <IndianRupee size={14} color={theme.colors.primary} />
-              <Text style={[styles.amount, { color: theme.colors.primary }]}>
-                {bill.amount.toLocaleString('en-IN', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Text>
-            </View>
+            {/* Overdue Warning */}
+            {bill.status === 'overdue' && (
+              <View style={styles.overdueWarning}>
+                <AlertCircle size={12} color="#EF4444" />
+                <Text style={styles.overdueText}>
+                  Overdue by{' '}
+                  {Math.ceil(
+                    (new Date().getTime() - new Date(bill.dueDate).getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )}{' '}
+                  days
+                </Text>
+              </View>
+            )}
           </View>
-
-          {bill.status === 'overdue' && (
-            <View style={styles.overdueWarning}>
-              <AlertCircle size={10} color="#EF4444" />
-              <Text style={styles.overdueText}>
-                Due{' '}
-                {Math.ceil(
-                  (new Date().getTime() - new Date(bill.dueDate).getTime()) /
-                    (1000 * 60 * 60 * 24)
-                )}{' '}
-                days ago
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </BlurView>
+        </BlurView>
+      </TouchableOpacity>
     </Animated.View>
   );
 
   const renderEmptyState = () => (
     <Animated.View entering={FadeIn.delay(300)} style={styles.emptyContainer}>
       <BlurView
-        intensity={themeType === 'dark' ? 15 : 80}
+        intensity={themeType === 'dark' ? 20 : 80}
         tint={themeType}
         style={styles.emptyCard}
       >
-        <FileText
-          size={48}
-          color={theme.colors.textSecondary}
-          strokeWidth={1}
-        />
+        <View style={styles.emptyIconContainer}>
+          <FileText
+            size={56}
+            color={theme.colors.textSecondary}
+            strokeWidth={1.5}
+          />
+        </View>
         <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
           No {selectedFilter === 'all' ? '' : selectedFilter} purchase bills
-          found
         </Text>
         <Text
           style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}
         >
           {selectedFilter === 'all'
-            ? 'Start by creating your first purchase bill'
-            : `No ${selectedFilter} purchase bills at the moment`}
+            ? 'Create your first purchase bill to get started'
+            : `No ${selectedFilter} purchase bills found`}
         </Text>
       </BlurView>
     </Animated.View>
@@ -490,7 +450,7 @@ export default function PurchaseBillListingScreen() {
         onPress={() => router.push('/purchase/bill/form/create')}
         activeOpacity={0.8}
       >
-        <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
+        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -511,7 +471,12 @@ export default function PurchaseBillListingScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
           }
         >
           {isLoading ? (
@@ -548,7 +513,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerGradient: {
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   header: {
     flexDirection: 'row',
@@ -559,67 +524,96 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  headerRightSpacer: {
+    width: 42,
+  },
+  summaryContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  summaryCard: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    padding: 16,
+    overflow: 'hidden',
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  summaryValue: {
+    fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.2,
   },
-  headerRightSpacer: {
-    width: 40,
-  },
   content: {
     flex: 1,
-    marginTop: -10,
+    marginTop: -12,
   },
   filterContainer: {
     marginHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 8,
   },
   filterTabsContainer: {
     paddingHorizontal: 0,
     paddingVertical: 8,
-    gap: 8,
+    gap: 10,
   },
   filterTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    gap: 4,
-    minHeight: 32,
+    gap: 6,
+    minHeight: 40,
   },
   filterTabText: {
-    fontSize: 12,
+    fontSize: 13,
     letterSpacing: -0.1,
   },
   filterTabBadge: {
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
   },
   filterTabBadgeText: {
-    fontSize: 9,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,
@@ -629,123 +623,99 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   billsList: {
-    gap: 10,
+    gap: 16,
   },
   cardContainer: {
-    marginBottom: 2,
+    marginBottom: 0,
+  },
+  cardTouchable: {
+    borderRadius: 16,
   },
   billCard: {
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
-    position: 'relative',
-  },
-  cardGradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   cardContent: {
-    padding: 14,
-    position: 'relative',
-    zIndex: 2,
+    padding: 16,
   },
-  cardHeader: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
-  },
-  billNumberContainer: {
-    flex: 1,
   },
   billNumber: {
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: -0.2,
-    marginBottom: 3,
   },
-  statusContainer: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   statusText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
     textTransform: 'capitalize',
   },
-  cardActions: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  actionButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  editButton: {
-    borderColor: 'rgba(99, 102, 241, 0.2)',
-  },
-  deleteButton: {
-    borderColor: 'rgba(239, 68, 68, 0.2)',
-  },
-  supplierContainer: {
+  supplierRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   supplierName: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: -0.1,
+    fontSize: 13,
+    fontWeight: '500',
   },
-  cardDetails: {
+  middleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  detailRow: {
-    flex: 1,
-    gap: 6,
-  },
-  detailItem: {
+  dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
-  detailText: {
-    fontSize: 11,
+  dateText: {
+    fontSize: 12,
     fontWeight: '500',
   },
-  itemsCount: {
-    fontSize: 11,
-    fontWeight: '500',
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   amountContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   amount: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   overdueWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-    paddingTop: 8,
+    gap: 6,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(239, 68, 68, 0.1)',
+    borderTopColor: 'rgba(239, 68, 68, 0.15)',
   },
   overdueText: {
     fontSize: 10,
@@ -756,53 +726,61 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: 80,
   },
   loadingText: {
     fontSize: 16,
-    fontWeight: '500',
-    marginTop: 12,
+    fontWeight: '600',
+    marginTop: 16,
   },
   emptyContainer: {
     flex: 1,
-    paddingTop: 60,
+    paddingTop: 80,
   },
   emptyCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 40,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 48,
     alignItems: 'center',
     overflow: 'hidden',
   },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
-    marginTop: 20,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   floatingButtonContainer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 32,
     right: 20,
     zIndex: 1000,
   },
   floatingButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 12,
+    elevation: 12,
   },
 });

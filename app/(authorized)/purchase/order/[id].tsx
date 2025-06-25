@@ -1,14 +1,33 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { HeaderBar } from '@/components/shared/HeaderBar';
-import { Button } from '@/components/shared/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
-import { CreditCard as Edit2, Trash2, Send, Download } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ArrowLeft,
+  Edit,
+  FileText,
+  IndianRupee,
+  Package,
+  Trash2,
+  Download,
+  Send,
+  Building2,
+} from 'lucide-react-native';
 
 export default function PurchaseOrderDetailsScreen() {
-  const { theme } = useTheme();
+  const { theme, themeType }: any = useTheme();
+  const router = useRouter();
   const { id } = useLocalSearchParams();
 
   // Mock data - replace with actual data fetching
@@ -44,163 +63,379 @@ export default function PurchaseOrderDetailsScreen() {
     notes: 'Please deliver during business hours.',
   };
 
+  const handleEdit = () => {
+    router.push(`/purchase/order/form/create?id=${orderDetails.orderNumber}`);
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Purchase Order',
+      'Are you sure you want to delete this purchase order?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => router.back() },
+      ]
+    );
+  };
+
+  const handleDownload = () => {
+    Alert.alert('Download', 'Download PDF functionality coming soon.');
+  };
+
+  const handleSend = () => {
+    Alert.alert('Send', 'Send to supplier functionality coming soon.');
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['right', 'left']}>
-      <HeaderBar 
-        title="Purchase Order Details" 
-        showBack
-        rightElement={
-          <View style={styles.headerActions}>
-            <Button
-              title="Edit"
-              variant="outline"
-              icon={<Edit2 size={18} color={theme.colors.primary} />}
-              size="sm"
-              style={{ marginRight: 8 }}
-            />
-            <Button
-              title="Delete"
-              variant="outline"
-              icon={<Trash2 size={18} color={theme.colors.error} />}
-              size="sm"
-              style={{ borderColor: theme.colors.error }}
-              textStyle={{ color: theme.colors.error }}
-            />
-          </View>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <LinearGradient
+        colors={
+          themeType === 'dark'
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
-      />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-          <View style={styles.cardHeader}>
-            <View>
-              <Text style={[styles.orderNumber, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.bold }]}>
-                {orderDetails.orderNumber}
-              </Text>
-              <Text style={[styles.orderDate, { color: theme.colors.textLight }]}>
-                Created on {orderDetails.orderDate}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.headerGradient}
+      >
+        <SafeAreaView>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <FileText size={20} color="#FFFFFF" />
+              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+                Purchase Order
               </Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: theme.colors.primaryLight }]}>
-              <Text style={[styles.statusText, { color: theme.colors.primary }]}>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.iconButton} onPress={handleEdit}>
+                <Edit size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleDelete}
+              >
+                <Trash2 size={20} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Order Details Section */}
+        <BlurView
+          intensity={themeType === 'dark' ? 15 : 80}
+          tint={themeType}
+          style={styles.section}
+        >
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Order Details
+            </Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: theme.colors.primaryLight },
+              ]}
+            >
+              <Text
+                style={[styles.statusText, { color: theme.colors.primary }]}
+              >
                 {orderDetails.status.toUpperCase()}
               </Text>
             </View>
           </View>
-
-          <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-
-          <View style={styles.supplierInfo}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Supplier</Text>
-            <Text style={[styles.supplierName, { color: theme.colors.text }]}>{orderDetails.supplier.name}</Text>
-            <Text style={[styles.supplierDetails, { color: theme.colors.textLight }]}>{orderDetails.supplier.address}</Text>
-            <Text style={[styles.supplierDetails, { color: theme.colors.textLight }]}>{orderDetails.supplier.phone}</Text>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>
+              Order Number
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+              {orderDetails.orderNumber}
+            </Text>
           </View>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>
+              Order Date
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+              {new Date(orderDetails.orderDate).toLocaleDateString()}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>
+              Expected Date
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+              {new Date(orderDetails.expectedDate).toLocaleDateString()}
+            </Text>
+          </View>
+        </BlurView>
 
-          <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+        {/* Supplier Information Section */}
+        <BlurView
+          intensity={themeType === 'dark' ? 15 : 80}
+          tint={themeType}
+          style={styles.section}
+        >
+          <View style={styles.sectionHeader}>
+            <Building2 size={18} color="#10B981" />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Supplier Information
+            </Text>
+          </View>
+          <View style={styles.supplierInfo}>
+            <Text style={[styles.supplierName, { color: theme.colors.text }]}>
+              {orderDetails.supplier.name}
+            </Text>
+            <Text
+              style={[
+                styles.supplierDetails,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              {orderDetails.supplier.address}
+            </Text>
+            <Text
+              style={[
+                styles.supplierDetails,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              {orderDetails.supplier.phone}
+            </Text>
+          </View>
+        </BlurView>
 
-          <View style={styles.itemsSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Items</Text>
-            {orderDetails.items.map((item, index) => (
-              <View 
-                key={item.id}
-                style={[
-                  styles.itemRow,
-                  index < orderDetails.items.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.border,
-                  }
-                ]}
-              >
-                <View style={styles.itemInfo}>
-                  <Text style={[styles.itemName, { color: theme.colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.itemQuantity, { color: theme.colors.textLight }]}>
-                    {item.quantity} x ₹{item.price}
-                  </Text>
-                </View>
-                <Text style={[styles.itemAmount, { color: theme.colors.text }]}>
-                  ₹{item.amount}
+        {/* Items Section */}
+        <BlurView
+          intensity={themeType === 'dark' ? 15 : 80}
+          tint={themeType}
+          style={styles.section}
+        >
+          <View style={styles.sectionHeader}>
+            <Package size={18} color="#8B5CF6" />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Order Items
+            </Text>
+          </View>
+          {orderDetails.items.map((item, idx) => (
+            <View key={item.id} style={styles.itemRow}>
+              <View style={styles.itemLeft}>
+                <Text style={[styles.itemName, { color: theme.colors.text }]}>
+                  {item.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.itemMeta,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
+                  Qty: {item.quantity} x ₹{item.price}
                 </Text>
               </View>
-            ))}
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-
-          <View style={styles.summary}>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Subtotal</Text>
-              <Text style={[styles.summaryValue, { color: theme.colors.text }]}>₹{orderDetails.subtotal}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textLight }]}>Tax (18%)</Text>
-              <Text style={[styles.summaryValue, { color: theme.colors.text }]}>₹{orderDetails.tax}</Text>
-            </View>
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: theme.colors.primary }]}>₹{orderDetails.total}</Text>
-            </View>
-          </View>
-
-          {orderDetails.notes && (
-            <>
-              <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-              <View style={styles.notes}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Notes</Text>
-                <Text style={[styles.notesText, { color: theme.colors.textLight }]}>{orderDetails.notes}</Text>
+              <View style={styles.itemRight}>
+                <Text
+                  style={[styles.itemAmount, { color: theme.colors.primary }]}
+                >
+                  ₹{item.amount.toFixed(2)}
+                </Text>
               </View>
-            </>
-          )}
-        </View>
+            </View>
+          ))}
+        </BlurView>
+
+        {/* Summary Section */}
+        <BlurView
+          intensity={themeType === 'dark' ? 15 : 80}
+          tint={themeType}
+          style={styles.section}
+        >
+          <View style={styles.sectionHeader}>
+            <IndianRupee size={18} color="#F97316" />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Summary
+            </Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text
+              style={[
+                styles.summaryLabel,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              Subtotal
+            </Text>
+            <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+              ₹{orderDetails.subtotal.toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text
+              style={[
+                styles.summaryLabel,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              Tax (18%)
+            </Text>
+            <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+              ₹{orderDetails.tax.toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryRow}>
+            <Text
+              style={[styles.summaryTotalLabel, { color: theme.colors.text }]}
+            >
+              Total Amount
+            </Text>
+            <Text
+              style={[
+                styles.summaryTotalValue,
+                { color: theme.colors.primary },
+              ]}
+            >
+              ₹{orderDetails.total.toFixed(2)}
+            </Text>
+          </View>
+        </BlurView>
+
+        {/* Notes Section */}
+        {orderDetails.notes ? (
+          <BlurView
+            intensity={themeType === 'dark' ? 15 : 80}
+            tint={themeType}
+            style={styles.section}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Notes
+              </Text>
+            </View>
+            <Text
+              style={[styles.notesText, { color: theme.colors.textSecondary }]}
+            >
+              {orderDetails.notes}
+            </Text>
+          </BlurView>
+        ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
-        <Button 
-          title="Download PDF"
-          variant="outline"
-          icon={<Download size={18} color={theme.colors.primary} />}
-          style={{ marginRight: 12 }}
-        />
-        <Button 
-          title="Send to Supplier"
-          icon={<Send size={18} color="#FFFFFF" />}
-          fullWidth
-        />
+      {/* Footer Actions */}
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: theme.colors.card,
+            borderTopColor: theme.colors.border,
+          },
+        ]}
+      >
+        <TouchableOpacity style={styles.footerAction} onPress={handleDownload}>
+          <Download size={22} color={theme.colors.primary} />
+          <Text
+            style={[
+              styles.footerActionLabel,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Download
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerAction} onPress={handleSend}>
+          <Send size={22} color={theme.colors.primary} />
+          <Text
+            style={[
+              styles.footerActionLabel,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Send
+          </Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  headerGradient: { paddingBottom: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingVertical: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
   headerActions: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  scrollView: {
-    flex: 1,
+  iconButton: {
+    padding: 6,
+    borderRadius: 8,
+    marginLeft: 4,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 100 : 80,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
   },
-  card: {
-    borderRadius: 12,
-    padding: 16,
+  section: {
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
   },
-  cardHeader: {
+  sectionHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
   },
-  orderNumber: {
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  orderDate: {
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    flex: 1,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -211,90 +446,110 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  divider: {
-    height: 1,
-    marginVertical: 16,
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  sectionTitle: {
-    fontSize: 16,
+  detailLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  detailValue: {
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 12,
   },
   supplierInfo: {
-    marginBottom: 8,
+    gap: 4,
   },
   supplierName: {
     fontSize: 16,
+    fontWeight: '600',
     marginBottom: 4,
   },
   supplierDetails: {
     fontSize: 14,
-    marginBottom: 2,
-  },
-  itemsSection: {
-    marginBottom: 8,
+    lineHeight: 20,
   },
   itemRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.04)',
   },
-  itemInfo: {
+  itemLeft: {
     flex: 1,
   },
   itemName: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  itemQuantity: {
     fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  itemMeta: {
+    fontSize: 12,
+  },
+  itemRight: {
+    minWidth: 80,
+    alignItems: 'flex-end',
   },
   itemAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  summary: {
-    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: '700',
   },
   summaryRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
   summaryLabel: {
     fontSize: 14,
+    fontWeight: '500',
   },
   summaryValue: {
     fontSize: 14,
+    fontWeight: '600',
   },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+  summaryDivider: {
+    height: 1,
+    marginVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  totalLabel: {
+  summaryTotalLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  totalValue: {
+  summaryTotalValue: {
     fontSize: 18,
-    fontWeight: '600',
-  },
-  notes: {
-    marginBottom: 8,
+    fontWeight: '800',
   },
   notesText: {
     fontSize: 14,
     lineHeight: 20,
+    marginTop: 4,
   },
   footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    flexDirection: 'row',
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    padding: 10,
+    borderTopWidth: 1,
+  },
+  footerAction: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+  },
+  footerActionLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
 });

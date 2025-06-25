@@ -1,236 +1,526 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { HeaderBar } from '@/components/shared/HeaderBar';
-import { Search, Plus, ChevronRight } from 'lucide-react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInRight } from 'react-native-reanimated';
+import { StatusBar } from 'expo-status-bar';
+import {
+  AlertCircle,
+  ArrowLeft,
+  Calendar,
+  CheckCircle,
+  Clock,
+  FileText,
+  IndianRupee,
+  Plus,
+  User,
+  ChevronRight,
+  Package,
+  Send,
+  X,
+} from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface PurchaseOrder {
-  id: string;
-  orderNumber: string;
-  supplierName: string;
-  date: string;
-  amount: number;
-  status: 'draft' | 'sent' | 'accepted' | 'completed' | 'cancelled';
-}
-
-const SAMPLE_ORDERS: PurchaseOrder[] = [
+// Mock data - replace with your actual data source
+const mockPurchaseOrders = [
   {
     id: '1',
     orderNumber: 'PO-0001',
     supplierName: 'ABC Suppliers',
-    date: '2024-01-25',
-    amount: 25000,
-    status: 'draft'
+    supplierId: '1',
+    amount: 25000.0,
+    status: 'draft',
+    orderDate: '2025-01-25',
+    deliveryDate: '2025-02-10',
+    items: 3,
   },
   {
     id: '2',
     orderNumber: 'PO-0002',
     supplierName: 'XYZ Trading',
-    date: '2024-01-24',
-    amount: 18500,
-    status: 'sent'
+    supplierId: '2',
+    amount: 18500.5,
+    status: 'sent',
+    orderDate: '2025-01-24',
+    deliveryDate: '2025-02-08',
+    items: 2,
   },
   {
     id: '3',
     orderNumber: 'PO-0003',
     supplierName: 'Global Imports',
-    date: '2024-01-23',
-    amount: 32000,
-    status: 'accepted'
+    supplierId: '3',
+    amount: 32000.0,
+    status: 'accepted',
+    orderDate: '2025-01-23',
+    deliveryDate: '2025-02-07',
+    items: 5,
   },
   {
     id: '4',
     orderNumber: 'PO-0004',
     supplierName: 'City Wholesalers',
-    date: '2024-01-22',
-    amount: 15750,
-    status: 'completed'
+    supplierId: '4',
+    amount: 15750.25,
+    status: 'completed',
+    orderDate: '2025-01-22',
+    deliveryDate: '2025-01-30',
+    items: 1,
   },
   {
     id: '5',
     orderNumber: 'PO-0005',
     supplierName: 'Metro Distributors',
-    date: '2024-01-21',
-    amount: 9800,
-    status: 'cancelled'
-  }
+    supplierId: '5',
+    amount: 9800.0,
+    status: 'cancelled',
+    orderDate: '2025-01-21',
+    deliveryDate: '2025-02-05',
+    items: 4,
+  },
 ];
 
 export default function PurchaseOrdersScreen() {
-  const { theme } = useTheme();
+  const { theme, themeType }: any = useTheme();
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-
-  const statusFilters = [
-    { id: 'all', label: 'All' },
-    { id: 'draft', label: 'Draft' },
-    { id: 'sent', label: 'Sent' },
-    { id: 'accepted', label: 'Accepted' },
-    { id: 'completed', label: 'Completed' },
-    { id: 'cancelled', label: 'Cancelled' }
-  ];
-
-  const filteredOrders = SAMPLE_ORDERS.filter(order => {
-    const matchesSearch = 
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.supplierName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const [purchaseOrders, setPurchaseOrders] = useState(mockPurchaseOrders);
+  const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('all');
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return { bg: theme.colors.primaryLight, text: theme.colors.primary };
+        return '#8B5CF6';
       case 'sent':
-        return { bg: theme.colors.warningLight, text: theme.colors.warning };
+        return '#F59E0B';
       case 'accepted':
-        return { bg: theme.colors.successLight, text: theme.colors.success };
+        return '#10B981';
       case 'completed':
-        return { bg: theme.colors.accentLight, text: theme.colors.accent };
+        return '#06B6D4';
       case 'cancelled':
-        return { bg: theme.colors.errorLight, text: theme.colors.error };
+        return '#EF4444';
       default:
-        return { bg: theme.colors.primaryLight, text: theme.colors.primary };
+        return theme.colors.textSecondary;
     }
   };
 
-  const renderOrderItem = ({ item, index }: { item: PurchaseOrder; index: number }) => {
-    const statusColors = getStatusColor(item.status);
-    
-    return (
-      <Animated.View
-        entering={FadeInRight.delay(index * 100).springify()}
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <FileText size={12} color="#8B5CF6" />;
+      case 'sent':
+        return <Send size={12} color="#F59E0B" />;
+      case 'accepted':
+        return <CheckCircle size={12} color="#10B981" />;
+      case 'completed':
+        return <Package size={12} color="#06B6D4" />;
+      case 'cancelled':
+        return <X size={12} color="#EF4444" />;
+      default:
+        return <Clock size={12} color={theme.colors.textSecondary} />;
+    }
+  };
+
+  const handleViewPurchaseOrder = (orderId: string) => {
+    // Navigate to view screen
+    router.push(`/purchase/order/${orderId}`);
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Simulate API call
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
+
+  const filteredPurchaseOrders = purchaseOrders.filter((order) => {
+    if (selectedFilter === 'all') return true;
+    return order.status === selectedFilter;
+  });
+
+  const renderHeader = () => (
+    <LinearGradient
+      colors={
+        themeType === 'dark'
+          ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+          : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+      }
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.headerGradient}
+    >
+      <SafeAreaView>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
+          </TouchableOpacity>
+
+          <View style={styles.headerTitleContainer}>
+            <Package size={22} color="#FFFFFF" />
+            <Text style={styles.headerTitle}>Purchase Orders</Text>
+          </View>
+
+          <View style={styles.headerRightSpacer} />
+        </View>
+
+        {/* Summary Cards */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryRow}>
+            <BlurView
+              intensity={themeType === 'dark' ? 20 : 80}
+              tint={themeType}
+              style={styles.summaryCard}
+            >
+              <Text style={styles.summaryLabel}>Total Orders</Text>
+              <Text style={styles.summaryValue}>{purchaseOrders.length}</Text>
+            </BlurView>
+            
+            <BlurView
+              intensity={themeType === 'dark' ? 20 : 80}
+              tint={themeType}
+              style={styles.summaryCard}
+            >
+              <Text style={styles.summaryLabel}>Total Amount</Text>
+              <Text style={styles.summaryValue}>
+                ₹{purchaseOrders.reduce((sum, order) => sum + order.amount, 0).toLocaleString('en-IN')}
+              </Text>
+            </BlurView>
+          </View>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
+  );
+
+  const renderFilterTabs = () => (
+    <Animated.View
+      entering={FadeInUp.delay(100)}
+      style={styles.filterContainer}
+    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterTabsContainer}
       >
-        <TouchableOpacity
+        {[
+          { key: 'all', label: 'All', count: purchaseOrders.length },
+          {
+            key: 'draft',
+            label: 'Draft',
+            count: purchaseOrders.filter((o) => o.status === 'draft').length,
+          },
+          {
+            key: 'sent',
+            label: 'Sent',
+            count: purchaseOrders.filter((o) => o.status === 'sent').length,
+          },
+          {
+            key: 'accepted',
+            label: 'Accepted',
+            count: purchaseOrders.filter((o) => o.status === 'accepted').length,
+          },
+          {
+            key: 'completed',
+            label: 'Completed',
+            count: purchaseOrders.filter((o) => o.status === 'completed').length,
+          },
+          {
+            key: 'cancelled',
+            label: 'Cancelled',
+            count: purchaseOrders.filter((o) => o.status === 'cancelled').length,
+          },
+        ].map((filter) => (
+          <TouchableOpacity
+            key={filter.key}
+            style={[
+              styles.filterTab,
+              {
+                backgroundColor:
+                  selectedFilter === filter.key
+                    ? theme.colors.primary
+                    : themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor:
+                  selectedFilter === filter.key
+                    ? theme.colors.primary
+                    : themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(255, 255, 255, 0.5)',
+                shadowColor: selectedFilter === filter.key ? theme.colors.primary : 'transparent',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: selectedFilter === filter.key ? 0.3 : 0,
+                shadowRadius: 4,
+                elevation: selectedFilter === filter.key ? 4 : 0,
+              },
+            ]}
+            onPress={() => setSelectedFilter(filter.key)}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                {
+                  color:
+                    selectedFilter === filter.key
+                      ? '#FFFFFF'
+                      : theme.colors.text,
+                  fontWeight: selectedFilter === filter.key ? '700' : '600',
+                },
+              ]}
+            >
+              {filter.label}
+            </Text>
+            {filter.count > 0 && (
+              <View
+                style={[
+                  styles.filterTabBadge,
+                  {
+                    backgroundColor:
+                      selectedFilter === filter.key
+                        ? 'rgba(255, 255, 255, 0.25)'
+                        : `${theme.colors.primary}20`,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterTabBadgeText,
+                    {
+                      color:
+                        selectedFilter === filter.key
+                          ? '#FFFFFF'
+                          : theme.colors.primary,
+                    },
+                  ]}
+                >
+                  {filter.count}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </Animated.View>
+  );
+
+  const renderPurchaseOrderCard = (order: any, index: number) => (
+    <Animated.View
+      key={order.id}
+      entering={FadeInDown.delay(index * 50).springify()}
+      style={styles.cardContainer}
+    >
+      <TouchableOpacity
+        onPress={() => handleViewPurchaseOrder(order.id)}
+        activeOpacity={0.95}
+        style={styles.cardTouchable}
+      >
+        <BlurView
+          intensity={themeType === 'dark' ? 20 : 85}
+          tint={themeType}
           style={[
             styles.orderCard,
             {
-              backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              shadowColor: theme.colors.shadow
-            }
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12)'
+                  : 'rgba(255, 255, 255, 0.4)',
+            },
           ]}
-          onPress={() => router.push(`/purchase/order/${item.id}`)}
         >
-          <View style={styles.orderHeader}>
-            <View>
-              <Text style={[styles.orderNumber, { color: theme.colors.text, fontFamily: theme.typography.fontFamily.medium }]}>
-                {item.orderNumber}
+          <View style={styles.cardContent}>
+            {/* Top Row - Order Number and Status */}
+            <View style={styles.topRow}>
+              <Text style={[styles.orderNumber, { color: theme.colors.text }]}>
+                {order.orderNumber}
               </Text>
-              <Text style={[styles.supplierName, { color: theme.colors.textLight }]}>
-                {item.supplierName}
-              </Text>
-            </View>
-            <ChevronRight size={20} color={theme.colors.textLight} />
-          </View>
-
-          <View style={styles.orderFooter}>
-            <Text style={[styles.date, { color: theme.colors.textLight }]}>
-              {item.date}
-            </Text>
-            <View style={styles.rightSection}>
-              <Text style={[styles.amount, { color: theme.colors.text }]}>
-                ₹{item.amount.toLocaleString('en-IN')}
-              </Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
-                <Text style={[styles.statusText, { color: statusColors.text }]}>
-                  {item.status.toUpperCase()}
+              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}15` }]}>
+                {getStatusIcon(order.status)}
+                <Text
+                  style={[
+                    styles.statusText,
+                    { color: getStatusColor(order.status) },
+                  ]}
+                >
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </Text>
               </View>
             </View>
+
+            {/* Supplier Row */}
+            <View style={styles.supplierRow}>
+              <User size={14} color={theme.colors.textSecondary} />
+              <Text style={[styles.supplierName, { color: theme.colors.textSecondary }]}>
+                {order.supplierName}
+              </Text>
+            </View>
+
+            {/* Bottom Row - Date, Amount and chevron */}
+            <View style={styles.bottomRow}>
+              <View style={styles.dateContainer}>
+                <Calendar size={14} color={theme.colors.textSecondary} />
+                <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
+                  {new Date(order.orderDate).toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                  })}
+                </Text>
+              </View>
+              
+              <View style={styles.rightSection}>
+                <View style={styles.amountContainer}>
+                  <IndianRupee size={16} color={theme.colors.primary} />
+                  <Text style={[styles.amount, { color: theme.colors.primary }]}>
+                    {order.amount.toLocaleString('en-IN')}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color={theme.colors.textSecondary} />
+              </View>
+            </View>
+
+            {/* Items count info */}
+            <View style={styles.itemsInfo}>
+              <Package size={12} color={theme.colors.textSecondary} />
+              <Text style={[styles.itemsText, { color: theme.colors.textSecondary }]}>
+                {order.items} item{order.items !== 1 ? 's' : ''}
+              </Text>
+              {order.deliveryDate && (
+                <>
+                  <Text style={[styles.separator, { color: theme.colors.textSecondary }]}>•</Text>
+                  <Text style={[styles.deliveryText, { color: theme.colors.textSecondary }]}>
+                    Delivery: {new Date(order.deliveryDate).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  };
+        </BlurView>
+      </TouchableOpacity>
+    </Animated.View>
+  );
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['right', 'left']}>
-      <HeaderBar
-        title="Purchase Orders"
-        showBack
-        rightElement={
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-            onPress={() => router.push('/purchase/order/create')}
-          >
-            <Plus size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        }
-      />
-
-      <View style={[styles.searchContainer, { backgroundColor: theme.colors.card }]}>
-        <View style={[styles.searchBar, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}>
-          <Search size={20} color={theme.colors.textLight} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.colors.text }]}
-            placeholder="Search orders"
-            placeholderTextColor={theme.colors.textLight}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+  const renderEmptyState = () => (
+    <Animated.View entering={FadeIn.delay(300)} style={styles.emptyContainer}>
+      <BlurView
+        intensity={themeType === 'dark' ? 20 : 80}
+        tint={themeType}
+        style={styles.emptyCard}
+      >
+        <View style={styles.emptyIconContainer}>
+          <Package
+            size={56}
+            color={theme.colors.textSecondary}
+            strokeWidth={1.5}
           />
         </View>
-      </View>
-
-      <View style={styles.filtersContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersScroll}
+        <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+          No {selectedFilter === 'all' ? '' : selectedFilter} purchase orders
+        </Text>
+        <Text
+          style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}
         >
-          {statusFilters.map(filter => (
-            <TouchableOpacity
-              key={filter.id}
-              style={[
-                styles.filterButton,
-                selectedStatus === filter.id && {
-                  backgroundColor: theme.colors.primaryLight,
-                  borderColor: theme.colors.primary,
-                },
-                selectedStatus !== filter.id && {
-                  backgroundColor: theme.colors.card,
-                  borderColor: theme.colors.border,
-                }
-              ]}
-              onPress={() => setSelectedStatus(filter.id)}
-            >
+          {selectedFilter === 'all'
+            ? 'Create your first purchase order to get started'
+            : `No ${selectedFilter} purchase orders found`}
+        </Text>
+      </BlurView>
+    </Animated.View>
+  );
+
+  const renderFloatingActionButton = () => (
+    <Animated.View
+      entering={FadeIn.delay(500)}
+      style={styles.floatingButtonContainer}
+    >
+      <TouchableOpacity
+        style={[
+          styles.floatingButton,
+          {
+            backgroundColor: theme.colors.primary,
+            shadowColor: theme.colors.primary,
+          },
+        ]}
+        onPress={() => router.push('/purchase/order/create')}
+        activeOpacity={0.8}
+      >
+        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  return (
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+
+      {renderHeader()}
+
+      <View style={styles.content}>
+        {renderFilterTabs()}
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
+          }
+        >
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text
                 style={[
-                  styles.filterText,
-                  { fontFamily: theme.typography.fontFamily.medium },
-                  selectedStatus === filter.id
-                    ? { color: theme.colors.primary }
-                    : { color: theme.colors.textLight }
+                  styles.loadingText,
+                  { color: theme.colors.textSecondary },
                 ]}
               >
-                {filter.label}
+                Loading purchase orders...
               </Text>
-            </TouchableOpacity>
-          ))}
+            </View>
+          ) : filteredPurchaseOrders.length > 0 ? (
+            <View style={styles.ordersList}>
+              {filteredPurchaseOrders.map((order, index) =>
+                renderPurchaseOrderCard(order, index)
+              )}
+            </View>
+          ) : (
+            renderEmptyState()
+          )}
         </ScrollView>
       </View>
 
-      <FlatList
-        data={filteredOrders}
-        renderItem={renderOrderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: theme.colors.textLight }]}>
-              No purchase orders found
-            </Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+      {renderFloatingActionButton()}
+    </View>
   );
 }
 
@@ -238,113 +528,276 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerGradient: {
+    paddingBottom: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingVertical: 16,
+  },
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  searchContainer: {
-    padding: 16,
-  },
-  searchBar: {
+  headerTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
+    gap: 10,
   },
-  searchInput: {
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  headerRightSpacer: {
+    width: 42,
+  },
+  summaryContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  summaryCard: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  filtersContainer: {
-    paddingVertical: 8,
-  },
-  filtersScroll: {
-    paddingHorizontal: 16,
-  },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
-    marginRight: 8,
-  },
-  filterText: {
-    fontSize: 14,
-  },
-  listContent: {
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     padding: 16,
+    overflow: 'hidden',
   },
-  orderCard: {
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+  content: {
+    flex: 1,
+    marginTop: -12,
+  },
+  filterContainer: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 8,
+  },
+  filterTabsContainer: {
+    paddingHorizontal: 0,
+    paddingVertical: 8,
+    gap: 10,
+  },
+  filterTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-      },
-    }),
+    gap: 6,
+    minHeight: 40,
   },
-  orderHeader: {
+  filterTabText: {
+    fontSize: 13,
+    letterSpacing: -0.1,
+  },
+  filterTabBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  filterTabBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  ordersList: {
+    gap: 16,
+  },
+  cardContainer: {
+    marginBottom: 0,
+  },
+  cardTouchable: {
+    borderRadius: 16,
+  },
+  orderCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  cardContent: {
+    padding: 16,
+  },
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   orderNumber: {
     fontSize: 16,
-    marginBottom: 4,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  supplierRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
   },
   supplierName: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '500',
   },
-  orderFooter: {
+  dateContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 6,
   },
-  date: {
-    fontSize: 14,
+  dateText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  amountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   amount: {
     fontSize: 16,
-    marginRight: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+  itemsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
-  emptyContainer: {
+  itemsText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  separator: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  deliveryText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    paddingTop: 80,
   },
-  emptyText: {
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    paddingTop: 80,
+  },
+  emptyCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    padding: 48,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
     fontSize: 16,
     textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 32,
+    right: 20,
+    zIndex: 1000,
+  },
+  floatingButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 12,
   },
 });

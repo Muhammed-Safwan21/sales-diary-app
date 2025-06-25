@@ -36,6 +36,7 @@ import {
   Plus,
   Trash2,
   Percent,
+  ShoppingCart,
 } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -936,7 +937,7 @@ export default function PurchaseReturnScreen() {
                 "Return Number",
                 returnForm.returnNumber,
                 (text) => setReturnForm({ ...returnForm, returnNumber: text }),
-                "Auto-generated or manual entry",
+                "Return Number",
                 <Hash size={16} color={theme.colors.primary} />,
                 "default",
                 false,
@@ -1022,7 +1023,7 @@ export default function PurchaseReturnScreen() {
                 </TouchableOpacity>
               </View>
 
-              {returnForm.items.map((item, index) =>
+              {returnForm?.items?.map((item, index) =>
                 renderItemRow(item, index)
               )}
             </BlurView>
@@ -1140,6 +1141,55 @@ export default function PurchaseReturnScreen() {
           </Animated.View>
 
           {/* Submit Button */}
+          <BlurView
+          intensity={themeType === 'dark' ? 20 : 80}
+          tint={themeType}
+          style={styles.footer}
+        >
+          <View style={styles.footerContent}>
+            <TouchableOpacity
+              style={[
+                styles.draftButton,
+                {
+                  backgroundColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(0, 0, 0, 0.05)',
+                  borderColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.12)'
+                      : 'rgba(0, 0, 0, 0.08)',
+                },
+              ]}
+            >
+              <Save size={20} color={theme.colors.textSecondary} />
+              <Text
+                style={[
+                  styles.draftButtonText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                Save Draft
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
+              <LinearGradient
+                colors={['#06B6D4', '#22D3EE']}
+                style={styles.submitGradient}
+              >
+                <ShoppingCart size={20} color="#FFFFFF" />
+                <Text style={styles.submitButtonText}>Create Order</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+
+
+
           <Animated.View
             entering={FadeInDown.delay(700)}
             style={styles.submitContainer}
@@ -1462,10 +1512,6 @@ const styles = StyleSheet.create({
   submitContainer: {
     marginTop: 20,
   },
-  submitButton: {
-    borderRadius: 16,
-    overflow: "hidden",
-  },
   submitGradient: {
     flexDirection: "row",
     alignItems: "center",
@@ -1559,5 +1605,40 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  footer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  footerContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    gap: 16,
+  },
+  draftButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 10,
+  },
+  draftButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  submitButton: {
+    flex: 2,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
 });

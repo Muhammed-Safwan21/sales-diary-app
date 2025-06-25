@@ -8,6 +8,7 @@ import {
   TextInput,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,22 +20,30 @@ import {
   Trash2,
   Save,
   FileText,
+  Package,
+  IndianRupee,
+  Percent,
+  X,
+  User,
+  ChevronDown,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { KeyboardAvoidingView } from 'react-native';
 
 interface BillItem {
   id: string;
-  description: string;
+  productName: string;
   quantity: string;
-  rate: string;
-  amount: string;
-  hsn: string;
-  gstRate: string;
-  gstAmount: string;
+  unitPrice: string;
+  taxRate: string;
+  taxAmount: number;
+  discountRate: string;
+  discountAmount: number;
+  subtotal: number;
+  total: number;
 }
 
 interface PurchaseBill {
@@ -45,11 +54,19 @@ interface PurchaseBill {
   dueDate: Date;
   items: BillItem[];
   subtotal: number;
-  taxAmount: number;
-  total: number;
+  totalTax: number;
+  totalDiscount: number;
+  totalAmount: number;
   notes: string;
   paymentStatus: 'pending' | 'partial' | 'paid';
 }
+
+// Mock suppliers data
+const suppliers = [
+  { id: '1', name: 'ABC Suppliers Ltd.' },
+  { id: '2', name: 'XYZ Trading Co.' },
+  { id: '3', name: 'Premium Goods Inc.' },
+];
 
 export default function PurchaseBillForm() {
   const { theme, themeType }: any = useTheme();
@@ -58,6 +75,8 @@ export default function PurchaseBillForm() {
     'billDate' | 'dueDate' | null
   >(null);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+
   const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [bill, setBill] = useState<PurchaseBill>({
     supplierId: '',
@@ -68,21 +87,60 @@ export default function PurchaseBillForm() {
     items: [
       {
         id: '1',
-        description: '',
+        productName: '',
         quantity: '',
-        rate: '',
-        amount: '',
-        hsn: '',
-        gstRate: '',
-        gstAmount: '',
+        unitPrice: '',
+        taxRate: '',
+        taxAmount: 0,
+        discountRate: '',
+        discountAmount: 0,
+        subtotal: 0,
+        total: 0,
       },
     ],
     subtotal: 0,
-    taxAmount: 0,
-    total: 0,
+    totalTax: 0,
+    totalDiscount: 0,
+    totalAmount: 0,
     notes: '',
     paymentStatus: 'pending',
   });
+
+  const calculateItemTotals = (item: BillItem): BillItem => {
+    const quantity = parseFloat(item.quantity) || 0;
+    const unitPrice = parseFloat(item.unitPrice) || 0;
+    const taxRate = parseFloat(item.taxRate) || 0;
+    const discountRate = parseFloat(item.discountRate) || 0;
+
+    const subtotal = quantity * unitPrice;
+    const discountAmount = (subtotal * discountRate) / 100;
+    const afterDiscount = subtotal - discountAmount;
+    const taxAmount = (afterDiscount * taxRate) / 100;
+    const total = afterDiscount + taxAmount;
+
+    return {
+      ...item,
+      subtotal,
+      discountAmount,
+      taxAmount,
+      total,
+    };
+  };
+
+  const calculateTotals = () => {
+    const subtotal = bill.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalTax = bill.items.reduce((sum, item) => sum + item.taxAmount, 0);
+    const totalDiscount = bill.items.reduce((sum, item) => sum + item.discountAmount, 0);
+    const totalAmount = bill.items.reduce((sum, item) => sum + item.total, 0);
+
+    setBill((prevBill) => ({
+      ...prevBill,
+      subtotal,
+      totalTax,
+      totalDiscount,
+      totalAmount,
+    }));
+  };
 
   useEffect(() => {
     calculateTotals();
@@ -95,13 +153,15 @@ export default function PurchaseBillForm() {
         ...bill.items,
         {
           id: Date.now().toString(),
-          description: '',
+          productName: '',
           quantity: '',
-          rate: '',
-          amount: '',
-          hsn: '',
-          gstRate: '',
-          gstAmount: '',
+          unitPrice: '',
+          taxRate: '',
+          taxAmount: 0,
+          discountRate: '',
+          discountAmount: 0,
+          subtotal: 0,
+          total: 0,
         },
       ],
     });
@@ -122,40 +182,11 @@ export default function PurchaseBillForm() {
       items: bill.items.map((item) => {
         if (item.id === id) {
           const updatedItem = { ...item, [field]: value };
-          if (field === 'quantity' || field === 'rate') {
-            const quantity = parseFloat(updatedItem.quantity) || 0;
-            const rate = parseFloat(updatedItem.rate) || 0;
-            updatedItem.amount = (quantity * rate).toFixed(2);
-          }
-          if (field === 'amount' || field === 'gstRate') {
-            const amount = parseFloat(updatedItem.amount) || 0;
-            const gstRate = parseFloat(updatedItem.gstRate) || 0;
-            updatedItem.gstAmount = ((amount * gstRate) / 100).toFixed(2);
-          }
-          return updatedItem;
+          return calculateItemTotals(updatedItem);
         }
         return item;
       }),
     });
-  };
-
-  const calculateTotals = () => {
-    const subtotal = bill.items.reduce(
-      (sum, item) => sum + (parseFloat(item.amount) || 0),
-      0
-    );
-    const taxAmount = bill.items.reduce(
-      (sum, item) => sum + (parseFloat(item.gstAmount) || 0),
-      0
-    );
-    const total = subtotal + taxAmount;
-
-    setBill((prevBill) => ({
-      ...prevBill,
-      subtotal,
-      taxAmount,
-      total,
-    }));
   };
 
   const handleSupplierSelect = (supplier: any) => {
@@ -170,11 +201,10 @@ export default function PurchaseBillForm() {
   const handleSubmit = async (isDraft: boolean = false) => {
     setIsCreatingBill(true);
     try {
-      // TODO: Implement bill submission logic
       console.log('Bill submitted:', { ...bill, isDraft });
       setTimeout(() => {
         setIsCreatingBill(false);
-        // router.push('/purchase-bill/preview');
+        router.back();
       }, 1000);
     } catch (error) {
       console.error('Error creating bill:', error);
@@ -222,6 +252,332 @@ export default function PurchaseBillForm() {
         />
         {rightIcon && <View style={styles.inputIcon}>{rightIcon}</View>}
       </TouchableOpacity>
+    </View>
+  );
+
+  const renderDropdownModal = (
+    visible: boolean,
+    onClose: () => void,
+    title: string,
+    data: any[],
+    selectedValue: string,
+    onSelect: (value: string, label?: string) => void
+  ) => (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <BlurView
+          intensity={themeType === "dark" ? 20 : 80}
+          tint={themeType}
+          style={styles.modalContent}
+        >
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              {title}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
+              <Text
+                style={[
+                  styles.modalCloseText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {data.map((item) => {
+              const isSelected = selectedValue === (item.value || item.id);
+              const displayText = item.label || item.name;
+              const selectValue = item.value || item.id;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.dropdownItem,
+                    {
+                      backgroundColor: isSelected
+                        ? `${theme.colors.primary}15`
+                        : "transparent",
+                    },
+                  ]}
+                  onPress={() => {
+                    onSelect(selectValue, displayText);
+                    onClose();
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownItemText,
+                      {
+                        color: isSelected
+                          ? theme.colors.primary
+                          : theme.colors.text,
+                        fontWeight: isSelected ? "600" : "500",
+                      },
+                    ]}
+                  >
+                    {displayText}
+                  </Text>
+                  {isSelected && (
+                    <ChevronDown size={16} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </BlurView>
+      </View>
+    </Modal>
+  );
+
+  const renderItemRow = (item: BillItem, index: number) => (
+    <View
+      key={item.id}
+      style={[
+        styles.itemContainer,
+        {
+          backgroundColor:
+            themeType === 'dark'
+              ? 'rgba(255, 255, 255, 0.03)'
+              : 'rgba(0, 0, 0, 0.02)',
+          borderColor:
+            themeType === 'dark'
+              ? 'rgba(255, 255, 255, 0.06)'
+              : 'rgba(0, 0, 0, 0.04)',
+        },
+      ]}
+    >
+      <View style={styles.itemHeader}>
+        <Text style={[styles.itemNumber, { color: theme.colors.primary }]}>
+          Item {index + 1}
+        </Text>
+        {bill.items.length > 1 && (
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => removeItem(item.id)}
+          >
+            <Trash2 size={16} color="#EF4444" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <TextInput
+        style={[
+          styles.itemInput,
+          {
+            backgroundColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.05)'
+                : 'rgba(255, 255, 255, 0.8)',
+            borderColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.08)'
+                : 'rgba(0, 0, 0, 0.06)',
+            color: theme.colors.text,
+            marginBottom: 12,
+          },
+        ]}
+        placeholder="Product name"
+        placeholderTextColor={theme.colors.textSecondary}
+        value={item.productName}
+        onChangeText={(text) => updateItem(item.id, 'productName', text)}
+      />
+
+      <View style={styles.itemRow}>
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Qty
+          </Text>
+          <TextInput
+            style={[
+              styles.itemInputSmall,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+                color: theme.colors.text,
+              },
+            ]}
+            placeholder="0"
+            placeholderTextColor={theme.colors.textSecondary}
+            keyboardType="numeric"
+            value={item.quantity}
+            onChangeText={(text) => updateItem(item.id, 'quantity', text)}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Price
+          </Text>
+          <TextInput
+            style={[
+              styles.itemInputMedium,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+                color: theme.colors.text,
+              },
+            ]}
+            placeholder="0.00"
+            placeholderTextColor={theme.colors.textSecondary}
+            keyboardType="numeric"
+            value={item.unitPrice}
+            onChangeText={(text) => updateItem(item.id, 'unitPrice', text)}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Tax %
+          </Text>
+          <View style={styles.inputWithIcon}>
+            <TextInput
+              style={[
+                styles.itemInputSmall,
+                {
+                  backgroundColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(255, 255, 255, 0.8)',
+                  borderColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(0, 0, 0, 0.06)',
+                  color: theme.colors.text,
+                  paddingRight: 24,
+                },
+              ]}
+              placeholder="0"
+              placeholderTextColor={theme.colors.textSecondary}
+              keyboardType="numeric"
+              value={item.taxRate}
+              onChangeText={(text) => updateItem(item.id, 'taxRate', text)}
+            />
+            <Percent
+              size={12}
+              color={theme.colors.textSecondary}
+              style={styles.percentIcon}
+            />
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.itemRow}>
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Tax Amt
+          </Text>
+          <View style={[
+            styles.itemInputSmall,
+            {
+              backgroundColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.03)'
+                  : 'rgba(0, 0, 0, 0.02)',
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.06)'
+                  : 'rgba(0, 0, 0, 0.04)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+          ]}>
+            <Text style={[{ color: theme.colors.textSecondary, fontSize: 13 }]}>
+              ₹{item.taxAmount.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Discount %
+          </Text>
+          <TextInput
+            style={[
+              styles.itemInputMedium,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+                color: theme.colors.text,
+              },
+            ]}
+            placeholder="0.00"
+            placeholderTextColor={theme.colors.textSecondary}
+            keyboardType="numeric"
+            value={item.discountRate}
+            onChangeText={(text) => updateItem(item.id, 'discountRate', text)}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+            Discount Amt
+          </Text>
+          <View style={[
+            styles.itemInputSmall,
+            {
+              backgroundColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.03)'
+                  : 'rgba(0, 0, 0, 0.02)',
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.06)'
+                  : 'rgba(0, 0, 0, 0.04)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+          ]}>
+            <Text style={[{ color: '#EF4444', fontSize: 13 }]}>
+              ₹{item.discountAmount.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.displayRow}>
+        <View style={styles.displayField}>
+          <Text style={[styles.displayLabel, { color: theme.colors.textSecondary }]}>
+            Item Total
+          </Text>
+        </View>
+
+        <View
+          style={[
+            styles.totalContainer,
+            { backgroundColor: `${theme.colors.primary}${themeType === 'dark' ? '15' : '10'}` },
+          ]}
+        >
+          <IndianRupee size={14} color={theme.colors.primary} />
+          <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
+            {item.total.toFixed(2)}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -360,12 +716,12 @@ export default function PurchaseBillForm() {
 
               {renderFormInput(
                 'Supplier',
-                bill.supplierName,
-                (text) => setBill({ ...bill, supplierName: text }),
+                suppliers.find((s) => s.id === bill.supplierId)?.name || '',
+                () => {},
                 'Select or add supplier',
-                <Calendar size={18} color={theme.colors.textSecondary} />,
+                <User size={18} color={theme.colors.textSecondary} />,
                 false,
-                () => setShowSupplierModal(true)
+                () => setShowSupplierDropdown(true)
               )}
 
               {renderFormInput(
@@ -458,321 +814,28 @@ export default function PurchaseBillForm() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
+                <Package size={18} color="#8B5CF6" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
-                  Items
+                  Bill Items
                 </Text>
                 <TouchableOpacity
                   style={[
-                    styles.addItemButton,
-                    {
-                      backgroundColor: theme.colors.primary,
-                      shadowColor: theme.colors.primary,
-                    },
+                    styles.addButton,
+                    { backgroundColor: `#8B5CF620`, borderColor: `#8B5CF640` },
                   ]}
                   onPress={addItem}
                 >
-                  <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={styles.addItemText}>Add Item</Text>
+                  <Plus size={16} color="#8B5CF6" />
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.itemsContainer}>
-                {bill.items.map((item, index) => (
-                  <Animated.View
-                    key={item.id}
-                    entering={FadeInDown.delay(index * 50).springify()}
-                    style={[
-                      styles.itemCard,
-                      {
-                        backgroundColor:
-                          themeType === 'dark'
-                            ? 'rgba(255, 255, 255, 0.03)'
-                            : 'rgba(255, 255, 255, 0.6)',
-                        borderColor:
-                          themeType === 'dark'
-                            ? 'rgba(255, 255, 255, 0.06)'
-                            : 'rgba(0, 0, 0, 0.04)',
-                      },
-                    ]}
-                  >
-                    <LinearGradient
-                      colors={[
-                        `${theme.colors.accent}08`,
-                        `${theme.colors.accent}02`,
-                        'transparent',
-                      ]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.itemGradientOverlay}
-                    />
-
-                    {bill.items.length > 1 && (
-                      <TouchableOpacity
-                        style={[
-                          styles.deleteButtonCorner,
-                          {
-                            backgroundColor: 'rgba(239, 68, 68, 0.9)',
-                          },
-                        ]}
-                        onPress={() => removeItem(item.id)}
-                      >
-                        <Trash2 size={14} color="#FFFFFF" />
-                      </TouchableOpacity>
-                    )}
-
-                    <View style={styles.itemContent}>
-                      <View style={styles.itemMainRow}>
-                        <View style={styles.itemNameContainer}>
-                          <View
-                            style={[
-                              styles.inputContainer,
-                              styles.itemNameInput,
-                              {
-                                backgroundColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(255, 255, 255, 0.8)',
-                                borderColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'rgba(0, 0, 0, 0.06)',
-                              },
-                            ]}
-                          >
-                            <TextInput
-                              style={[
-                                styles.textInput,
-                                { color: theme.colors.text },
-                              ]}
-                              placeholder="Description"
-                              placeholderTextColor={theme.colors.textSecondary}
-                              value={item.description}
-                              onChangeText={(text) =>
-                                updateItem(item.id, 'description', text)
-                              }
-                            />
-                          </View>
-                        </View>
-                      </View>
-
-                      <View style={styles.itemDetailsRow}>
-                        <View style={styles.quantityContainer}>
-                          <Text
-                            style={[
-                              styles.smallLabel,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                          >
-                            Qty
-                          </Text>
-                          <TextInput
-                            style={[
-                              styles.smallInput,
-                              {
-                                color: theme.colors.text,
-                                backgroundColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(255, 255, 255, 0.8)',
-                                borderColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'rgba(0, 0, 0, 0.06)',
-                              },
-                            ]}
-                            value={item.quantity}
-                            onChangeText={(text) =>
-                              updateItem(item.id, 'quantity', text)
-                            }
-                            keyboardType="numeric"
-                            placeholder="0"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            textAlign="center"
-                          />
-                        </View>
-
-                        <View style={styles.priceContainer}>
-                          <Text
-                            style={[
-                              styles.smallLabel,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                          >
-                            Rate
-                          </Text>
-                          <View style={styles.priceInputContainer}>
-                            <TextInput
-                              style={[
-                                styles.smallInput,
-                                styles.priceInput,
-                                {
-                                  color: theme.colors.text,
-                                  backgroundColor:
-                                    themeType === 'dark'
-                                      ? 'rgba(255, 255, 255, 0.05)'
-                                      : 'rgba(255, 255, 255, 0.8)',
-                                  borderColor:
-                                    themeType === 'dark'
-                                      ? 'rgba(255, 255, 255, 0.08)'
-                                      : 'rgba(0, 0, 0, 0.06)',
-                                },
-                              ]}
-                              value={item.rate}
-                              onChangeText={(text) =>
-                                updateItem(item.id, 'rate', text)
-                              }
-                              keyboardType="numeric"
-                              placeholder="0.00"
-                              placeholderTextColor={theme.colors.textSecondary}
-                            />
-                          </View>
-                        </View>
-
-                        <View style={styles.amountContainer}>
-                          <Text
-                            style={[
-                              styles.smallLabel,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                          >
-                            Amount
-                          </Text>
-                          <TextInput
-                            style={[
-                              styles.smallInput,
-                              {
-                                color: theme.colors.text,
-                                backgroundColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(255, 255, 255, 0.8)',
-                                borderColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'rgba(0, 0, 0, 0.06)',
-                              },
-                            ]}
-                            value={item.amount}
-                            editable={false}
-                            placeholder="0.00"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            textAlign="center"
-                          />
-                        </View>
-                      </View>
-
-                      <View style={styles.gstRow}>
-                        <View style={styles.hsnContainer}>
-                          <Text
-                            style={[
-                              styles.smallLabel,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                          >
-                            HSN/SAC
-                          </Text>
-                          <TextInput
-                            style={[
-                              styles.smallInput,
-                              {
-                                color: theme.colors.text,
-                                backgroundColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(255, 255, 255, 0.8)',
-                                borderColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'rgba(0, 0, 0, 0.06)',
-                              },
-                            ]}
-                            value={item.hsn}
-                            onChangeText={(text) =>
-                              updateItem(item.id, 'hsn', text)
-                            }
-                            placeholder="0000"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            textAlign="center"
-                          />
-                        </View>
-
-                        <View style={styles.gstRateContainer}>
-                          <Text
-                            style={[
-                              styles.smallLabel,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                          >
-                            GST %
-                          </Text>
-                          <TextInput
-                            style={[
-                              styles.smallInput,
-                              {
-                                color: theme.colors.text,
-                                backgroundColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(255, 255, 255, 0.8)',
-                                borderColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'rgba(0, 0, 0, 0.06)',
-                              },
-                            ]}
-                            value={item.gstRate}
-                            onChangeText={(text) =>
-                              updateItem(item.id, 'gstRate', text)
-                            }
-                            keyboardType="numeric"
-                            placeholder="0"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            textAlign="center"
-                          />
-                        </View>
-
-                        <View style={styles.gstAmountContainer}>
-                          <Text
-                            style={[
-                              styles.smallLabel,
-                              { color: theme.colors.textSecondary },
-                            ]}
-                          >
-                            GST Amount
-                          </Text>
-                          <TextInput
-                            style={[
-                              styles.smallInput,
-                              {
-                                color: theme.colors.text,
-                                backgroundColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.05)'
-                                    : 'rgba(255, 255, 255, 0.8)',
-                                borderColor:
-                                  themeType === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'rgba(0, 0, 0, 0.06)',
-                              },
-                            ]}
-                            value={item.gstAmount}
-                            editable={false}
-                            placeholder="0.00"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            textAlign="center"
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  </Animated.View>
-                ))}
-              </View>
+              {bill.items.map((item, index) => renderItemRow(item, index))}
             </BlurView>
           </Animated.View>
 
-          <Animated.View entering={FadeInUp.delay(250)}>
+          <Animated.View entering={FadeInUp.delay(300)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
               tint={themeType}
@@ -815,9 +878,7 @@ export default function PurchaseBillForm() {
                       { color: theme.colors.text },
                     ]}
                     value={bill.notes}
-                    onChangeText={(text: any) =>
-                      setBill({ ...bill, notes: text })
-                    }
+                    onChangeText={(text) => setBill({ ...bill, notes: text })}
                     placeholder="Add any notes for this bill..."
                     placeholderTextColor={theme.colors.textSecondary}
                     multiline
@@ -829,82 +890,91 @@ export default function PurchaseBillForm() {
             </BlurView>
           </Animated.View>
 
-          <Animated.View entering={FadeInUp.delay(300)}>
+          <Animated.View entering={FadeInUp.delay(500)}>
             <BlurView
-              intensity={themeType === 'dark' ? 15 : 80}
+              intensity={themeType === "dark" ? 15 : 80}
               tint={themeType}
-              style={styles.totalSection}
+              style={styles.section}
             >
-              <LinearGradient
-                colors={[
-                  `${theme.colors.primary}12`,
-                  `${theme.colors.primary}06`,
-                  'transparent',
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.totalGradientOverlay}
-              />
+              <View style={styles.sectionHeader}>
+                <IndianRupee size={18} color="#F97316" />
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
+                  Summary
+                </Text>
+              </View>
 
-              <View style={styles.totalContent}>
-                <View style={styles.totalRow}>
+              <View style={styles.summaryContainer}>
+                <View style={styles.summaryRow}>
                   <Text
                     style={[
-                      styles.totalLabel,
+                      styles.summaryLabel,
                       { color: theme.colors.textSecondary },
                     ]}
                   >
                     Subtotal
                   </Text>
                   <Text
-                    style={[styles.totalValue, { color: theme.colors.text }]}
+                    style={[styles.summaryValue, { color: theme.colors.text }]}
                   >
-                    ₹
-                    {bill.subtotal.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    ₹{bill.subtotal.toFixed(2)}
                   </Text>
                 </View>
-                <View style={styles.totalRow}>
+
+                <View style={styles.summaryRow}>
                   <Text
                     style={[
-                      styles.totalLabel,
+                      styles.summaryLabel,
                       { color: theme.colors.textSecondary },
                     ]}
                   >
-                    GST Amount
+                    Total Tax
                   </Text>
-                  <Text
-                    style={[styles.totalValue, { color: theme.colors.text }]}
-                  >
-                    ₹
-                    {bill.taxAmount.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </Text>
-                </View>
-                <View style={[styles.totalRow, styles.grandTotalRow]}>
                   <Text
                     style={[
-                      styles.grandTotalLabel,
+                      styles.summaryValue,
+                      { color: theme.colors.secondary },
+                    ]}
+                  >
+                    ₹{bill.totalTax.toFixed(2)}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryRow}>
+                  <Text
+                    style={[
+                      styles.summaryLabel,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Total Discount
+                  </Text>
+                  <Text style={[styles.summaryValue, { color: "#EF4444" }]}>
+                    -₹{bill.totalDiscount.toFixed(2)}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.summaryDivider,
+                    { backgroundColor: theme.colors.border },
+                  ]}
+                />
+
+                <View style={styles.summaryRow}>
+                  <Text
+                    style={[
+                      styles.summaryTotalLabel,
                       { color: theme.colors.text },
                     ]}
                   >
-                    Total
+                    Total Amount
                   </Text>
                   <Text
-                    style={[
-                      styles.grandTotalValue,
-                      { color: theme.colors.primary },
-                    ]}
+                    style={[styles.summaryTotalValue, { color: "#F97316" }]}
                   >
-                    ₹
-                    {bill.total.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    ₹{bill.totalAmount.toFixed(2)}
                   </Text>
                 </View>
               </View>
@@ -914,6 +984,15 @@ export default function PurchaseBillForm() {
 
         {renderFooter()}
       </KeyboardAvoidingView>
+
+      {renderDropdownModal(
+        showSupplierDropdown,
+        () => setShowSupplierDropdown(false),
+        'Select Supplier',
+        suppliers,
+        bill.supplierId,
+        (value, label) => setBill({ ...bill, supplierId: value, supplierName: label || '' })
+      )}
 
       {showDatePicker && (
         <DateTimePicker
@@ -1192,10 +1271,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  totalValue: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
   grandTotalRow: {
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
@@ -1210,36 +1285,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: -0.3,
-  },
-  footer: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-  },
-  footerContent: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    gap: 16,
-  },
-  draftButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 10,
-  },
-  draftButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.1,
   },
   saveButton: {
     flex: 2,
@@ -1284,5 +1329,294 @@ const styles = StyleSheet.create({
   notesInput: {
     minHeight: 60,
     textAlignVertical: 'top',
+  },
+  addButton: {
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 6,
+  },
+  multilineContainer: {
+    alignItems: "flex-start",
+    paddingVertical: 12,
+  },
+  multilineInput: {
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  dateContainer: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dateContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  dateText: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  itemContainer: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+  },
+  itemHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  itemNumber: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  removeButton: {
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+  },
+  itemInput: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  itemInputSmall: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  itemInputMedium: {
+    flex: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  inputWithIcon: {
+    flex: 1,
+    position: "relative",
+  },
+  percentIcon: {
+    position: "absolute",
+    right: 6,
+    top: "50%",
+    transform: [{ translateY: -6 }],
+  },
+  calculatedField: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  calculatedLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  calculatedValue: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  totalContainer: {
+    flex: 1.2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  totalValue: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  summaryContainer: {
+    gap: 12,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  summaryDivider: {
+    height: 1,
+    marginVertical: 8,
+  },
+  summaryTotalLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  summaryTotalValue: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  submitContainer: {
+    marginTop: 20,
+  },
+  submitGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "90%",
+    maxHeight: "70%",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  modalCloseButton: {
+    padding: 8,
+  },
+  modalCloseText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  displayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
+  },
+  displayField: {
+    flex: 1,
+    alignItems: "center",
+  },
+  displayLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  displayValue: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  spacer: {
+    flex: 1,
+  },
+  footer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  footerContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    gap: 16,
+  },
+  draftButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 10,
+  },
+  draftButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  submitButton: {
+    flex: 2,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
 });
