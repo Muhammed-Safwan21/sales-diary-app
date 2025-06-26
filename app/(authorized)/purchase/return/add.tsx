@@ -844,47 +844,25 @@ export default function PurchaseReturnScreen() {
                 themeType === 'dark'
                   ? 'rgba(255, 255, 255, 0.12)'
                   : 'rgba(0, 0, 0, 0.08)',
-              opacity: isCreatingInvoice ? 0.5 : 1,
             },
           ]}
           disabled={isCreatingInvoice}
           onPress={() => handleSubmit(true)}
         >
           {isCreatingInvoice ? (
-            <ActivityIndicator
-              size="small"
-              color={theme.colors.textSecondary}
-            />
+            <ActivityIndicator size="small" color={theme.colors.textSecondary} />
           ) : (
             <Save size={20} color={theme.colors.textSecondary} />
           )}
-          <Text
-            style={[
-              styles.draftButtonText,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Save Draft
-          </Text>
+          <Text style={[styles.draftButtonText, { color: theme.colors.textSecondary }]}>Save Draft</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={[
-            styles.saveButton,
-            {
-              backgroundColor: theme.colors.primary,
-              shadowColor: theme.colors.primary,
-              opacity: isCreatingInvoice ? 0.5 : 1,
-            },
-          ]}
+          style={styles.saveButton}
           disabled={isCreatingInvoice}
           onPress={() => handleSubmit(false)}
         >
           <LinearGradient
-            colors={[
-              theme.colors.primary,
-              theme.colors.primaryLight || theme.colors.primary,
-            ]}
+            colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
             style={styles.saveGradient}
           >
             <View style={styles.saveButtonContent}>
@@ -911,9 +889,9 @@ export default function PurchaseReturnScreen() {
       {/* Header with Purchase Return gradient */}
       <LinearGradient
         colors={
-          themeType === "dark"
-            ? ["#7C2D12", "#EA580C", "rgba(234, 88, 12, 0.3)", "transparent"]
-            : ["#F97316", "#FB923C", "rgba(251, 146, 60, 0.2)", "transparent"]
+          themeType === 'dark'
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -955,12 +933,8 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Receipt size={18} color="#F97316" />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Return Details
-                </Text>
+                <FileText size={18} color="#8B5CF6" />
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Return Details</Text>
               </View>
 
               {/* Date Input */}
@@ -1042,12 +1016,8 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Building2 size={18} color="#FB923C" />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Supplier & Invoice Details
-                </Text>
+                <Building2 size={18} color="#8B5CF6" />
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Supplier & Invoice Details</Text>
               </View>
 
               {renderDropdownInput(
@@ -1056,7 +1026,7 @@ export default function PurchaseReturnScreen() {
                   (supplier) => supplier.value === returnForm.supplier
                 )?.label || "",
                 "Select supplier",
-                <User size={16} color="#F97316" />,
+                <User size={16} color="#8B5CF6" />,
                 () => setShowSupplierDropdown(true),
                 true
               )}
@@ -1067,7 +1037,7 @@ export default function PurchaseReturnScreen() {
                 returnForm.supplier
                   ? "Select invoice from supplier"
                   : "Please select supplier first",
-                <FileText size={16} color="#FB923C" />,
+                <FileText size={16} color="#8B5CF6" />,
                 () => setShowInvoiceDropdown(true),
                 true,
                 !returnForm.supplier || availableInvoices.length === 0
@@ -1079,7 +1049,7 @@ export default function PurchaseReturnScreen() {
                   (reason) => reason.value === returnForm.returnReason
                 )?.label || "",
                 "Select return reason",
-                <Truck size={16} color="#FB923C" />,
+                <Truck size={16} color="#8B5CF6" />,
                 () => setShowReasonDropdown(true),
                 true
               )}
@@ -1094,20 +1064,19 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Package size={18} color="#F97316" />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Return Items
-                </Text>
+                <Package size={18} color="#8B5CF6" />
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Return Items</Text>
                 <TouchableOpacity
                   style={[
                     styles.addButton,
-                    { backgroundColor: `#F9731620`, borderColor: `#F9731640` },
+                    {
+                      backgroundColor: `#8B5CF620`,
+                      borderColor: `#8B5CF640`,
+                    },
                   ]}
                   onPress={addItem}
                 >
-                  <Plus size={16} color="#F97316" />
+                  <Plus size={16} color="#8B5CF6" />
                 </TouchableOpacity>
               </View>
 
@@ -1126,11 +1095,7 @@ export default function PurchaseReturnScreen() {
             >
               <View style={styles.sectionHeader}>
                 <IndianRupee size={18} color="#F97316" />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Summary
-                </Text>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Summary</Text>
               </View>
 
               <View style={styles.summaryContainer}>
@@ -1200,7 +1165,7 @@ export default function PurchaseReturnScreen() {
                     Total Amount
                   </Text>
                   <Text
-                    style={[styles.summaryTotalValue, { color: "#F97316" }]}
+                    style={[styles.summaryTotalValue, { color: '#F97316' }]}
                   >
                     ₹{returnForm.totalAmount.toFixed(2)}
                   </Text>
@@ -1216,6 +1181,11 @@ export default function PurchaseReturnScreen() {
               tint={themeType}
               style={styles.section}
             >
+              <View style={styles.sectionHeader}>
+                <MessageSquare size={18} color="#8B5CF6" />
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Additional Notes</Text>
+              </View>
+
               {renderFormInput(
                 "Additional Notes",
                 returnForm.notes,
@@ -1409,8 +1379,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 10,
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 13,
+    fontWeight: '500',
   },
   itemRow: {
     flexDirection: "row",
@@ -1425,8 +1395,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     fontSize: 13,
-    fontWeight: "500",
-    textAlign: "center",
+    fontWeight: '500',
+    textAlign: 'center',
   },
   itemInputMedium: {
     flex: 2,
@@ -1435,7 +1405,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   inputWithIcon: {
     flex: 1,
@@ -1526,37 +1496,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    width: "90%",
-    maxHeight: "70%",
+    width: '90%',
+    maxHeight: '70%',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   modalCloseButton: {
     padding: 8,
   },
   modalCloseText: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -1564,7 +1534,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
     flex: 1,
   },
   inputGroup: {

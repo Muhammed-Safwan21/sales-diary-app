@@ -813,8 +813,8 @@ export default function CreatePurchaseOrderScreen() {
       <LinearGradient
         colors={
           themeType === 'dark'
-            ? ['#164E63', '#0891B2', 'rgba(6, 182, 212, 0.3)', 'transparent']
-            : ['#06B6D4', '#22D3EE', 'rgba(34, 211, 238, 0.2)', 'transparent']
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -856,7 +856,7 @@ export default function CreatePurchaseOrderScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <ShoppingCart size={18} color="#06B6D4" />
+                <ShoppingCart size={18} color="#8B5CF6" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -874,7 +874,7 @@ export default function CreatePurchaseOrderScreen() {
                     orderNumber: text,
                   }),
                 'Enter order number',
-                <Receipt size={16} color="#06B6D4" />,
+                <Receipt size={16} color="#8B5CF6" />,
                 'default',
                 false,
                 true
@@ -883,7 +883,7 @@ export default function CreatePurchaseOrderScreen() {
               {/* Order Date */}
               <View style={styles.formGroup}>
                 <View style={styles.labelContainer}>
-                  <Calendar size={16} color="#22D3EE" />
+                  <Calendar size={16} color="#8B5CF6" />
                   <Text
                     style={[
                       styles.label,
@@ -951,7 +951,7 @@ export default function CreatePurchaseOrderScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Building size={18} color="#0891B2" />
+                <Building size={18} color="#8B5CF6" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -966,7 +966,7 @@ export default function CreatePurchaseOrderScreen() {
                   (supplier) => supplier.value === purchaseOrderForm.supplier
                 )?.label || '',
                 'Select supplier',
-                <Building size={16} color="#06B6D4" />,
+                <Building size={16} color="#8B5CF6" />,
                 () => setShowSupplierDropdown(true),
                 true
               )}
@@ -981,7 +981,7 @@ export default function CreatePurchaseOrderScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Package size={18} color="#22D3EE" />
+                <Package size={18} color="#8B5CF6" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -991,14 +991,13 @@ export default function CreatePurchaseOrderScreen() {
                   style={[
                     styles.addButton,
                     {
-                      backgroundColor: `#06B6D4${
-                        themeType === 'dark' ? '20' : '15'
-                      }`,
+                      backgroundColor: `#8B5CF620`,
+                      borderColor: `#8B5CF640`,
                     },
                   ]}
                   onPress={addItem}
                 >
-                  <Plus size={16} color="#06B6D4" />
+                  <Plus size={16} color="#8B5CF6" />
                 </TouchableOpacity>
               </View>
 
@@ -1017,7 +1016,7 @@ export default function CreatePurchaseOrderScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <IndianRupee size={18} color="#0D9488" />
+                <IndianRupee size={18} color="#F97316" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -1092,7 +1091,7 @@ export default function CreatePurchaseOrderScreen() {
                     Total Amount
                   </Text>
                   <Text
-                    style={[styles.summaryTotalValue, { color: '#06B6D4' }]}
+                    style={[styles.summaryTotalValue, { color: '#F97316' }]}
                   >
                     ₹{purchaseOrderForm.totalAmount.toFixed(2)}
                   </Text>
@@ -1109,7 +1108,7 @@ export default function CreatePurchaseOrderScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <MessageSquare size={18} color="#0891B2" />
+                <MessageSquare size={18} color="#8B5CF6" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -1123,7 +1122,7 @@ export default function CreatePurchaseOrderScreen() {
                 (text) =>
                   setPurchaseOrderForm({ ...purchaseOrderForm, notes: text }),
                 'Add any additional notes or special instructions',
-                <MessageSquare size={16} color="#0D9488" />,
+                <MessageSquare size={16} color="#8B5CF6" />,
                 'default',
                 true
               )}
@@ -1169,7 +1168,7 @@ export default function CreatePurchaseOrderScreen() {
               onPress={handleSubmit}
             >
               <LinearGradient
-                colors={['#06B6D4', '#22D3EE']}
+                colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
                 style={styles.submitGradient}
               >
                 <ShoppingCart size={20} color="#FFFFFF" />
@@ -1354,9 +1353,9 @@ const styles = StyleSheet.create({
   itemInput: {
     borderRadius: 8,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     marginBottom: 8,
   },
@@ -1371,7 +1370,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 8,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -1379,9 +1378,9 @@ const styles = StyleSheet.create({
     flex: 2,
     borderRadius: 8,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 8,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
   },
   totalContainer: {
@@ -1455,46 +1454,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalContent: {
-    width: '100%',
-    maxWidth: 400,
+    width: '90%',
     maxHeight: '70%',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontWeight: '600',
   },
   modalCloseButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    padding: 8,
   },
   modalCloseText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
   },
   dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     marginBottom: 4,
   },
   dropdownItemText: {
-    fontSize: 16,
-    letterSpacing: -0.1,
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
   },
   inputGroup: {
     flex: 1,
