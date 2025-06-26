@@ -63,7 +63,7 @@ export default function CreateScreen() {
         title: 'Invoice',
         description: 'Create GST or non-GST invoices',
         icon: <FileText size={22} />,
-        route: '/invoice',
+        route: '/sales/invoice',
         gradient: ['#6366F1', '#8B5CF6'],
       },
       // {
@@ -79,7 +79,7 @@ export default function CreateScreen() {
         title: 'Sales Return',
         description: 'Create sales returns',
         icon: <Receipt size={22} />,
-        route: '/sales-return',
+        route: '/sales/return',
         gradient: ['#F59E0B', '#FBBF24'],
       },
       {
@@ -87,7 +87,7 @@ export default function CreateScreen() {
         title: 'Estimate',
         description: 'Create quotations for customers',
         icon: <FileBarChart size={22} />,
-        route: '/estimate',
+        route: '/sales/estimate',
         gradient: ['#EC4899', '#F472B6'],
       },
     ],

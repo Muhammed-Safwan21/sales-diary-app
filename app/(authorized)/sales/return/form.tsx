@@ -10,7 +10,7 @@ import {
   ScrollView,
   Modal,
   FlatList,
-  ActivityIndicator,
+  ActivityIndicator
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,6 +33,7 @@ import {
   FileText,
   Truck,
   Hash,
+  Share,
   User,
   Plus,
   Trash2,
@@ -42,13 +43,13 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-interface PurchaseReturnForm {
+interface SalesReturnForm {
   date: Date;
   returnNumber: string;
   originalInvoiceNumber: string;
-  supplier: string;
+  customer: string;
   returnReason: string;
-  items: PurchaseReturnItem[];
+  items: SalesReturnItem[];
   subtotal: number;
   totalTax: number;
   totalDiscount: number;
@@ -56,7 +57,7 @@ interface PurchaseReturnForm {
   notes: string;
 }
 
-interface PurchaseReturnItem {
+interface SalesReturnItem {
   id: string;
   productName: string;
   quantity: string;
@@ -80,22 +81,22 @@ interface Invoice {
   invoiceNumber: string;
   date: string;
   amount: string;
-  supplierId: string;
+  customerId: string;
 }
 
-const suppliers: DropdownItem[] = [
+const customers: DropdownItem[] = [
   {
-    id: "supplier1",
-    label: "ABC Electronics Pvt Ltd",
-    value: "abc_electronics",
+    id: "customer1",
+    label: "John Doe",
+    value: "john_doe",
   },
-  { id: "supplier2", label: "XYZ Trading Company", value: "xyz_trading" },
-  { id: "supplier3", label: "Global Supplies Inc", value: "global_supplies" },
-  { id: "supplier4", label: "Tech Components Ltd", value: "tech_components" },
+  { id: "customer2", label: "Acme Corp", value: "acme_corp" },
+  { id: "customer3", label: "Jane Smith", value: "jane_smith" },
+  { id: "customer4", label: "Beta Traders", value: "beta_traders" },
   {
-    id: "supplier5",
-    label: "Industrial Materials Co",
-    value: "industrial_materials",
+    id: "customer5",
+    label: "Gamma Enterprises",
+    value: "gamma_enterprises",
   },
 ];
 
@@ -113,63 +114,56 @@ const returnReasons: DropdownItem[] = [
 const allInvoices: Invoice[] = [
   {
     id: "1",
-    invoiceNumber: "INV-2024-001",
-    date: "2024-01-15",
-    amount: "₹25,000",
-    supplierId: "abc_electronics",
+    invoiceNumber: "SINV-2024-001",
+    date: "2024-01-10",
+    amount: "₹12,000",
+    customerId: "john_doe",
   },
   {
     id: "2",
-    invoiceNumber: "INV-2024-002",
-    date: "2024-01-20",
-    amount: "₹18,500",
-    supplierId: "abc_electronics",
+    invoiceNumber: "SINV-2024-002",
+    date: "2024-01-15",
+    amount: "₹8,500",
+    customerId: "acme_corp",
   },
   {
     id: "3",
-    invoiceNumber: "INV-2024-003",
-    date: "2024-01-25",
-    amount: "₹32,000",
-    supplierId: "xyz_trading",
+    invoiceNumber: "SINV-2024-003",
+    date: "2024-01-20",
+    amount: "₹15,000",
+    customerId: "jane_smith",
   },
   {
     id: "4",
-    invoiceNumber: "INV-2024-004",
-    date: "2024-01-28",
-    amount: "₹45,000",
-    supplierId: "global_supplies",
+    invoiceNumber: "SINV-2024-004",
+    date: "2024-01-25",
+    amount: "₹22,000",
+    customerId: "beta_traders",
   },
   {
     id: "5",
-    invoiceNumber: "INV-2024-005",
-    date: "2024-02-02",
-    amount: "₹12,000",
-    supplierId: "tech_components",
-  },
-  {
-    id: "6",
-    invoiceNumber: "INV-2024-006",
-    date: "2024-02-05",
-    amount: "₹28,500",
-    supplierId: "industrial_materials",
+    invoiceNumber: "SINV-2024-005",
+    date: "2024-02-01",
+    amount: "₹9,000",
+    customerId: "gamma_enterprises",
   },
 ];
 
-export default function PurchaseReturnScreen() {
+export default function SalesReturnFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showReasonDropdown, setShowReasonDropdown] = useState(false);
   const [showInvoiceDropdown, setShowInvoiceDropdown] = useState(false);
   const [availableInvoices, setAvailableInvoices] = useState<Invoice[]>([]);
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
 
-  const [returnForm, setReturnForm] = useState<PurchaseReturnForm>({
+  const [returnForm, setReturnForm] = useState<SalesReturnForm>({
     date: new Date(),
     returnNumber: "",
     originalInvoiceNumber: "",
-    supplier: "",
+    customer: "",
     returnReason: "",
     items: [
       {
@@ -192,19 +186,19 @@ export default function PurchaseReturnScreen() {
     notes: "",
   });
 
-  // Filter invoices based on selected supplier
+  // Filter invoices based on selected customer
   useEffect(() => {
-    if (returnForm.supplier) {
+    if (returnForm.customer) {
       const filteredInvoices = allInvoices.filter(
-        (invoice) => invoice.supplierId === returnForm.supplier
+        (invoice) => invoice.customerId === returnForm.customer
       );
       setAvailableInvoices(filteredInvoices);
     } else {
       setAvailableInvoices([]);
     }
-    // Reset selected invoice when supplier changes
+    // Reset selected invoice when customer changes
     setReturnForm((prev) => ({ ...prev, originalInvoiceNumber: "" }));
-  }, [returnForm.supplier]);
+  }, [returnForm.customer]);
 
   // Calculate totals whenever items change
   useEffect(() => {
@@ -232,8 +226,8 @@ export default function PurchaseReturnScreen() {
   }, [returnForm.items]);
 
   const calculateItemTotals = (
-    item: PurchaseReturnItem
-  ): PurchaseReturnItem => {
+    item: SalesReturnItem
+  ): SalesReturnItem => {
     const quantity = parseFloat(item.quantity) || 0;
     const unitPrice = parseFloat(item.unitPrice) || 0;
     const taxRate = parseFloat(item.taxRate) || 0;
@@ -269,7 +263,7 @@ export default function PurchaseReturnScreen() {
   };
 
   const addItem = () => {
-    const newItem: PurchaseReturnItem = {
+    const newItem: SalesReturnItem = {
       id: Date.now().toString(),
       productName: "",
       quantity: "",
@@ -298,7 +292,7 @@ export default function PurchaseReturnScreen() {
 
   const updateItem = (
     itemId: string,
-    field: keyof PurchaseReturnItem,
+    field: keyof SalesReturnItem,
     value: string
   ) => {
     const updatedItems = returnForm.items.map((item) => {
@@ -337,7 +331,7 @@ export default function PurchaseReturnScreen() {
           style={styles.modalContent}
         >
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}> 
               {title}
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
@@ -424,7 +418,7 @@ export default function PurchaseReturnScreen() {
     <View style={styles.formGroup}>
       <View style={styles.labelContainer}>
         {icon}
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}> 
           {label}
           {required && <Text style={{ color: "#EF4444" }}>*</Text>}
         </Text>
@@ -476,7 +470,7 @@ export default function PurchaseReturnScreen() {
     <View style={styles.formGroup}>
       <View style={styles.labelContainer}>
         {icon}
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}> 
           {label}
           {required && <Text style={{ color: "#EF4444" }}>*</Text>}
         </Text>
@@ -515,7 +509,7 @@ export default function PurchaseReturnScreen() {
     </View>
   );
 
-  const renderItemRow = (item: PurchaseReturnItem, index: number) => (
+  const renderItemRow = (item: SalesReturnItem, index: number) => (
     <View
       key={item.id}
       style={[
@@ -533,7 +527,7 @@ export default function PurchaseReturnScreen() {
       ]}
     >
       <View style={styles.itemHeader}>
-        <Text style={[styles.itemNumber, { color: theme.colors.primary }]}>
+        <Text style={[styles.itemNumber, { color: theme.colors.primary }]}> 
           Item {index + 1}
         </Text>
         {returnForm.items.length > 1 && (
@@ -572,7 +566,7 @@ export default function PurchaseReturnScreen() {
       {/* First Row: Quantity, Unit Price, Tax % */}
       <View style={styles.itemRow}>
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}> 
             Qty
           </Text>
           <TextInput
@@ -599,7 +593,7 @@ export default function PurchaseReturnScreen() {
         </View>
   
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}> 
             Price
           </Text>
           <TextInput
@@ -626,7 +620,7 @@ export default function PurchaseReturnScreen() {
         </View>
   
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}> 
             Tax %
           </Text>
           <View style={styles.inputWithIcon}>
@@ -664,7 +658,7 @@ export default function PurchaseReturnScreen() {
       {/* Second Row: Discount %, Discount Amount */}
       <View style={styles.itemRow}>
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}> 
           Tax Amt
           </Text>
           <TextInput
@@ -714,7 +708,7 @@ export default function PurchaseReturnScreen() {
         </View>
   
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}> 
           Discount %
           </Text>
           <TextInput
@@ -742,7 +736,7 @@ export default function PurchaseReturnScreen() {
         </View>
   
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}> 
           Discount Amt
           </Text>
           <View style={styles.inputWithIcon}>
@@ -802,12 +796,9 @@ export default function PurchaseReturnScreen() {
       {/* Third Row: Tax Amount and Total (Display Only) */}
       <View style={styles.displayRow}>
         <View style={styles.displayField}>
-          <Text style={[styles.displayLabel, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.displayLabel, { color: theme.colors.textSecondary }]}> 
             Item Total
           </Text>
-          {/* <Text style={[styles.displayLabel, { color: theme.colors.textSecondary }]}>
-            Sub total: ₹{item.subtotal.toFixed(2)}
-          </Text> */}
         </View>
   
         <View
@@ -817,7 +808,7 @@ export default function PurchaseReturnScreen() {
           ]}
         >
           <IndianRupee size={14} color={theme.colors.primary} />
-          <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
+          <Text style={[styles.totalValue, { color: theme.colors.primary }]}> 
             {item.total.toFixed(2)}
           </Text>
         </View>
@@ -899,21 +890,19 @@ export default function PurchaseReturnScreen() {
             </View>
           </LinearGradient>
         </TouchableOpacity>
-      </View>
-    </BlurView>
+        </View>
+        </BlurView>
   );
-  
   
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar style={themeType === "dark" ? "light" : "dark"} />
 
-      {/* Header with Purchase Return gradient */}
       <LinearGradient
         colors={
           themeType === "dark"
-            ? ["#7C2D12", "#EA580C", "rgba(234, 88, 12, 0.3)", "transparent"]
-            : ["#F97316", "#FB923C", "rgba(251, 146, 60, 0.2)", "transparent"]
+            ? ["#1A1B3A", "#2D1B69", "rgba(61, 42, 122, 0.3)", "transparent"]
+            : ["#6366F1", "#8B5CF6", "rgba(139, 92, 246, 0.2)", "transparent"]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -930,7 +919,7 @@ export default function PurchaseReturnScreen() {
 
             <View style={styles.headerTitleContainer}>
               <Receipt size={20} color="#FFFFFF" />
-              <Text style={styles.headerTitle}>Purchase Return</Text>
+              <Text style={styles.headerTitle}>Sales Return</Text>
             </View>
 
             <View style={styles.placeholder} />
@@ -955,7 +944,7 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Receipt size={18} color="#F97316" />
+                <Receipt size={18} color="#6366F1" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -1034,7 +1023,7 @@ export default function PurchaseReturnScreen() {
             </BlurView>
           </Animated.View>
 
-          {/* Supplier & Invoice Selection */}
+          {/* Customer & Invoice Selection */}
           <Animated.View entering={FadeInUp.delay(300)}>
             <BlurView
               intensity={themeType === "dark" ? 15 : 80}
@@ -1042,35 +1031,35 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Building2 size={18} color="#FB923C" />
+                <Building2 size={18} color="#6366F1" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
-                  Supplier & Invoice Details
+                  Customer & Invoice Details
                 </Text>
               </View>
 
               {renderDropdownInput(
-                "Supplier",
-                suppliers.find(
-                  (supplier) => supplier.value === returnForm.supplier
+                "Customer",
+                customers.find(
+                  (customer) => customer.value === returnForm.customer
                 )?.label || "",
-                "Select supplier",
-                <User size={16} color="#F97316" />,
-                () => setShowSupplierDropdown(true),
+                "Select customer",
+                <User size={16} color="#6366F1" />,
+                () => setShowCustomerDropdown(true),
                 true
               )}
 
               {renderDropdownInput(
-                "Original Purchase Invoice",
+                "Original Sales Invoice",
                 returnForm.originalInvoiceNumber,
-                returnForm.supplier
-                  ? "Select invoice from supplier"
-                  : "Please select supplier first",
-                <FileText size={16} color="#FB923C" />,
+                returnForm.customer
+                  ? "Select invoice from customer"
+                  : "Please select customer first",
+                <FileText size={16} color="#6366F1" />,
                 () => setShowInvoiceDropdown(true),
                 true,
-                !returnForm.supplier || availableInvoices.length === 0
+                !returnForm.customer || availableInvoices.length === 0
               )}
 
               {renderDropdownInput(
@@ -1079,7 +1068,7 @@ export default function PurchaseReturnScreen() {
                   (reason) => reason.value === returnForm.returnReason
                 )?.label || "",
                 "Select return reason",
-                <Truck size={16} color="#FB923C" />,
+                <Truck size={16} color="#6366F1" />,
                 () => setShowReasonDropdown(true),
                 true
               )}
@@ -1094,7 +1083,7 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <Package size={18} color="#F97316" />
+                <Package size={18} color="#6366F1" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -1103,11 +1092,11 @@ export default function PurchaseReturnScreen() {
                 <TouchableOpacity
                   style={[
                     styles.addButton,
-                    { backgroundColor: `#F9731620`, borderColor: `#F9731640` },
+                    { backgroundColor: `#6366F120`, borderColor: `#6366F140` },
                   ]}
                   onPress={addItem}
                 >
-                  <Plus size={16} color="#F97316" />
+                  <Plus size={16} color="#6366F1" />
                 </TouchableOpacity>
               </View>
 
@@ -1125,7 +1114,7 @@ export default function PurchaseReturnScreen() {
               style={styles.section}
             >
               <View style={styles.sectionHeader}>
-                <IndianRupee size={18} color="#F97316" />
+                <IndianRupee size={18} color="#6366F1" />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -1178,7 +1167,7 @@ export default function PurchaseReturnScreen() {
                   >
                     Total Discount
                   </Text>
-                  <Text style={[styles.summaryValue, { color: "#EF4444" }]}>
+                  <Text style={[styles.summaryValue, { color: "#EF4444" }]}> 
                     -₹{returnForm.totalDiscount.toFixed(2)}
                   </Text>
                 </View>
@@ -1200,7 +1189,7 @@ export default function PurchaseReturnScreen() {
                     Total Amount
                   </Text>
                   <Text
-                    style={[styles.summaryTotalValue, { color: "#F97316" }]}
+                    style={[styles.summaryTotalValue, { color: "#6366F1" }]}
                   >
                     ₹{returnForm.totalAmount.toFixed(2)}
                   </Text>
@@ -1229,16 +1218,17 @@ export default function PurchaseReturnScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
       {renderFooter()}
 
       {/* Dropdown Modals */}
       {renderDropdownModal(
-        showSupplierDropdown,
-        () => setShowSupplierDropdown(false),
-        "Select Supplier",
-        suppliers,
-        returnForm.supplier,
-        (value) => setReturnForm({ ...returnForm, supplier: value })
+        showCustomerDropdown,
+        () => setShowCustomerDropdown(false),
+        "Select Customer",
+        customers,
+        returnForm.customer,
+        (value) => setReturnForm({ ...returnForm, customer: value })
       )}
 
       {renderDropdownModal(
@@ -1251,7 +1241,7 @@ export default function PurchaseReturnScreen() {
       )}
 
       {renderDropdownModal(
-        !!(showInvoiceDropdown && returnForm.supplier),
+        !!(showInvoiceDropdown && returnForm.customer),
         () => setShowInvoiceDropdown(false),
         "Select Original Invoice",
         availableInvoices,
@@ -1634,6 +1624,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.1,
+  },
+  submitButton: {
+    flex: 2,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   saveButton: {
     flex: 2,

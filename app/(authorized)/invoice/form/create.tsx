@@ -285,7 +285,6 @@ export default function CreateInvoiceScreen() {
 
     try {
       const invoiceData = prepareInvoiceData(isDraft);
-      console.log('invoiceDatainvoiceData', invoiceData);
       await createInvoiceMutation.mutateAsync(invoiceData);
     } catch (error) {
       console.error('Error creating invoice:', error);
