@@ -67,6 +67,18 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
       icon: '🧾',
       description: 'Payment receipt',
     },
+    {
+      id: 'estimate',
+      label: 'Estimate',
+      icon: '📊',
+      description: 'Cost estimate',
+    },
+    {
+      id: 'quotation',
+      label: 'Quotation',
+      icon: '💼',
+      description: 'Price quote',
+    },
   ];
 
   const {
@@ -146,25 +158,6 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
     translateY,
   ]);
 
-  const getInputBorderStyle = React.useCallback(
-    (hasError: boolean, isFocused: boolean = false) => ({
-      borderColor: hasError
-        ? theme.colors.error || '#EF4444'
-        : isFocused
-        ? theme.colors.primary
-        : themeType === 'dark'
-        ? theme.colors.border || 'rgba(255, 255, 255, 0.1)'
-        : theme.colors.border || 'rgba(0, 0, 0, 0.08)',
-      borderWidth: hasError || isFocused ? 2 : 1,
-      shadowColor: isFocused ? theme.colors.primary : 'transparent',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isFocused ? 0.1 : 0,
-      shadowRadius: 8,
-      elevation: isFocused ? 4 : 0,
-    }),
-    [theme.colors.primary, theme.colors.error, theme.colors.border, themeType]
-  );
-
   const selectedType = invoiceTypes.find((type) => type.id === invoiceType);
 
   if (!visible) return null;
@@ -195,71 +188,28 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
               },
             ]}
           >
-            {/* Enhanced Header with Gradient */}
-            <View style={modalStyles.headerWrapper}>
-              <LinearGradient
-                colors={[
-                  `${theme.colors.primary}25`,
-                  `${theme.colors.primary}15`,
-                  `${theme.colors.primary}05`,
-                  'transparent',
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={modalStyles.headerGradientBg}
-              />
-              <BlurView
-                intensity={themeType === 'dark' ? 30 : 90}
-                tint={themeType}
-                style={modalStyles.header}
-              >
-                <View style={modalStyles.headerContent}>
-                  <View style={modalStyles.headerTitleContainer}>
-                    <View
-                      style={[
-                        modalStyles.iconContainer,
-                        { backgroundColor: `${theme.colors.primary}15` },
-                      ]}
-                    >
-                      <FileText size={22} color={theme.colors.primary} />
-                    </View>
-                    <View>
-                      <Text
-                        style={[
-                          modalStyles.headerTitle,
-                          { color: theme.colors.text },
-                        ]}
-                      >
-                        Terms & Conditions
-                      </Text>
-                      <Text
-                        style={[
-                          modalStyles.headerSubtitle,
-                          { color: theme.colors.textSecondary },
-                        ]}
-                      >
-                        Configure your invoice terms
-                      </Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={[
-                      modalStyles.closeButton,
-                      {
-                        backgroundColor:
-                          theme.colors.surface ||
-                          (themeType === 'dark'
-                            ? 'rgba(255,255,255,0.1)'
-                            : 'rgba(0,0,0,0.05)'),
-                      },
-                    ]}
-                    onPress={onClose}
-                  >
-                    <X size={20} color={theme.colors.textSecondary} />
-                  </TouchableOpacity>
+            {/* Enhanced Header with Gradient - close button on right */}
+            <LinearGradient
+              colors={
+                themeType === 'dark'
+                  ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+                  : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={modalStyles.headerGradient}
+            >
+              <View style={modalStyles.header}>
+                <View style={modalStyles.headerLeftSpacer} />
+                <View style={modalStyles.headerTitleContainer}>
+                  <FileText size={20} color="#FFFFFF" />
+                  <Text style={modalStyles.headerTitle}>Terms & Conditions</Text>
                 </View>
-              </BlurView>
-            </View>
+                <TouchableOpacity style={modalStyles.closeButton} onPress={onClose}>
+                  <X size={20} color="rgba(255, 255, 255, 0.9)" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
 
             <ScrollView
               style={modalStyles.content}
@@ -268,15 +218,17 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
               bounces={false}
             >
               {/* Invoice Type Selection */}
-              <View style={modalStyles.section}>
-                <Text
-                  style={[
-                    modalStyles.inputLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Invoice Type
-                </Text>
+              <BlurView 
+                intensity={themeType === 'dark' ? 15 : 80} 
+                tint={themeType} 
+                style={modalStyles.section}
+              >
+                <View style={modalStyles.sectionHeader}>
+                  <FileText size={18} color={theme.colors.primary} />
+                  <Text style={[modalStyles.sectionTitle, { color: theme.colors.text }]}>
+                    Invoice Type
+                  </Text>
+                </View>
 
                 <Controller
                   control={control}
@@ -297,17 +249,15 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
                               backgroundColor:
                                 value === type.id
                                   ? theme.colors.primary
-                                  : theme.colors.surface ||
-                                    (themeType === 'dark'
-                                      ? 'rgba(255,255,255,0.08)'
-                                      : 'rgba(255,255,255,0.9)'),
+                                  : themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.08)'
+                                  : 'rgba(255, 255, 255, 0.9)',
                               borderColor:
                                 value === type.id
                                   ? theme.colors.primary
-                                  : theme.colors.border ||
-                                    (themeType === 'dark'
-                                      ? 'rgba(255,255,255,0.15)'
-                                      : 'rgba(0,0,0,0.08)'),
+                                  : themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.15)'
+                                  : 'rgba(0, 0, 0, 0.08)',
                               marginLeft: index === 0 ? 0 : 12,
                             },
                           ]}
@@ -319,7 +269,7 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
                               {
                                 color:
                                   value === type.id
-                                    ? '#FFF'
+                                    ? '#FFFFFF'
                                     : theme.colors.text,
                               },
                             ]}
@@ -331,93 +281,122 @@ export const InvoiceTermsModal: React.FC<InvoiceTermsModalProps> = ({
                     </ScrollView>
                   )}
                 />
-              </View>
+              </BlurView>
 
               {/* Terms Input */}
-              <View style={modalStyles.section}>
-                <Text
-                  style={[
-                    modalStyles.inputLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Terms Content{' '}
-                  <Text style={{ color: theme.colors.error || '#EF4444' }}>
-                    *
+              <BlurView 
+                intensity={themeType === 'dark' ? 15 : 80} 
+                tint={themeType} 
+                style={modalStyles.section}
+              >
+                <View style={modalStyles.sectionHeader}>
+                  <FileText size={18} color={theme.colors.primary} />
+                  <Text style={[modalStyles.sectionTitle, { color: theme.colors.text }]}>
+                    Terms Configuration
                   </Text>
-                </Text>
-                <Controller
-                  control={control}
-                  name="terms"
-                  rules={{ required: 'Terms are required' }}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <View
+                </View>
+                
+                <View style={modalStyles.formGroup}>
+                  <Text style={[modalStyles.label, { color: theme.colors.textSecondary }]}>
+                    Terms Content
+                    <Text style={{ color: theme.colors.error || '#EF4444' }}> *</Text>
+                  </Text>
+                  <Controller
+                    control={control}
+                    name="terms"
+                    rules={{ required: 'Terms are required' }}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <View
+                        style={[
+                          modalStyles.textAreaContainer,
+                          {
+                            backgroundColor:
+                              themeType === 'dark'
+                                ? 'rgba(255, 255, 255, 0.05)'
+                                : 'rgba(255, 255, 255, 0.8)',
+                            borderColor: errors.terms
+                              ? theme.colors.error || '#EF4444'
+                              : themeType === 'dark'
+                              ? 'rgba(255, 255, 255, 0.08)'
+                              : 'rgba(0, 0, 0, 0.06)',
+                            borderWidth: errors.terms ? 2 : 1,
+                          },
+                        ]}
+                      >
+                        <TextInput
+                          style={[
+                            modalStyles.textArea,
+                            { color: theme.colors.text },
+                          ]}
+                          value={value}
+                          onChangeText={onChange}
+                          onBlur={onBlur}
+                          placeholder="Enter your terms and conditions here..."
+                          placeholderTextColor={theme.colors.textSecondary}
+                          multiline
+                          numberOfLines={6}
+                          textAlignVertical="top"
+                        />
+                      </View>
+                    )}
+                  />
+                  {errors.terms && (
+                    <Text
                       style={[
-                        modalStyles.textAreaContainer,
-                        {
-                          backgroundColor:
-                            theme.colors.surface ||
-                            (themeType === 'dark'
-                              ? 'rgba(255,255,255,0.05)'
-                              : 'rgba(255,255,255,0.8)'),
-                        },
-                        getInputBorderStyle(!!errors.terms),
+                        modalStyles.errorText,
+                        { color: theme.colors.error || '#EF4444' },
                       ]}
                     >
-                      <TextInput
-                        style={[
-                          modalStyles.textArea,
-                          { color: theme.colors.text },
-                        ]}
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        placeholder="Enter your terms and conditions here..."
-                        placeholderTextColor={theme.colors.textSecondary}
-                        multiline
-                        numberOfLines={6}
-                        textAlignVertical="top"
-                      />
-                    </View>
+                      {errors.terms.message}
+                    </Text>
                   )}
-                />
-                {errors.terms && (
-                  <Text
-                    style={[
-                      modalStyles.errorText,
-                      { color: theme.colors.error || '#EF4444' },
-                    ]}
-                  >
-                    {errors.terms.message}
-                  </Text>
-                )}
-              </View>
-
-              {/* Enhanced Save Button */}
-              <TouchableOpacity
-                style={[
-                  modalStyles.saveButton,
-                  {
-                    shadowColor: theme.colors.primary,
-                  },
-                ]}
-                onPress={handleSubmit(onSave)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={[
-                    theme.colors.primary,
-                    theme.colors.primaryLight || theme.colors.primary,
-                  ]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={modalStyles.saveGradient}
-                >
-                  <Save size={22} color="#FFF" />
-                  <Text style={modalStyles.saveButtonText}>Save</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                </View>
+              </BlurView>
             </ScrollView>
+
+            {/* Footer with Save Button - matching staff form */}
+            <BlurView 
+              intensity={themeType === 'dark' ? 20 : 80} 
+              tint={themeType} 
+              style={modalStyles.footer}
+            >
+              <View style={modalStyles.footerContent}>
+                <TouchableOpacity
+                  style={[
+                    modalStyles.cancelButton,
+                    {
+                      backgroundColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'rgba(0, 0, 0, 0.05)',
+                      borderColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.15)'
+                          : 'rgba(0, 0, 0, 0.1)',
+                    },
+                  ]}
+                  onPress={onClose}
+                >
+                  <X size={18} color={theme.colors.textSecondary} />
+                  <Text style={[modalStyles.cancelButtonText, { color: theme.colors.textSecondary }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={modalStyles.saveButton}
+                  onPress={handleSubmit(onSave)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
+                    style={modalStyles.saveGradient}
+                  >
+                    <Save size={18} color="#FFFFFF" />
+                    <Text style={modalStyles.saveButtonText}>Submit</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
           </Animated.View>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -439,8 +418,8 @@ function getModalStyles(themeType: string, theme: any) {
       flex: 1,
     },
     modalContainer: {
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: -8 },
@@ -451,123 +430,67 @@ function getModalStyles(themeType: string, theme: any) {
         theme.colors.background ||
         (themeType === 'dark' ? '#18181B' : '#FFFFFF'),
       maxHeight: SCREEN_HEIGHT * 0.9,
-      minHeight: SCREEN_HEIGHT * 0.6,
+      minHeight: SCREEN_HEIGHT * 0.7,
     },
-    headerWrapper: {
-      position: 'relative',
-      overflow: 'hidden',
-    },
-    headerGradientBg: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+    headerGradient: {
+      paddingBottom: 20,
     },
     header: {
-      paddingTop: 8,
-      paddingBottom: 16,
-    },
-    headerContent: {
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      paddingHorizontal: 24,
-      paddingTop: 16,
+      paddingHorizontal: 20,
+      paddingTop: Platform.OS === 'android' ? 12 : 8,
+      paddingVertical: 8,
     },
-    headerTitleContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-      flex: 1,
-    },
-    iconContainer: {
-      width: 48,
-      height: 48,
-      borderRadius: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      letterSpacing: -0.3,
-      marginBottom: 2,
-    },
-    headerSubtitle: {
-      fontSize: 14,
-      fontWeight: '500',
-      opacity: 0.8,
+    headerLeftSpacer: {
+      width: 40,
     },
     closeButton: {
       width: 40,
       height: 40,
       borderRadius: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.2)',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 4,
+    },
+    headerTitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: '#FFFFFF',
+      letterSpacing: -0.2,
     },
     content: {
       flex: 1,
     },
     contentContainer: {
-      paddingHorizontal: 24,
-      paddingTop: 8,
-      paddingBottom: 32,
+      paddingHorizontal: 20,
     },
-    previewCard: {
-      padding: 20,
+    section: {
       borderRadius: 20,
-      marginBottom: 32,
+      padding: 20,
+      marginBottom: 10,
       borderWidth: 1,
-      position: 'relative',
+      borderColor: 'rgba(255, 255, 255, 0.1)',
       overflow: 'hidden',
     },
-    previewGradient: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
-    previewHeader: {
+    sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      marginBottom: 12,
-    },
-    previewLabel: {
-      fontSize: 14,
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    },
-    previewText: {
-      fontSize: 28,
-      fontWeight: '700',
-      letterSpacing: -0.5,
-      marginBottom: 4,
-    },
-    previewDescription: {
-      fontSize: 13,
-      fontWeight: '500',
-      opacity: 0.8,
-    },
-    section: {
-      paddingVertical: 8,
-      marginBottom: 6,
+      marginBottom: 16,
     },
     sectionTitle: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '700',
-      marginBottom: 4,
       letterSpacing: -0.2,
-    },
-    sectionDescription: {
-      fontSize: 14,
-      marginBottom: 20,
-      opacity: 0.8,
-      lineHeight: 20,
     },
     typeScrollContainer: {
       marginHorizontal: -4,
@@ -577,81 +500,95 @@ function getModalStyles(themeType: string, theme: any) {
       paddingVertical: 4,
     },
     typeCard: {
-      paddingVertical: 16,
+      paddingVertical: 12,
       paddingHorizontal: 16,
-      borderRadius: 20,
-      borderWidth: 2,
+      borderRadius: 16,
+      borderWidth: 1,
       alignItems: 'center',
-      minWidth: 120,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    typeIcon: {
-      fontSize: 24,
-      marginBottom: 8,
+      minWidth: 100,
+      justifyContent: 'center',
     },
     typeLabel: {
-      fontSize: 14,
-      fontWeight: '600',
-      textAlign: 'center',
-      letterSpacing: -0.1,
-      marginBottom: 4,
-    },
-    typeDescription: {
       fontSize: 12,
-      fontWeight: '500',
-      textAlign: 'center',
-      opacity: 0.8,
-    },
-    inputLabel: {
-      fontSize: 14,
       fontWeight: '600',
-      marginBottom: 12,
       letterSpacing: -0.1,
+    },
+    formGroup: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: -0.1,
+      marginBottom: 8,
     },
     textAreaContainer: {
-      borderRadius: 16,
+      borderRadius: 12,
+      borderWidth: 1,
       paddingHorizontal: 16,
-      paddingVertical: 16,
-      minHeight: 120,
+      paddingVertical: 12,
     },
     textArea: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '500',
-      minHeight: 88,
+      minHeight: 120,
       lineHeight: 22,
+      textAlignVertical: 'top',
     },
     errorText: {
-      fontSize: 13,
-      marginTop: 8,
+      fontSize: 12,
+      marginTop: 6,
       marginLeft: 4,
       fontWeight: '500',
     },
-    saveButton: {
-      borderRadius: 20,
+    footer: {
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.1)',
       overflow: 'hidden',
-      marginTop: 8,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 6,
+      paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    },
+    footerContent: {
+      flexDirection: 'row',
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      gap: 16,
+    },
+    cancelButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      borderRadius: 16,
+      borderWidth: 1,
+      gap: 10,
+    },
+    cancelButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      letterSpacing: -0.1,
+    },
+    saveButton: {
+      flex: 2,
+      borderRadius: 16,
+      overflow: 'hidden',
     },
     saveGradient: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 18,
-      paddingHorizontal: 24,
-      gap: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      gap: 10,
     },
     saveButtonText: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',
-      letterSpacing: -0.2,
+      letterSpacing: -0.1,
     },
   });
 }

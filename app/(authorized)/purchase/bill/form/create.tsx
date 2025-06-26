@@ -26,6 +26,7 @@ import {
   X,
   User,
   ChevronDown,
+  Printer,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -221,29 +222,26 @@ export default function PurchaseBillForm() {
     editable = true,
     onPress?: () => void
   ) => (
-    <View style={styles.formGroup}>
-      <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 8 }}>
         {label}
       </Text>
-      <TouchableOpacity
-        style={[
-          styles.inputContainer,
-          {
-            backgroundColor:
-              themeType === 'dark'
-                ? 'rgba(255, 255, 255, 0.05)'
-                : 'rgba(255, 255, 255, 0.8)',
-            borderColor:
-              themeType === 'dark'
-                ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(0, 0, 0, 0.06)',
-          },
-        ]}
-        onPress={onPress}
-        disabled={!onPress}
-      >
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 12,
+        borderWidth: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: themeType === 'dark'
+          ? 'rgba(255, 255, 255, 0.05)'
+          : 'rgba(255, 255, 255, 0.8)',
+        borderColor: themeType === 'dark'
+          ? 'rgba(255, 255, 255, 0.08)'
+          : 'rgba(0, 0, 0, 0.06)',
+      }}>
         <TextInput
-          style={[styles.textInput, { color: theme.colors.text }]}
+          style={{ flex: 1, fontSize: 15, fontWeight: '500', color: theme.colors.text }}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -251,7 +249,7 @@ export default function PurchaseBillForm() {
           editable={editable}
         />
         {rightIcon && <View style={styles.inputIcon}>{rightIcon}</View>}
-      </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -585,74 +583,65 @@ export default function PurchaseBillForm() {
     <BlurView
       intensity={themeType === 'dark' ? 20 : 80}
       tint={themeType}
-      style={styles.footer}
+      style={{
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        overflow: 'hidden',
+        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+      }}
     >
-      <View style={styles.footerContent}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 24, paddingTop: 24, gap: 16 }}>
         <TouchableOpacity
-          style={[
-            styles.draftButton,
-            {
-              backgroundColor:
-                themeType === 'dark'
-                  ? 'rgba(255, 255, 255, 0.08)'
-                  : 'rgba(0, 0, 0, 0.05)',
-              borderColor:
-                themeType === 'dark'
-                  ? 'rgba(255, 255, 255, 0.12)'
-                  : 'rgba(0, 0, 0, 0.08)',
-              opacity: isCreatingBill ? 0.5 : 1,
-            },
-          ]}
-          disabled={isCreatingBill}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 16,
+            paddingHorizontal: 20,
+            borderRadius: 16,
+            borderWidth: 1,
+            gap: 10,
+            backgroundColor: themeType === 'dark'
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'rgba(0, 0, 0, 0.05)',
+            borderColor: themeType === 'dark'
+              ? 'rgba(255, 255, 255, 0.15)'
+              : 'rgba(0, 0, 0, 0.1)',
+          }}
           onPress={() => handleSubmit(true)}
         >
-          {isCreatingBill ? (
-            <ActivityIndicator
-              size="small"
-              color={theme.colors.textSecondary}
-            />
-          ) : (
-            <Save size={20} color={theme.colors.textSecondary} />
-          )}
-          <Text
-            style={[
-              styles.draftButtonText,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Save Draft
+          <X size={18} color={theme.colors.textSecondary} />
+          <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.textSecondary, letterSpacing: -0.1 }}>
+            Cancel
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
-          style={[
-            styles.saveButton,
-            {
-              backgroundColor: theme.colors.primary,
-              shadowColor: theme.colors.primary,
-              opacity: isCreatingBill ? 0.5 : 1,
-            },
-          ]}
-          disabled={isCreatingBill}
+          style={{
+            flex: 2,
+            borderRadius: 16,
+            overflow: 'hidden',
+          }}
           onPress={() => handleSubmit(false)}
+          activeOpacity={0.8}
         >
           <LinearGradient
-            colors={[
-              theme.colors.primary,
-              theme.colors.primaryLight || theme.colors.primary,
-            ]}
-            style={styles.saveGradient}
+            colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 16,
+              paddingHorizontal: 20,
+              gap: 10,
+            }}
           >
-            <View style={styles.saveButtonContent}>
-              {isCreatingBill ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <FileText size={20} color="#FFFFFF" />
-              )}
-              <Text style={styles.saveButtonText}>
-                {isCreatingBill ? 'Creating...' : 'Create Bill'}
-              </Text>
-            </View>
+            <Save size={18} color="#FFFFFF" />
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.1 }}>
+              Create Bill
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -671,24 +660,39 @@ export default function PurchaseBillForm() {
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={styles.headerGradient}
+        style={{ paddingBottom: 20 }}
       >
-        <SafeAreaView>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
-            </TouchableOpacity>
-
-            <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>Create Purchase Bill</Text>
-            </View>
-
-            <View style={styles.placeholder} />
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 20,
+          paddingTop: Platform.OS === 'android' ? 12 : 8,
+          paddingVertical: 8,
+        }}>
+          <View style={{ width: 40 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Printer size={20} color="#FFFFFF" />
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.2 }}>
+              Printer Settings
+            </Text>
           </View>
-        </SafeAreaView>
+          <TouchableOpacity
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => {}}
+          >
+            <X size={20} color="rgba(255, 255, 255, 0.9)" />
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -704,106 +708,22 @@ export default function PurchaseBillForm() {
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
               tint={themeType}
-              style={styles.section}
+              style={{
+                borderRadius: 20,
+                padding: 20,
+                marginBottom: 20,
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                overflow: 'hidden',
+              }}
             >
-              <View style={styles.sectionHeader}>
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Bill Details
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <Printer size={18} color={theme.colors.primary} />
+                <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.text, letterSpacing: -0.2 }}>
+                  Printer Type
                 </Text>
               </View>
-
-              {renderFormInput(
-                'Supplier',
-                suppliers.find((s) => s.id === bill.supplierId)?.name || '',
-                () => {},
-                'Select or add supplier',
-                <User size={18} color={theme.colors.textSecondary} />,
-                false,
-                () => setShowSupplierDropdown(true)
-              )}
-
-              {renderFormInput(
-                'Bill Number',
-                bill.billNumber,
-                (text) => setBill({ ...bill, billNumber: text }),
-                'Enter bill number'
-              )}
-
-              <View style={styles.formRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 12 }]}>
-                  <Text
-                    style={[
-                      styles.label,
-                      { color: theme.colors.textSecondary },
-                    ]}
-                  >
-                    Bill Date
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.inputContainer,
-                      {
-                        backgroundColor:
-                          themeType === 'dark'
-                            ? 'rgba(255, 255, 255, 0.05)'
-                            : 'rgba(255, 255, 255, 0.8)',
-                        borderColor:
-                          themeType === 'dark'
-                            ? 'rgba(255, 255, 255, 0.08)'
-                            : 'rgba(0, 0, 0, 0.06)',
-                      },
-                    ]}
-                    onPress={() => setShowDatePicker('billDate')}
-                  >
-                    <Text
-                      style={[styles.textInput, { color: theme.colors.text }]}
-                    >
-                      {bill.billDate.toLocaleDateString()}
-                    </Text>
-                    <View style={styles.inputIcon}>
-                      <Calendar size={18} color={theme.colors.textSecondary} />
-                    </View>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={[styles.formGroup, { flex: 1 }]}>
-                  <Text
-                    style={[
-                      styles.label,
-                      { color: theme.colors.textSecondary },
-                    ]}
-                  >
-                    Due Date
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.inputContainer,
-                      {
-                        backgroundColor:
-                          themeType === 'dark'
-                            ? 'rgba(255, 255, 255, 0.05)'
-                            : 'rgba(255, 255, 255, 0.8)',
-                        borderColor:
-                          themeType === 'dark'
-                            ? 'rgba(255, 255, 255, 0.08)'
-                            : 'rgba(0, 0, 0, 0.06)',
-                      },
-                    ]}
-                    onPress={() => setShowDatePicker('dueDate')}
-                  >
-                    <Text
-                      style={[styles.textInput, { color: theme.colors.text }]}
-                    >
-                      {bill.dueDate.toLocaleDateString()}
-                    </Text>
-                    <View style={styles.inputIcon}>
-                      <Calendar size={18} color={theme.colors.textSecondary} />
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              {/* ...Printer type options here, styled as in bill form... */}
             </BlurView>
           </Animated.View>
 

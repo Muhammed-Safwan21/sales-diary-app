@@ -903,8 +903,8 @@ function getModalStyles(themeType: string) {
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     modalContainer: {
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: -8 },
@@ -949,7 +949,7 @@ function getModalStyles(themeType: string) {
       alignItems: 'center',
     },
     headerTitle: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: '700',
       letterSpacing: -0.3,
       marginBottom: 2,
@@ -974,9 +974,9 @@ function getModalStyles(themeType: string) {
       marginBottom: 28,
     },
     sectionTitle: {
-      fontSize: 17,
-      fontWeight: '600',
-      marginBottom: 16,
+      fontSize: 16,
+      fontWeight: '700',
+      marginBottom: 8,
       letterSpacing: -0.2,
     },
     printerTypeContainer: {
@@ -1103,8 +1103,8 @@ function getModalStyles(themeType: string) {
       minHeight: 80,
     },
     pageSizeText: {
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 15,
+      fontWeight: '500',
       marginBottom: 4,
     },
     pageSizeDesc: {

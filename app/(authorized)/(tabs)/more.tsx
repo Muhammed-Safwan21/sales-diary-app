@@ -279,7 +279,7 @@ export default function MoreScreen() {
             icon={<Users size={20} />}
             title="Manage Staff"
             description="Manage your staffs and their permissions"
-            onPress={() => router.push('/business/staff')}
+            onPress={() => router.push('/staff')}
             delay={350}
             gradient={['#06D6A0', '#34D399']}
           />

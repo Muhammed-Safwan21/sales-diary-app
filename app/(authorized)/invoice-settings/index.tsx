@@ -1,16 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal, KeyboardAvoidingView, TextInput } from 'react-native';
-import { useTheme } from '@/context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronRight, Printer, FileText, Hash, Save, ArrowLeft } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { Controller, useForm } from 'react-hook-form';
-import { BlurView } from 'expo-blur';
 import { InvoicePrefixModal } from '@/components/modal/invoicePrefixModal';
 import { InvoiceTermsModal } from '@/components/modal/invoiceTermsModal';
 import { PrinterSettingsModal } from '@/components/modal/printerSettingsModal';
+import { useTheme } from '@/context/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { ArrowLeft, ChevronRight, FileText, Hash, Printer } from 'lucide-react-native';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function InvoiceSettingsScreen() {
   const { theme, themeType }: any = useTheme();
@@ -91,21 +90,40 @@ export default function InvoiceSettingsScreen() {
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={styles.headerGradient}
+        style={{ paddingBottom: 24 }}
       >
         <SafeAreaView>
-          <View style={styles.header}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+            paddingTop: Platform.OS === 'android' ? 12 : 8,
+            paddingVertical: 16,
+          }}>
             <TouchableOpacity
-              style={styles.backButton}
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.25)',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
               onPress={() => router.back()}
+              activeOpacity={0.7}
             >
               <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
             </TouchableOpacity>
-            <View style={styles.headerTitleContainer}>
-              <FileText size={20} color="#FFFFFF" />
-              <Text style={styles.headerTitle}>Invoice Settings</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <FileText size={22} color="#FFFFFF" />
+              <Text style={{ fontSize: 20, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.3 }}>
+                Invoice Settings
+              </Text>
             </View>
-            <View style={styles.placeholder} />
+            <View style={{ width: 42 }} />
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -177,9 +195,6 @@ export default function InvoiceSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerGradient: {
-    paddingBottom: 20,
   },
   header: {
     paddingHorizontal: 20,
@@ -266,101 +281,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
   placeholder: {
     width: 24,
     height: 24,
   },
 });
-
-const modalStyles = StyleSheet.create({
-  modalContainer: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    minHeight: 340,
-  },
-  handle: {
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#D1D5DB',
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4,
-    letterSpacing: -0.2,
-  },
-  modalDescription: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 18,
-    letterSpacing: -0.1,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 8,
-    letterSpacing: -0.1,
-  },
-  dropdownContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
-    borderRadius: 12,
-    padding: 6,
-    backgroundColor: 'transparent',
-  },
-  dropdownItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  textAreaContainer: {
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 60,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    marginBottom: 4,
-  },
-  textArea: {
-    fontSize: 15,
-    fontWeight: '500',
-    minHeight: 48,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 2,
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  saveButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginTop: 18,
-  },
-  saveGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    gap: 10,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: -0.1,
-  },
-}); 

@@ -1,7 +1,7 @@
 import { useTheme } from '@/context/ThemeContext';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, Hash, Save, X } from 'lucide-react-native';
+import { Hash, Save, X, Eye } from 'lucide-react-native';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -165,25 +165,6 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
     translateY,
   ]);
 
-  const getInputBorderStyle = React.useCallback(
-    (hasError: boolean, isFocused: boolean = false) => ({
-      borderColor: hasError
-        ? theme.colors.error || '#EF4444'
-        : isFocused
-        ? theme.colors.primary
-        : themeType === 'dark'
-        ? theme.colors.border || 'rgba(255, 255, 255, 0.1)'
-        : theme.colors.border || 'rgba(0, 0, 0, 0.08)',
-      borderWidth: hasError || isFocused ? 2 : 1,
-      shadowColor: isFocused ? theme.colors.primary : 'transparent',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isFocused ? 0.1 : 0,
-      shadowRadius: 8,
-      elevation: isFocused ? 4 : 0,
-    }),
-    [theme.colors.primary, theme.colors.error, theme.colors.border, themeType]
-  );
-
   const generatePreview = React.useMemo(() => {
     const prefixValue = prefix || 'INV-';
     const startNumberValue = startNumber || '1001';
@@ -191,6 +172,54 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
   }, [prefix, startNumber]);
 
   const selectedType = invoiceTypes.find((type) => type.id === invoiceType);
+
+  const renderFormInput = (
+    label: string,
+    value: string,
+    onChangeText: (text: string) => void,
+    placeholder: string,
+    keyboardType: any = 'default',
+    error?: string,
+    required: boolean = false
+  ) => (
+    <View style={modalStyles.formGroup}>
+      <Text style={[modalStyles.label, { color: theme.colors.textSecondary }]}>
+        {label}
+        {required && <Text style={{ color: theme.colors.error || '#EF4444' }}> *</Text>}
+      </Text>
+      <View
+        style={[
+          modalStyles.inputContainer,
+          {
+            backgroundColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.05)'
+                : 'rgba(255, 255, 255, 0.8)',
+            borderColor: error
+              ? theme.colors.error || '#EF4444'
+              : themeType === 'dark'
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'rgba(0, 0, 0, 0.06)',
+            borderWidth: error ? 2 : 1,
+          },
+        ]}
+      >
+        <TextInput
+          style={[modalStyles.textInput, { color: theme.colors.text }]}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={theme.colors.textSecondary}
+          keyboardType={keyboardType}
+        />
+      </View>
+      {error && (
+        <Text style={[modalStyles.errorText, { color: theme.colors.error || '#EF4444' }]}>
+          {error}
+        </Text>
+      )}
+    </View>
+  );
 
   if (!visible) return null;
 
@@ -220,71 +249,28 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
               },
             ]}
           >
-            {/* Enhanced Header with Gradient */}
-            <View style={modalStyles.headerWrapper}>
-              <LinearGradient
-                colors={[
-                  `${theme.colors.primary}25`,
-                  `${theme.colors.primary}15`,
-                  `${theme.colors.primary}05`,
-                  'transparent',
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={modalStyles.headerGradientBg}
-              />
-              <BlurView
-                intensity={themeType === 'dark' ? 30 : 90}
-                tint={themeType}
-                style={modalStyles.header}
-              >
-                <View style={modalStyles.headerContent}>
-                  <View style={modalStyles.headerTitleContainer}>
-                    <View
-                      style={[
-                        modalStyles.iconContainer,
-                        { backgroundColor: `${theme.colors.primary}15` },
-                      ]}
-                    >
-                      <Hash size={22} color={theme.colors.primary} />
-                    </View>
-                    <View>
-                      <Text
-                        style={[
-                          modalStyles.headerTitle,
-                          { color: theme.colors.text },
-                        ]}
-                      >
-                        Invoice Settings
-                      </Text>
-                      <Text
-                        style={[
-                          modalStyles.headerSubtitle,
-                          { color: theme.colors.textSecondary },
-                        ]}
-                      >
-                        Configure your invoice numbering
-                      </Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={[
-                      modalStyles.closeButton,
-                      {
-                        backgroundColor:
-                          theme.colors.surface ||
-                          (themeType === 'dark'
-                            ? 'rgba(255,255,255,0.1)'
-                            : 'rgba(0,0,0,0.05)'),
-                      },
-                    ]}
-                    onPress={onClose}
-                  >
-                    <X size={20} color={theme.colors.textSecondary} />
-                  </TouchableOpacity>
+            {/* Enhanced Header with Gradient - close button on right */}
+            <LinearGradient
+              colors={
+                themeType === 'dark'
+                  ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+                  : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={modalStyles.headerGradient}
+            >
+              <View style={modalStyles.header}>
+                <View style={modalStyles.headerLeftSpacer} />
+                <View style={modalStyles.headerTitleContainer}>
+                  <Hash size={20} color="#FFFFFF" />
+                  <Text style={modalStyles.headerTitle}>Invoice Settings</Text>
                 </View>
-              </BlurView>
-            </View>
+                <TouchableOpacity style={modalStyles.closeButton} onPress={onClose}>
+                  <X size={20} color="rgba(255, 255, 255, 0.9)" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
 
             <ScrollView
               style={modalStyles.content}
@@ -292,17 +278,18 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
-
               {/* Invoice Type Selection */}
-              <View style={modalStyles.section}>
-                <Text
-                  style={[
-                    modalStyles.inputLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Invoice Type
-                </Text>
+              <BlurView 
+                intensity={themeType === 'dark' ? 15 : 80} 
+                tint={themeType} 
+                style={modalStyles.section}
+              >
+                <View style={modalStyles.sectionHeader}>
+                  <Hash size={18} color={theme.colors.primary} />
+                  <Text style={[modalStyles.sectionTitle, { color: theme.colors.text }]}>
+                    Invoice Type
+                  </Text>
+                </View>
 
                 <Controller
                   control={control}
@@ -323,17 +310,15 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
                               backgroundColor:
                                 value === type.id
                                   ? theme.colors.primary
-                                  : theme.colors.surface ||
-                                    (themeType === 'dark'
-                                      ? 'rgba(255,255,255,0.08)'
-                                      : 'rgba(255,255,255,0.9)'),
+                                  : themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.08)'
+                                  : 'rgba(255, 255, 255, 0.9)',
                               borderColor:
                                 value === type.id
                                   ? theme.colors.primary
-                                  : theme.colors.border ||
-                                    (themeType === 'dark'
-                                      ? 'rgba(255,255,255,0.15)'
-                                      : 'rgba(0,0,0,0.08)'),
+                                  : themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.15)'
+                                  : 'rgba(0, 0, 0, 0.08)',
                               marginLeft: index === 0 ? 0 : 12,
                             },
                           ]}
@@ -345,7 +330,7 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
                               {
                                 color:
                                   value === type.id
-                                    ? '#FFF'
+                                    ? '#FFFFFF'
                                     : theme.colors.text,
                               },
                             ]}
@@ -357,151 +342,106 @@ export const InvoicePrefixModal: React.FC<InvoicePrefixModalProps> = ({
                     </ScrollView>
                   )}
                 />
-              </View>
+              </BlurView>
 
               {/* Input Fields */}
-              <View style={modalStyles.section}>
+              <BlurView 
+                intensity={themeType === 'dark' ? 15 : 80} 
+                tint={themeType} 
+                style={modalStyles.section}
+              >
+                <View style={modalStyles.sectionHeader}>
+                  <Hash size={18} color={theme.colors.primary} />
+                  <Text style={[modalStyles.sectionTitle, { color: theme.colors.text }]}>
+                    Numbering Configuration
+                  </Text>
+                </View>
+                
                 <View style={modalStyles.inputRow}>
                   <View style={modalStyles.inputGroup}>
-                    <Text
-                      style={[
-                        modalStyles.inputLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      Prefix{' '}
-                      <Text style={{ color: theme.colors.error || '#EF4444' }}>
-                        *
-                      </Text>
-                    </Text>
                     <Controller
                       control={control}
                       name="prefix"
                       rules={{ required: 'Prefix is required' }}
-                      render={({ field: { onChange, onBlur, value } }) => (
-                        <View
-                          style={[
-                            modalStyles.inputContainer,
-                            {
-                              backgroundColor:
-                                theme.colors.surface ||
-                                (themeType === 'dark'
-                                  ? 'rgba(255,255,255,0.05)'
-                                  : 'rgba(255,255,255,0.8)'),
-                            },
-                            getInputBorderStyle(!!errors.prefix),
-                          ]}
-                        >
-                          <TextInput
-                            style={[
-                              modalStyles.input,
-                              { color: theme.colors.text },
-                            ]}
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                            placeholder="INV-"
-                            placeholderTextColor={theme.colors.textSecondary}
-                          />
-                        </View>
-                      )}
+                      render={({ field: { onChange, onBlur, value } }) =>
+                        renderFormInput(
+                          'Prefix',
+                          value,
+                          onChange,
+                          'INV-',
+                          'default',
+                          errors.prefix?.message,
+                          true
+                        )
+                      }
                     />
-                    {errors.prefix && (
-                      <Text
-                        style={[
-                          modalStyles.errorText,
-                          { color: theme.colors.error || '#EF4444' },
-                        ]}
-                      >
-                        {errors.prefix.message}
-                      </Text>
-                    )}
                   </View>
 
                   <View style={modalStyles.inputGroup}>
-                    <Text
-                      style={[
-                        modalStyles.inputLabel,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      Start Number{' '}
-                      <Text style={{ color: theme.colors.error || '#EF4444' }}>
-                        *
-                      </Text>
-                    </Text>
                     <Controller
                       control={control}
                       name="startNumber"
                       rules={{ required: 'Start number is required' }}
-                      render={({ field: { onChange, onBlur, value } }) => (
-                        <View
-                          style={[
-                            modalStyles.inputContainer,
-                            {
-                              backgroundColor:
-                                theme.colors.surface ||
-                                (themeType === 'dark'
-                                  ? 'rgba(255,255,255,0.05)'
-                                  : 'rgba(255,255,255,0.8)'),
-                            },
-                            getInputBorderStyle(!!errors.startNumber),
-                          ]}
-                        >
-                          <TextInput
-                            style={[
-                              modalStyles.input,
-                              { color: theme.colors.text },
-                            ]}
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                            placeholder="1001"
-                            placeholderTextColor={theme.colors.textSecondary}
-                            keyboardType="numeric"
-                          />
-                        </View>
-                      )}
+                      render={({ field: { onChange, onBlur, value } }) =>
+                        renderFormInput(
+                          'Start Number',
+                          value,
+                          onChange,
+                          '1001',
+                          'numeric',
+                          errors.startNumber?.message,
+                          true
+                        )
+                      }
                     />
-                    {errors.startNumber && (
-                      <Text
-                        style={[
-                          modalStyles.errorText,
-                          { color: theme.colors.error || '#EF4444' },
-                        ]}
-                      >
-                        {errors.startNumber.message}
-                      </Text>
-                    )}
                   </View>
                 </View>
-              </View>
-
-              {/* Enhanced Save Button */}
-              <TouchableOpacity
-                style={[
-                  modalStyles.saveButton,
-                  {
-                    shadowColor: theme.colors.primary,
-                  },
-                ]}
-                onPress={handleSubmit(onSave)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={[
-                    theme.colors.primary,
-                    theme.colors.primaryLight || theme.colors.primary,
-                  ]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={modalStyles.saveGradient}
-                >
-                  <Save size={22} color="#FFF" />
-                  <Text style={modalStyles.saveButtonText}>Save</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              </BlurView>
             </ScrollView>
+
+            {/* Footer with Save Button - matching staff form */}
+            <BlurView 
+              intensity={themeType === 'dark' ? 20 : 80} 
+              tint={themeType} 
+              style={modalStyles.footer}
+            >
+              <View style={modalStyles.footerContent}>
+                <TouchableOpacity
+                  style={[
+                    modalStyles.cancelButton,
+                    {
+                      backgroundColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'rgba(0, 0, 0, 0.05)',
+                      borderColor:
+                        themeType === 'dark'
+                          ? 'rgba(255, 255, 255, 0.15)'
+                          : 'rgba(0, 0, 0, 0.1)',
+                    },
+                  ]}
+                  onPress={onClose}
+                >
+                  <X size={18} color={theme.colors.textSecondary} />
+                  <Text style={[modalStyles.cancelButtonText, { color: theme.colors.textSecondary }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={modalStyles.saveButton}
+                  onPress={handleSubmit(onSave)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
+                    style={modalStyles.saveGradient}
+                  >
+                    <Save size={18} color="#FFFFFF" />
+                    <Text style={modalStyles.saveButtonText}>Submit</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
           </Animated.View>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -523,8 +463,8 @@ function getModalStyles(themeType: string, theme: any) {
       flex: 1,
     },
     modalContainer: {
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: -8 },
@@ -535,122 +475,99 @@ function getModalStyles(themeType: string, theme: any) {
         theme.colors.background ||
         (themeType === 'dark' ? '#18181B' : '#FFFFFF'),
       maxHeight: SCREEN_HEIGHT * 0.9,
-      minHeight: SCREEN_HEIGHT * 0.5,
+      minHeight: SCREEN_HEIGHT * 0.7,
     },
-    headerWrapper: {
-      position: 'relative',
-      overflow: 'hidden',
-    },
-    headerGradientBg: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+    headerGradient: {
+      paddingBottom: 20,
     },
     header: {
-      paddingTop: 8,
-      paddingBottom: 16,
-    },
-    headerContent: {
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      paddingHorizontal: 24,
-      paddingTop: 16,
+      paddingHorizontal: 20,
+      paddingTop: Platform.OS === 'android' ? 12 : 8,
+      paddingVertical: 8,
     },
-    headerTitleContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-      flex: 1,
-    },
-    iconContainer: {
-      width: 48,
-      height: 48,
-      borderRadius: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      letterSpacing: -0.3,
-      marginBottom: 2,
-    },
-    headerSubtitle: {
-      fontSize: 14,
-      fontWeight: '500',
-      opacity: 0.8,
+    headerLeftSpacer: {
+      width: 40,
     },
     closeButton: {
       width: 40,
       height: 40,
       borderRadius: 20,
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.2)',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 4,
+    },
+    headerTitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: '#FFFFFF',
+      letterSpacing: -0.2,
+    },
+    headerRightSpacer: {
+      width: 40,
     },
     content: {
       flex: 1,
     },
     contentContainer: {
-      paddingHorizontal: 24,
-      paddingTop: 8,
-      paddingBottom: 32,
+      paddingHorizontal: 20,
     },
-    previewCard: {
-      padding: 20,
+    section: {
       borderRadius: 20,
-      marginBottom: 32,
+      padding: 20,
+      marginBottom: 12,
       borderWidth: 1,
-      position: 'relative',
+      borderColor: 'rgba(255, 255, 255, 0.1)',
       overflow: 'hidden',
     },
-    previewGradient: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
-    previewHeader: {
+    sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      marginBottom: 12,
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      letterSpacing: -0.2,
+    },
+    previewCard: {
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: themeType === 'dark' 
+        ? 'rgba(255, 255, 255, 0.03)' 
+        : 'rgba(255, 255, 255, 0.5)',
+      borderWidth: 1,
+      borderColor: themeType === 'dark' 
+        ? 'rgba(255, 255, 255, 0.08)' 
+        : 'rgba(0, 0, 0, 0.05)',
     },
     previewLabel: {
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '600',
       textTransform: 'uppercase',
       letterSpacing: 0.5,
+      marginBottom: 8,
     },
     previewText: {
-      fontSize: 28,
+      fontSize: 24,
       fontWeight: '700',
-      letterSpacing: -0.5,
+      letterSpacing: -0.3,
       marginBottom: 4,
     },
     previewDescription: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '500',
       opacity: 0.8,
-    },
-    section: {
-      marginBottom: 32,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: '700',
-      marginBottom: 4,
-      letterSpacing: -0.2,
-    },
-    sectionDescription: {
-      fontSize: 14,
-      marginBottom: 20,
-      opacity: 0.8,
-      lineHeight: 20,
     },
     typeScrollContainer: {
       marginHorizontal: -4,
@@ -661,23 +578,17 @@ function getModalStyles(themeType: string, theme: any) {
     },
     typeCard: {
       paddingVertical: 12,
-      paddingHorizontal: 8,
-      borderRadius: 20,
-      borderWidth: 2,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      borderWidth: 1,
       alignItems: 'center',
-      minWidth: 120,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
+      minWidth: 100,
+      justifyContent: 'center',
     },
     typeLabel: {
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: '600',
-      textAlign: 'center',
       letterSpacing: -0.1,
-      marginBottom: 4,
     },
     inputRow: {
       flexDirection: 'row',
@@ -686,52 +597,82 @@ function getModalStyles(themeType: string, theme: any) {
     inputGroup: {
       flex: 1,
     },
-    inputLabel: {
-      fontSize: 14,
+    formGroup: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 12,
       fontWeight: '600',
-      marginBottom: 12,
       letterSpacing: -0.1,
+      marginBottom: 8,
     },
     inputContainer: {
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      minHeight: 56,
-      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 12,
+      borderWidth: 1,
+      paddingHorizontal: 8
     },
-    input: {
-      fontSize: 16,
-      fontWeight: '600',
-      minHeight: 32,
+    textInput: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '500',
+      minHeight: 20,
     },
     errorText: {
-      fontSize: 13,
-      marginTop: 8,
+      fontSize: 12,
+      marginTop: 6,
       marginLeft: 4,
       fontWeight: '500',
     },
-    saveButton: {
-      borderRadius: 20,
+    footer: {
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.1)',
       overflow: 'hidden',
-      marginTop: 8,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 6,
+      paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    },
+    footerContent: {
+      flexDirection: 'row',
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      gap: 16,
+    },
+    cancelButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      borderRadius: 16,
+      borderWidth: 1,
+      gap: 10,
+    },
+    cancelButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      letterSpacing: -0.1,
+    },
+    saveButton: {
+      flex: 2,
+      borderRadius: 16,
+      overflow: 'hidden',
     },
     saveGradient: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 18,
-      paddingHorizontal: 24,
-      gap: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      gap: 10,
     },
     saveButtonText: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
       color: '#FFFFFF',
-      letterSpacing: -0.2,
+      letterSpacing: -0.1,
     },
   });
 }
