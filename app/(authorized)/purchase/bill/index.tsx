@@ -447,7 +447,7 @@ export default function PurchaseBillListingScreen() {
             shadowColor: theme.colors.primary,
           },
         ]}
-        onPress={() => router.push('/purchase/bill/form/create')}
+        onPress={() => router.push('/purchase/bill/form')}
         activeOpacity={0.8}
       >
         <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />

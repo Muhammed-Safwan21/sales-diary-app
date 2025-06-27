@@ -82,7 +82,7 @@ export default function PurchaseBillView() {
   const totalAmount = itemsWithTotals.reduce((sum, i) => sum + i.total, 0);
 
   const handleEdit = () => {
-    router.push(`/purchase/bill/form/create?id=${bill.id}`);
+    router.push(`/purchase/bill/form?id=${bill.id}`);
   };
   const handleDelete = () => {
     Alert.alert(

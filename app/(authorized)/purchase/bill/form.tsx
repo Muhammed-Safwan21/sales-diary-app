@@ -9,10 +9,11 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  Alert,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
   Calendar,
@@ -26,13 +27,17 @@ import {
   X,
   User,
   ChevronDown,
-  Printer,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { KeyboardAvoidingView } from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '@/services/api';
+import API from '@/config/api';
+import ProductSelectionModal from '@/components/modal/productSelectionModal';
+import PartiesSelectionModal from '@/components/modal/partiesSelectionModal';
 
 interface BillItem {
   id: string;
@@ -62,21 +67,18 @@ interface PurchaseBill {
   paymentStatus: 'pending' | 'partial' | 'paid';
 }
 
-// Mock suppliers data
-const suppliers = [
-  { id: '1', name: 'ABC Suppliers Ltd.' },
-  { id: '2', name: 'XYZ Trading Co.' },
-  { id: '3', name: 'Premium Goods Inc.' },
-];
-
 export default function PurchaseBillForm() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
+  const { id: rawId } = useLocalSearchParams();
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+  const queryClient = useQueryClient();
   const [showDatePicker, setShowDatePicker] = useState<
     'billDate' | 'dueDate' | null
   >(null);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
-  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
 
   const [isCreatingBill, setIsCreatingBill] = useState(false);
   const [bill, setBill] = useState<PurchaseBill>({
@@ -190,26 +192,97 @@ export default function PurchaseBillForm() {
     });
   };
 
-  const handleSupplierSelect = (supplier: any) => {
-    setBill({
-      ...bill,
-      supplierName: supplier.name,
-      supplierId: supplier.id,
-    });
-    setShowSupplierModal(false);
+ const createPurchaseBill = (data: any) => {
+    return apiClient.post(API.INVOICES, data);
   };
+  
+  /**
+   * Update a purchase bill by ID (invoiceType: 'PURCHASE')
+   * @param {string|number} id - The invoice ID
+   * @param {object} data - The purchase bill payload
+   * @returns {Promise<any>}
+   */
+const updatePurchaseBill = (id: string | number, data: any) => {
+    return apiClient.patch(`${API.INVOICES}/${id}`, data);
+  };
+
+  // Prepare payload for API
+  const prepareBillPayload = (isDraft: boolean = false) => {
+    return {
+      invoiceType: 'PURCHASE',
+      isDraft,
+      partyId: bill.supplierId ? parseInt(bill.supplierId) : 0,
+      financialYearId: 0, // TODO: Replace with actual value if available
+      branchId: 0, // TODO: Replace with actual value if available
+      staffId: 0, // TODO: Replace with actual value if available
+      tableId: 0, // Optional, set as needed
+      adminId: 0, // TODO: Replace with actual value if available
+      subtotal: bill.subtotal,
+      totalAmount: bill.totalAmount,
+      discountAmount: bill.totalDiscount,
+      taxAmount: bill.totalTax,
+      roundOffAmount: 0, // Optional, set as needed
+      notes: bill.notes,
+      startDate: bill.billDate.toISOString(),
+      endDate: bill.dueDate.toISOString(),
+      referenceNo: bill.billNumber,
+      items: bill.items.map((item) => ({
+        productId: 0, // TODO: Replace with actual productId if available
+        productName: item.productName,
+        unitPrice: parseFloat(item.unitPrice) || 0,
+        quantity: parseFloat(item.quantity) || 0,
+        subtotal: item.subtotal,
+        discountAmount: item.discountAmount,
+        discountPercentage: parseFloat(item.discountRate) || 0,
+        taxAmount: item.taxAmount,
+        taxPercentage: parseFloat(item.taxRate) || 0,
+        totalAmount: item.total,
+        notes: '',
+      })),
+    };
+  };
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: async (payload: any) => createPurchaseBill(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-bills'] });
+      Alert.alert('Success', 'Purchase bill created successfully!');
+      setIsCreatingBill(false);
+      router.back();
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error?.response?.data?.message || 'Failed to create bill');
+      setIsCreatingBill(false);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string | number; payload: any }) => updatePurchaseBill(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-bills'] });
+      Alert.alert('Success', 'Purchase bill updated successfully!');
+      setIsCreatingBill(false);
+      router.back();
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error?.response?.data?.message || 'Failed to update bill');
+      setIsCreatingBill(false);
+    },
+  });
 
   const handleSubmit = async (isDraft: boolean = false) => {
     setIsCreatingBill(true);
     try {
-      console.log('Bill submitted:', { ...bill, isDraft });
-      setTimeout(() => {
-        setIsCreatingBill(false);
-        router.back();
-      }, 1000);
+      const payload = prepareBillPayload(isDraft);
+      if (id) {
+        await updateMutation.mutateAsync({ id, payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
     } catch (error) {
-      console.error('Error creating bill:', error);
       setIsCreatingBill(false);
+      console.log(error)
     }
   };
 
@@ -222,26 +295,29 @@ export default function PurchaseBillForm() {
     editable = true,
     onPress?: () => void
   ) => (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 8 }}>
+    <View style={styles.formGroup}>
+      <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
         {label}
       </Text>
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 12,
-        borderWidth: 1,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        backgroundColor: themeType === 'dark'
-          ? 'rgba(255, 255, 255, 0.05)'
-          : 'rgba(255, 255, 255, 0.8)',
-        borderColor: themeType === 'dark'
-          ? 'rgba(255, 255, 255, 0.08)'
-          : 'rgba(0, 0, 0, 0.06)',
-      }}>
+      <TouchableOpacity
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.05)'
+                : 'rgba(255, 255, 255, 0.8)',
+            borderColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.08)'
+                : 'rgba(0, 0, 0, 0.06)',
+          },
+        ]}
+        onPress={onPress}
+        disabled={!onPress}
+      >
         <TextInput
-          style={{ flex: 1, fontSize: 15, fontWeight: '500', color: theme.colors.text }}
+          style={[styles.textInput, { color: theme.colors.text }]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -249,89 +325,8 @@ export default function PurchaseBillForm() {
           editable={editable}
         />
         {rightIcon && <View style={styles.inputIcon}>{rightIcon}</View>}
-      </View>
+      </TouchableOpacity>
     </View>
-  );
-
-  const renderDropdownModal = (
-    visible: boolean,
-    onClose: () => void,
-    title: string,
-    data: any[],
-    selectedValue: string,
-    onSelect: (value: string, label?: string) => void
-  ) => (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <BlurView
-          intensity={themeType === "dark" ? 20 : 80}
-          tint={themeType}
-          style={styles.modalContent}
-        >
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-              {title}
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
-              <Text
-                style={[
-                  styles.modalCloseText,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {data.map((item) => {
-              const isSelected = selectedValue === (item.value || item.id);
-              const displayText = item.label || item.name;
-              const selectValue = item.value || item.id;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.dropdownItem,
-                    {
-                      backgroundColor: isSelected
-                        ? `${theme.colors.primary}15`
-                        : "transparent",
-                    },
-                  ]}
-                  onPress={() => {
-                    onSelect(selectValue, displayText);
-                    onClose();
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      {
-                        color: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.text,
-                        fontWeight: isSelected ? "600" : "500",
-                      },
-                    ]}
-                  >
-                    {displayText}
-                  </Text>
-                  {isSelected && (
-                    <ChevronDown size={16} color={theme.colors.primary} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </BlurView>
-      </View>
-    </Modal>
   );
 
   const renderItemRow = (item: BillItem, index: number) => (
@@ -365,7 +360,7 @@ export default function PurchaseBillForm() {
         )}
       </View>
 
-      <TextInput
+      <TouchableOpacity
         style={[
           styles.itemInput,
           {
@@ -377,15 +372,19 @@ export default function PurchaseBillForm() {
               themeType === 'dark'
                 ? 'rgba(255, 255, 255, 0.08)'
                 : 'rgba(0, 0, 0, 0.06)',
-            color: theme.colors.text,
             marginBottom: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           },
         ]}
-        placeholder="Product name"
-        placeholderTextColor={theme.colors.textSecondary}
-        value={item.productName}
-        onChangeText={(text) => updateItem(item.id, 'productName', text)}
-      />
+        onPress={() => handleOpenProductModal(index)}
+      >
+        <Text style={{ color: theme.colors.text, flex: 1 }}>
+          {item.productName || 'Select Product'}
+        </Text>
+        <ChevronDown size={16} color={theme.colors.textSecondary} />
+      </TouchableOpacity>
 
       <View style={styles.itemRow}>
         <View style={styles.inputGroup}>
@@ -583,70 +582,113 @@ export default function PurchaseBillForm() {
     <BlurView
       intensity={themeType === 'dark' ? 20 : 80}
       tint={themeType}
-      style={{
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        overflow: 'hidden',
-        paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-      }}
+      style={styles.footer}
     >
-      <View style={{ flexDirection: 'row', paddingHorizontal: 24, paddingTop: 24, gap: 16 }}>
+      <View style={styles.footerContent}>
         <TouchableOpacity
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 16,
-            paddingHorizontal: 20,
-            borderRadius: 16,
-            borderWidth: 1,
-            gap: 10,
-            backgroundColor: themeType === 'dark'
-              ? 'rgba(255, 255, 255, 0.08)'
-              : 'rgba(0, 0, 0, 0.05)',
-            borderColor: themeType === 'dark'
-              ? 'rgba(255, 255, 255, 0.15)'
-              : 'rgba(0, 0, 0, 0.1)',
-          }}
+          style={[
+            styles.draftButton,
+            {
+              backgroundColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.05)',
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12)'
+                  : 'rgba(0, 0, 0, 0.08)',
+              opacity: isCreatingBill ? 0.5 : 1,
+            },
+          ]}
+          disabled={isCreatingBill}
           onPress={() => handleSubmit(true)}
         >
-          <X size={18} color={theme.colors.textSecondary} />
-          <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.textSecondary, letterSpacing: -0.1 }}>
-            Cancel
+          {isCreatingBill ? (
+            <ActivityIndicator
+              size="small"
+              color={theme.colors.textSecondary}
+            />
+          ) : (
+            <Save size={20} color={theme.colors.textSecondary} />
+          )}
+          <Text
+            style={[
+              styles.draftButtonText,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
+            Save Draft
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={{
-            flex: 2,
-            borderRadius: 16,
-            overflow: 'hidden',
-          }}
+          style={[
+            styles.saveButton,
+            {
+              backgroundColor: theme.colors.primary,
+              shadowColor: theme.colors.primary,
+              opacity: isCreatingBill ? 0.5 : 1,
+            },
+          ]}
+          disabled={isCreatingBill}
           onPress={() => handleSubmit(false)}
-          activeOpacity={0.8}
         >
           <LinearGradient
-            colors={[theme.colors.primary, theme.colors.primaryLight || theme.colors.primary]}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: 16,
-              paddingHorizontal: 20,
-              gap: 10,
-            }}
+            colors={[
+              theme.colors.primary,
+              theme.colors.primaryLight || theme.colors.primary,
+            ]}
+            style={styles.saveGradient}
           >
-            <Save size={18} color="#FFFFFF" />
-            <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.1 }}>
-              Create Bill
-            </Text>
+            <View style={styles.saveButtonContent}>
+              {isCreatingBill ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <FileText size={20} color="#FFFFFF" />
+              )}
+              <Text style={styles.saveButtonText}>
+                {isCreatingBill ? 'Creating...' : 'Create Bill'}
+              </Text>
+            </View>
           </LinearGradient>
         </TouchableOpacity>
       </View>
     </BlurView>
   );
+
+  const handleOpenProductModal = (index: number) => {
+    setCurrentItemIndex(index);
+    setShowProductModal(true);
+  };
+
+  const handleSelectProduct = (product:any) => {
+    if (currentItemIndex !== null) {
+      setBill((prevBill) => {
+        const updatedItems = prevBill.items.map((item, i) => {
+          if (i === currentItemIndex) {
+            // Prefill all fields
+            const updatedItem = {
+              ...item,
+              productName: product.name,
+              unitPrice: product.salePrice?.toString() || '',
+              taxRate: product.taxPercentage?.toString() || '',
+              quantity: '1',
+            };
+            return calculateItemTotals(updatedItem);
+          }
+          return item;
+        });
+        return { ...prevBill, items: updatedItems };
+      });
+      setShowProductModal(false);
+      setCurrentItemIndex(null);
+    }
+  };
+
+  const handleSelectSupplier = (supplier:any) => {
+    setBill({ ...bill, supplierId: supplier.id, supplierName: supplier.name });
+    setShowSupplierModal(false);
+  };
 
   return (
     <View
@@ -660,39 +702,24 @@ export default function PurchaseBillForm() {
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={{ paddingBottom: 20 }}
+        style={styles.headerGradient}
       >
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-          paddingTop: Platform.OS === 'android' ? 12 : 8,
-          paddingVertical: 8,
-        }}>
-          <View style={{ width: 40 }} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Printer size={20} color="#FFFFFF" />
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFFFFF', letterSpacing: -0.2 }}>
-              Printer Settings
-            </Text>
+        <SafeAreaView>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
+            </TouchableOpacity>
+
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>{id ? 'Edit Purchase Bill' : 'Create Purchase Bill'}</Text>
+            </View>
+
+            <View style={styles.placeholder} />
           </View>
-          <TouchableOpacity
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.2)',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            onPress={() => {}}
-          >
-            <X size={20} color="rgba(255, 255, 255, 0.9)" />
-          </TouchableOpacity>
-        </View>
+        </SafeAreaView>
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -708,22 +735,106 @@ export default function PurchaseBillForm() {
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
               tint={themeType}
-              style={{
-                borderRadius: 20,
-                padding: 20,
-                marginBottom: 20,
-                borderWidth: 1,
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                overflow: 'hidden',
-              }}
+              style={styles.section}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <Printer size={18} color={theme.colors.primary} />
-                <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.text, letterSpacing: -0.2 }}>
-                  Printer Type
+              <View style={styles.sectionHeader}>
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
+                  Bill Details
                 </Text>
               </View>
-              {/* ...Printer type options here, styled as in bill form... */}
+
+              {renderFormInput(
+                'Supplier',
+                bill.supplierName,
+                () => {},
+                'Select or add supplier',
+                <User size={18} color={theme.colors.textSecondary} />,
+                false,
+                () => setShowSupplierModal(true)
+              )}
+
+              {renderFormInput(
+                'Bill Number',
+                bill.billNumber,
+                (text) => setBill({ ...bill, billNumber: text }),
+                'Enter bill number'
+              )}
+
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1, marginRight: 12 }]}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Bill Date
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.inputContainer,
+                      {
+                        backgroundColor:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(255, 255, 255, 0.8)',
+                        borderColor:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(0, 0, 0, 0.06)',
+                      },
+                    ]}
+                    onPress={() => setShowDatePicker('billDate')}
+                  >
+                    <Text
+                      style={[styles.textInput, { color: theme.colors.text }]}
+                    >
+                      {bill.billDate.toLocaleDateString()}
+                    </Text>
+                    <View style={styles.inputIcon}>
+                      <Calendar size={18} color={theme.colors.textSecondary} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text
+                    style={[
+                      styles.label,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Due Date
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.inputContainer,
+                      {
+                        backgroundColor:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(255, 255, 255, 0.8)',
+                        borderColor:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(0, 0, 0, 0.06)',
+                      },
+                    ]}
+                    onPress={() => setShowDatePicker('dueDate')}
+                  >
+                    <Text
+                      style={[styles.textInput, { color: theme.colors.text }]}
+                    >
+                      {bill.dueDate.toLocaleDateString()}
+                    </Text>
+                    <View style={styles.inputIcon}>
+                      <Calendar size={18} color={theme.colors.textSecondary} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </BlurView>
           </Animated.View>
 
@@ -905,14 +1016,12 @@ export default function PurchaseBillForm() {
         {renderFooter()}
       </KeyboardAvoidingView>
 
-      {renderDropdownModal(
-        showSupplierDropdown,
-        () => setShowSupplierDropdown(false),
-        'Select Supplier',
-        suppliers,
-        bill.supplierId,
-        (value, label) => setBill({ ...bill, supplierId: value, supplierName: label || '' })
-      )}
+      <PartiesSelectionModal
+        visible={showSupplierModal}
+        onClose={() => setShowSupplierModal(false)}
+        onSelectParty={handleSelectSupplier}
+        contactType="SUPPLIER"
+      />
 
       {showDatePicker && (
         <DateTimePicker
@@ -931,6 +1040,13 @@ export default function PurchaseBillForm() {
           }}
         />
       )}
+
+      <ProductSelectionModal
+        visible={showProductModal}
+        onClose={() => setShowProductModal(false)}
+        onSelectProduct={handleSelectProduct}
+        selectedProducts={bill.items.map((item) => item.productName).filter(Boolean)}
+      />
     </View>
   );
 }
