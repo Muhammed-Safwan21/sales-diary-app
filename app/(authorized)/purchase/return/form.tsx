@@ -155,7 +155,7 @@ const allInvoices: Invoice[] = [
   },
 ];
 
-export default function PurchaseReturnScreen() {
+export default function PurchaseReturnFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const [showDatePicker, setShowDatePicker] = useState(false);

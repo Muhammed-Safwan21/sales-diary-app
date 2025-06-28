@@ -6,13 +6,13 @@ import {
   ArrowLeft,
   Edit,
   Trash2,
-  Wallet,
+  Banknote,
+  CreditCard,
+  Building2,
   CheckCircle,
-  Clock,
-  FileText,
-  User,
+  XCircle,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Platform,
@@ -24,67 +24,83 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Mock data for receipts
-const mockReceipts = [
+// Mock data for demonstration
+const mockBanks = [
   {
     id: '1',
-    receiptNumber: 'RCPT-001',
-    customerName: 'John Doe',
-    amount: 5000,
-    status: 'paid',
-    date: '2025-06-20',
-    paymentMode: 'Cash',
-    notes: 'Payment received in full.',
+    name: 'HDFC Bank',
+    accountNumber: 'XXXX1234',
+    ifsc: 'HDFC0001234',
+    balance: 120000.5,
+    type: 'Current',
+    status: 'active',
   },
   {
     id: '2',
-    receiptNumber: 'RCPT-002',
-    customerName: 'Jane Smith',
-    amount: 3000,
-    status: 'pending',
-    date: '2025-06-21',
-    paymentMode: 'Bank',
-    notes: '',
+    name: 'ICICI Bank',
+    accountNumber: 'XXXX5678',
+    ifsc: 'ICIC0005678',
+    balance: 50000,
+    type: 'Savings',
+    status: 'inactive',
+  },
+  {
+    id: '3',
+    name: 'SBI',
+    accountNumber: 'XXXX9876',
+    ifsc: 'SBIN0009876',
+    balance: 250000,
+    type: 'Current',
+    status: 'active',
+  },
+  {
+    id: '4',
+    name: 'Axis Bank',
+    accountNumber: 'XXXX4321',
+    ifsc: 'UTIB0004321',
+    balance: 10000,
+    type: 'Savings',
+    status: 'active',
   },
 ];
 
 const getStatusColor = (status: string, theme: any) => {
   switch (status) {
-    case 'paid':
+    case 'active':
       return theme.colors.success;
-    case 'pending':
-      return theme.colors.warning;
+    case 'inactive':
+      return theme.colors.error;
     default:
       return theme.colors.textSecondary;
   }
 };
 
-const getStatusIcon = (status: string, theme: any) => {
+const getStatusText = (status: string) => {
   switch (status) {
-    case 'paid':
-      return <CheckCircle size={14} color={theme.colors.success} />;
-    case 'pending':
-      return <Clock size={14} color={theme.colors.warning} />;
+    case 'active':
+      return 'Active';
+    case 'inactive':
+      return 'Inactive';
     default:
-      return <FileText size={14} color={theme.colors.textSecondary} />;
+      return 'Unknown';
   }
 };
 
-export default function CustomerReceiptView() {
+export default function BankView() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
-  // Find the receipt by id (mock)
-  const receipt = mockReceipts.find((r) => r.id === id) || mockReceipts[0];
+  // Find the bank by id (mock)
+  const bank = mockBanks.find((b) => b.id === id) || mockBanks[0];
 
   const handleEdit = () => {
-    router.push(`/receipts/customer/form?id=${receipt.id}`);
+    router.push(`/banks/form?id=${bank.id}`);
   };
   const handleDelete = () => {
     Alert.alert(
-      'Delete Receipt',
-      'Are you sure you want to delete this receipt?',
+      'Delete Bank',
+      'Are you sure you want to delete this bank account?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Delete', style: 'destructive', onPress: () => router.back() },
@@ -98,7 +114,7 @@ export default function CustomerReceiptView() {
         colors={
           themeType === 'dark'
             ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
-            : ['#06D6A0', '#34D399', 'rgba(52, 211, 153, 0.2)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -110,8 +126,8 @@ export default function CustomerReceiptView() {
               <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
-              <Wallet size={20} color="#FFFFFF" />
-              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Receipt</Text>
+              <Banknote size={20} color="#FFFFFF" />
+              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Bank</Text>
             </View>
             <View style={styles.headerActions}>
               <TouchableOpacity style={styles.iconButton} onPress={handleEdit}>
@@ -127,41 +143,37 @@ export default function CustomerReceiptView() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Receipt Details</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(receipt.status, theme) }]}> 
-              {getStatusIcon(receipt.status, theme)}
-              <Text style={styles.statusText}>{receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1)}</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Bank Details</Text>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(bank.status, theme) }]}> 
+              <Text style={styles.statusText}>{getStatusText(bank.status)}</Text>
             </View>
           </View>
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Receipt Number</Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{receipt.receiptNumber}</Text>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Name</Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{bank.name}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Customer</Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{receipt.customerName}</Text>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Account Number</Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{bank.accountNumber}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Date</Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{new Date(receipt.date).toLocaleDateString()}</Text>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>IFSC</Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{bank.ifsc}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Amount</Text>
-            <Text style={[styles.detailValue, { color: theme.colors.primary }]}>₹{receipt.amount.toLocaleString('en-IN')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Payment Mode</Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{receipt.paymentMode}</Text>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Type</Text>
+            <Text style={[styles.detailValue, { color: theme.colors.text }]}>{bank.type}</Text>
           </View>
         </BlurView>
-        {receipt.notes ? (
-          <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Notes</Text>
-            </View>
-            <Text style={[styles.notesText, { color: theme.colors.textSecondary }]}>{receipt.notes}</Text>
-          </BlurView>
-        ) : null}
+        <BlurView intensity={themeType === 'dark' ? 15 : 80} tint={themeType} style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Balance</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.colors.text }]}>Current Balance</Text>
+            <Text style={[styles.detailValue, { color: theme.colors.primary }]}>₹{bank.balance.toLocaleString('en-IN')}</Text>
+          </View>
+        </BlurView>
       </ScrollView>
     </View>
   );
@@ -235,9 +247,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -247,7 +256,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
-    marginLeft: 4,
   },
   detailRow: {
     flexDirection: 'row',
@@ -264,11 +272,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-  notesText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginTop: 4,
-    lineHeight: 20,
   },
 });

@@ -182,16 +182,7 @@ export default function SalesInvoiceForm() {
       }),
     });
   };
-
-  const handleCustomerSelect = (customer: any) => {
-    setInvoice({
-      ...invoice,
-      customerName: customer.name,
-      customerId: customer.id,
-    });
-    setShowCustomerDropdown(false);
-  };
-
+  
   const handleSubmit = async (isDraft: boolean = false) => {
     setIsCreatingInvoice(true);
     try {

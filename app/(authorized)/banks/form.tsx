@@ -8,16 +8,14 @@ import { StatusBar } from 'expo-status-bar';
 import {
   AlertCircle,
   ArrowLeft,
-  Building,
-  FileText,
-  Globe,
+  Building2,
+  CreditCard,
   Hash,
-  Mail,
-  MapPin,
-  Phone,
+  IndianRupee,
+  Landmark,
   Save,
-  User,
-  UserPlus,
+  FileText,
+  Plus,
 } from 'lucide-react-native';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -37,62 +35,48 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 
 // Form data interface
-interface CustomerFormData {
-  name: string;
-  businessName: string;
-  phone: string;
-  email: string;
-  gstNumber: string;
-  address: string;
-  state: string;
-  pincode: string;
-  city: string;
-  country: string;
-  pan: string;
-  notes: string;
+interface BankAccountFormData {
+  accountName: string;
+  bankName: string;
+  branchName: string;
+  ifscCode: string;
+  accountType: string;
   openingBalance: string;
-  openingBalanceType: 'CREDIT' | 'DEBIT';
 }
 
 // Validation rules
 const validationRules = {
-  name: {
-    required: 'Customer name is required',
+  accountName: {
+    required: 'Account name is required',
     minLength: {
       value: 2,
-      message: 'Name must be at least 2 characters',
+      message: 'Account name must be at least 2 characters',
     },
   },
-  phone: {
-    required: 'Phone number is required',
+  accountNumber: {
+    required: 'Account number is required',
+    minLength: {
+      value: 8,
+      message: 'Account number must be at least 8 digits',
+    },
     pattern: {
-      value: /^[0-9]{10}$/,
-      message: 'Please enter a valid 10-digit phone number',
+      value: /^[0-9]{8,18}$/,
+      message: 'Please enter a valid account number (8-18 digits)',
     },
   },
-  email: {
-    pattern: {
-      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-      message: 'Please enter a valid email address',
+  bankName: {
+    required: 'Bank name is required',
+    minLength: {
+      value: 2,
+      message: 'Bank name must be at least 2 characters',
     },
   },
-  gstNumber: {
-    pattern: {
-      value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
-      message: 'Please enter a valid GST number (15 characters)',
-    },
-  },
-  pan: {
-    pattern: {
-      value: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
-      message: 'Please enter a valid PAN number (10 characters)',
-    },
-  },
-  pincode: {
-    pattern: {
-      value: /^[0-9]{6}$/,
-      message: 'Please enter a valid 6-digit pincode',
-    },
+  ifscCode: {
+    required: 'IFSC code is required',
+    // pattern: {
+    //   value: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+    //   message: 'Please enter a valid IFSC code (e.g., SBIN0001234)',
+    // },
   },
   openingBalance: {
     pattern: {
@@ -102,7 +86,7 @@ const validationRules = {
   },
 };
 
-export default function AddCustomerScreen() {
+export default function BankAccountFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -117,44 +101,33 @@ export default function AddCustomerScreen() {
     reset,
     setValue,
     watch,
-  } = useForm<CustomerFormData>({
+  } = useForm<BankAccountFormData>({
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {
-      name: '',
-      businessName: '',
-      phone: '',
-      email: '',
-      gstNumber: '',
-      address: '',
-      state: '',
-      pincode: '',
-      city: '',
-      country: 'India',
-      pan: '',
-      notes: '',
+      accountName: '',
+      bankName: '',
+      branchName: '',
+      ifscCode: '',
+      accountType: 'Savings',
       openingBalance: '0',
-      openingBalanceType: 'CREDIT',
     },
   });
 
-  // Watch opening balance type for radio buttons
-  // const openingBalanceType = watch('openingBalanceType'); // Removed since hardcoded
-
-  // Create customer mutation
-  const { mutate: createCustomer, isPending } = useMutation({
-    mutationFn: async (customerData: any) => {
-      console.log('Creating customer with data:', customerData);
-      const response = await apiClient.post('/contacts', customerData);
-      console.log('Customer creation response:', response);
+  // Create bank account mutation
+  const { mutate: createBankAccount, isPending } = useMutation({
+    mutationFn: async (bankData: any) => {
+      console.log('Creating bank account with data:', bankData);
+      const response = await apiClient.post('/chart-of-accounts', bankData);
+      console.log('Bank account creation response:', response);
       return response.data;
     },
     onSuccess: (data) => {
-      console.log('Customer created successfully:', data);
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      console.log('Bank account created successfully:', data);
+      queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
 
-      Alert.alert('Success', 'Customer added successfully!', [
+      Alert.alert('Success', 'Bank account added successfully!', [
         {
           text: 'OK',
           onPress: () => router.back(),
@@ -162,8 +135,8 @@ export default function AddCustomerScreen() {
       ]);
     },
     onError: (error: any) => {
-      console.error('Customer creation error:', error);
-      let errorMessage = 'Failed to add customer. Please try again.';
+      console.error('Bank account creation error:', JSON.stringify(error));
+      let errorMessage = 'Failed to add bank account. Please try again.';
 
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -178,48 +151,23 @@ export default function AddCustomerScreen() {
   });
 
   // Form submission handler
-  const onSubmit = (data: CustomerFormData) => {
-    const cleanPhone = data.phone.replace(/\D/g, '');
-
-    // Prepare data for API - matching the cURL structure exactly
-    const customerPayload: any = {
-      name: data.name.trim(),
-      contactType: 'CUSTOMER',
-      mobile: `+91 ${cleanPhone}`,
-      phone: `+91 ${cleanPhone}`,
+  const onSubmit = (data: BankAccountFormData) => {
+    // Prepare data for API
+    const bankAccountPayload: any = {
+      accountHolder: data.accountName.trim(),
+      name: data.bankName.trim(),
+      bankBranch: data.branchName.trim() || '',
+      ifscCode: data.ifscCode.trim().toUpperCase(),
+      accountType: data.accountType,
       openingBalance: parseFloat(data.openingBalance) || 0,
-      openingBalanceType: 'DEBIT', // Hardcoded as requested
+      ledgerType: "BANK",
       
       // Required fields from Redux state
       adminId: Number(user?.id) || parseInt(user?.adminId) || 1,
       branchId: Number(branchInfo?.id) || parseInt(branchInfo?.branchId) || 1,
       financialYearId: Number(financialYear?.id) || parseInt(financialYear?.financialYearId) || 1,
     };
-
-    // Add optional fields - include empty strings to match API expectations
-    customerPayload.businessName = data.businessName.trim() || '';
-    customerPayload.email = data.email.trim() || '';
-    customerPayload.address = data.address.trim() || '';
-    customerPayload.city = data.city.trim() || '';
-    customerPayload.state = data.state.trim() || '';
-    customerPayload.country = data.country.trim() || 'India';
-    customerPayload.pincode = data.pincode.trim() || '';
-    customerPayload.notes = data.notes.trim() || '';
-    console.log("customerPayloadcustomerPayloadcustomerPayload",customerPayload)
-    // Business information
-    if (data.gstNumber.trim()) {
-      customerPayload.gstin = data.gstNumber.trim().toUpperCase();
-    }
-    
-    if (data.pan.trim()) {
-      customerPayload.pan = data.pan.trim().toUpperCase();
-    }
-
-    // Add image field as empty string (from cURL example)
-    customerPayload.image = '';
-
-    console.log('Submitting customer data:', customerPayload);
-    createCustomer(customerPayload);
+    createBankAccount(bankAccountPayload);
   };
 
   // Get input border style based on error state
@@ -233,7 +181,7 @@ export default function AddCustomerScreen() {
   });
 
   const renderFormInput = (
-    name: keyof CustomerFormData,
+    name: keyof BankAccountFormData,
     label: string,
     placeholder: string,
     icon: React.ReactNode,
@@ -278,7 +226,7 @@ export default function AddCustomerScreen() {
             >
               {React.cloneElement(icon as React.ReactElement, {
                 color: errors[name] ? '#EF4444' : theme.colors.primary,
-              }as any)}
+              } as any)}
             </View>
             <TextInput
               style={[
@@ -313,6 +261,15 @@ export default function AddCustomerScreen() {
     </View>
   );
 
+  const formatCurrency = (amount: string) => {
+    const numAmount = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+    }).format(numAmount);
+  };
+
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -341,8 +298,8 @@ export default function AddCustomerScreen() {
             </TouchableOpacity>
 
             <View style={styles.headerTitleContainer}>
-              <UserPlus size={20} color="#FFFFFF" />
-              <Text style={styles.headerTitle}>Add Customer</Text>
+              <Plus size={20} color="#FFFFFF" />
+              <Text style={styles.headerTitle}>Add Bank Account</Text>
             </View>
 
             <View style={styles.placeholder} />
@@ -359,7 +316,7 @@ export default function AddCustomerScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Personal Information Section */}
+          {/* Account Details Section */}
           <Animated.View entering={FadeInUp.delay(100)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -378,60 +335,74 @@ export default function AddCustomerScreen() {
               />
 
               <View style={styles.sectionHeader}>
-                <User size={18} color={theme.colors.primary} />
+                <CreditCard size={18} color={theme.colors.primary} />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
-                  Personal Information
+                  Account Details
                 </Text>
               </View>
 
               {renderFormInput(
-                'name',
-                'Customer Name',
-                'Enter customer name',
-                <User size={18} />,
+                'accountName',
+                'Account Name',
+                'Enter account holder name',
+                <CreditCard size={18} />,
                 'default',
                 'words',
                 false,
                 true,
-                validationRules.name
+                validationRules.accountName
               )}
 
-              {renderFormInput(
-                'businessName',
-                'Business Name',
-                'Enter business name (optional)',
-                <Building size={18} />
-              )}
-
-              {renderFormInput(
-                'phone',
-                'Phone Number',
-                'Enter 10-digit phone number',
-                <Phone size={18} />,
-                'phone-pad',
-                'none',
-                false,
-                true,
-                validationRules.phone
-              )}
-
-              {renderFormInput(
-                'email',
-                'Email Address',
-                'Enter email address (optional)',
-                <Mail size={18} />,
-                'email-address',
-                'none',
-                false,
-                false,
-                { pattern: validationRules.email.pattern }
-              )}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+                  Account Type
+                </Text>
+                <Controller
+                  control={control}
+                  name="accountType"
+                  render={({ field: { onChange, value } }) => (
+                    <View style={styles.accountTypeContainer}>
+                      {['Savings', 'Current', 'Other'].map((type) => (
+                        <TouchableOpacity
+                          key={type}
+                          style={[
+                            styles.accountTypeButton,
+                            {
+                              backgroundColor: value === type 
+                                ? theme.colors.primary 
+                                : themeType === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.05)'
+                                  : 'rgba(255, 255, 255, 0.8)',
+                              borderColor: value === type 
+                                ? theme.colors.primary 
+                                : 'rgba(255, 255, 255, 0.1)',
+                            }
+                          ]}
+                          onPress={() => onChange(type)}
+                          disabled={isPending}
+                        >
+                          <Text style={[
+                            styles.accountTypeText,
+                            { 
+                              color: value === type 
+                                ? '#FFFFFF' 
+                                : theme.colors.text 
+                            }
+                          ]}>
+                            {type}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                />
+              </View>
             </BlurView>
           </Animated.View>
 
-          {/* Business Information Section */}
+          {/* Bank Information Section */}
           <Animated.View entering={FadeInUp.delay(200)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -450,41 +421,48 @@ export default function AddCustomerScreen() {
               />
 
               <View style={styles.sectionHeader}>
-                <FileText size={18} color={theme.colors.accent} />
+                <Building2 size={18} color={theme.colors.accent} />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
-                  Business Information
+                  Bank Information
                 </Text>
               </View>
 
               {renderFormInput(
-                'gstNumber',
-                'GST Number',
-                'Enter GST number (15 characters)',
+                'bankName',
+                'Bank Name',
+                'Enter bank name',
+                <Building2 size={18} />,
+                'default',
+                'words',
+                false,
+                true,
+                validationRules.bankName
+              )}
+
+              {renderFormInput(
+                'branchName',
+                'Branch Name',
+                'Enter branch name',
+                <Landmark size={18} />
+              )}
+
+              {renderFormInput(
+                'ifscCode',
+                'IFSC Code',
+                'Enter IFSC code',
                 <Hash size={18} />,
                 'default',
                 'characters',
                 false,
-                false,
-                { pattern: validationRules.gstNumber.pattern }
-              )}
-
-              {renderFormInput(
-                'pan',
-                'PAN Number',
-                'Enter PAN number (10 characters)',
-                <FileText size={18} />,
-                'default',
-                'characters',
-                false,
-                false,
-                { pattern: validationRules.pan.pattern }
+                true,
+                validationRules.ifscCode
               )}
             </BlurView>
           </Animated.View>
 
-          {/* Address Information Section */}
+          {/* Financial Information Section */}
           <Animated.View entering={FadeInUp.delay(300)}>
             <BlurView
               intensity={themeType === 'dark' ? 15 : 80}
@@ -503,103 +481,7 @@ export default function AddCustomerScreen() {
               />
 
               <View style={styles.sectionHeader}>
-                <MapPin size={18} color={theme.colors.success} />
-                <Text
-                  style={[styles.sectionTitle, { color: theme.colors.text }]}
-                >
-                  Address Information
-                </Text>
-              </View>
-
-              {renderFormInput(
-                'address',
-                'Complete Address',
-                'Enter complete address (optional)',
-                <MapPin size={18} />,
-                'default',
-                'sentences',
-                true
-              )}
-
-              <View style={styles.formRow}>
-                <Animated.View
-                  entering={FadeInDown.delay(50).springify()}
-                  style={[styles.halfWidth, { marginRight: 8 }]}
-                >
-                  {renderFormInput(
-                    'city',
-                    'City',
-                    'Enter city',
-                    <Building size={18} />
-                  )}
-                </Animated.View>
-
-                <Animated.View
-                  entering={FadeInDown.delay(100).springify()}
-                  style={[styles.halfWidth, { marginLeft: 8 }]}
-                >
-                  {renderFormInput(
-                    'state',
-                    'State',
-                    'Enter state',
-                    <Globe size={18} />
-                  )}
-                </Animated.View>
-              </View>
-
-              <View style={styles.formRow}>
-                <Animated.View
-                  entering={FadeInDown.delay(150).springify()}
-                  style={[styles.halfWidth, { marginRight: 8 }]}
-                >
-                  {renderFormInput(
-                    'pincode',
-                    'Pincode',
-                    'Enter 6-digit pincode',
-                    <Hash size={18} />,
-                    'numeric',
-                    'none',
-                    false,
-                    false,
-                    { pattern: validationRules.pincode.pattern }
-                  )}
-                </Animated.View>
-
-                <Animated.View
-                  entering={FadeInDown.delay(200).springify()}
-                  style={[styles.halfWidth, { marginLeft: 8 }]}
-                >
-                  {renderFormInput(
-                    'country',
-                    'Country',
-                    'Enter country',
-                    <Globe size={18} />
-                  )}
-                </Animated.View>
-              </View>
-            </BlurView>
-          </Animated.View>
-
-          {/* Financial Information Section */}
-          <Animated.View entering={FadeInUp.delay(400)}>
-            <BlurView
-              intensity={themeType === 'dark' ? 15 : 80}
-              tint={themeType}
-              style={styles.section}
-            >
-              <LinearGradient
-                colors={[
-                  `${theme.colors.warning}08`,
-                  `${theme.colors.warning}04`,
-                  'transparent',
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.sectionGradientOverlay}
-              />
-
-              <View style={styles.sectionHeader}>
-                <FileText size={18} color={theme.colors.warning} />
+                <IndianRupee size={18} color={theme.colors.success} />
                 <Text
                   style={[styles.sectionTitle, { color: theme.colors.text }]}
                 >
@@ -610,8 +492,8 @@ export default function AddCustomerScreen() {
               {renderFormInput(
                 'openingBalance',
                 'Opening Balance',
-                'Enter opening balance (0 if none)',
-                <Hash size={18} />,
+                'Enter opening balance',
+                <IndianRupee size={18} />,
                 'numeric',
                 'none',
                 false,
@@ -619,37 +501,6 @@ export default function AddCustomerScreen() {
                 { pattern: validationRules.openingBalance.pattern }
               )}
 
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
-                  Opening Balance Type
-                </Text>
-                <View style={styles.infoContainer}>
-                  <View style={[
-                    styles.infoBox,
-                    { 
-                      backgroundColor: `${theme.colors.primary}20`,
-                      borderColor: theme.colors.primary
-                    }
-                  ]}>
-                    <Text style={[
-                      styles.infoText,
-                      { color: theme.colors.primary }
-                    ]}>
-                      Set to DEBIT (They owe you)
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {renderFormInput(
-                'notes',
-                'Notes',
-                'Add any notes about the customer (optional)',
-                <FileText size={18} />,
-                'default',
-                'sentences',
-                true
-              )}
             </BlurView>
           </Animated.View>
         </ScrollView>
@@ -687,7 +538,7 @@ export default function AddCustomerScreen() {
                 ) : (
                   <>
                     <Save size={20} color="#FFFFFF" />
-                    <Text style={styles.saveButtonText}>Save Customer</Text>
+                    <Text style={styles.saveButtonText}>Save Bank Account</Text>
                   </>
                 )}
               </LinearGradient>
@@ -827,27 +678,40 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '500',
   },
-  formRow: {
+  accountTypeContainer: {
     flexDirection: 'row',
-    marginBottom: 0,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  halfWidth: {
-    flex: 1,
-  },
-  infoContainer: {
-    marginTop: 8,
-  },
-  infoBox: {
-    paddingVertical: 12,
+  accountTypeButton: {
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  accountTypeText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  balanceDisplay: {
+    marginBottom: 20,
+  },
+  balanceCard: {
+    padding: 16,
+    borderRadius: 16,
     borderWidth: 1.5,
     alignItems: 'center',
   },
-  infoText: {
-    fontSize: 14,
+  balanceLabel: {
+    fontSize: 12,
     fontWeight: '600',
-    textAlign: 'center',
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    fontSize: 20,
+    fontWeight: '700',
   },
   footer: {
     borderTopLeftRadius: 24,

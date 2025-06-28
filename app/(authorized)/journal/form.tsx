@@ -44,7 +44,7 @@ const creditAccounts: DropdownItem[] = [
   { id: 'liabilities', label: 'Current Liabilities', value: 'liabilities' },
 ];
 
-export default function AddJournalScreen() {
+export default function JournalFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const [showDatePicker, setShowDatePicker] = useState(false);

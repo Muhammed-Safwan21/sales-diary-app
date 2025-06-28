@@ -3,7 +3,9 @@ const API = {
 
     LOGIN:"auth/login",
     REFRESH:"auth/refresh",
-    PARTIES:"contacts",
+    PARTIES:"contacts/",
+    TRANSACTIONS:"transactions/",
+    CHART_OF_ACCOUNTS:"chart-of-accounts/",
 
 
     UNITS:"units",

@@ -4,7 +4,9 @@ const QUERY_KEY = {
     TAX:"tax",
     HSN_SAC:"hsn-sac",
     PRODUCTS:"products",
-    PARTIES:"parties",
+    PARTIES:"parties/",
+    TRANSACTIONS:"transactions/",
+    CHART_OF_ACCOUNTS:"chart-of-accounts/",
     BANKING:"banking",
     ACCOUNT_CATEGORIES:"acount-categories",
 

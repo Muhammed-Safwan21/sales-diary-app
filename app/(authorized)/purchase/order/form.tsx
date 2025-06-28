@@ -119,13 +119,12 @@ const statusOptions: DropdownItem[] = [
   { id: 'sent', label: 'Sent to Supplier', value: 'sent' },
 ];
 
-export default function CreatePurchaseOrderScreen() {
+export default function PurchaseOrderFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const [showOrderDatePicker, setShowOrderDatePicker] = useState(false);
   const [showRequiredDatePicker, setShowRequiredDatePicker] = useState(false);
   const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   const [purchaseOrderForm, setPurchaseOrderForm] = useState<PurchaseOrderForm>(
     {

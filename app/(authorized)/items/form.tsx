@@ -1,0 +1,2119 @@
+import CategorySelectionModal from '@/components/modal/categorySelectionModal';
+import HSNSelectionModal from '@/components/modal/hsnSelectionModal';
+import TaxSelectionModal from '@/components/modal/taxSelection';
+import UnitSelectionModal from '@/components/modal/unitSelectionModal';
+import API from '@/config/api';
+import QUERY_KEY from '@/config/queryKey';
+import { useTheme } from '@/context/ThemeContext';
+import { apiClient } from '@/services/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { BlurView } from 'expo-blur';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BarChart3,
+  Camera,
+  ChevronDown,
+  FileText,
+  Folder,
+  Hash,
+  Image as ImageIcon,
+  IndianRupee,
+  Info,
+  MoreHorizontal,
+  Package,
+  QrCode,
+  Save,
+  Sparkles,
+  Tag,
+  TrendingUp,
+  Upload,
+  X,
+} from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Animated, { FadeIn, FadeInUp, FadeOut } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+interface FormData {
+  name: string;
+  itemCode: string;
+  barcode: string;
+  category: string;
+  categoryId: string;
+  hsnCode: string;
+  hsnCodeId: string;
+  purchasePrice: string;
+  sellingPrice: string;
+  stock: string;
+  openingRate: string;
+  unit: string;
+  unitId: string;
+  lowStockAlert: string;
+  gstRate: string;
+  taxPercentage: string;
+  description: string;
+  includeGst: boolean;
+}
+
+interface Unit {
+  id: string;
+  unit: string;
+  formalName: string;
+  decimalValues: number;
+  branchId: number;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  category: string;
+  branchId: number;
+  parentCategoryId: string | null;
+  adminId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+interface TaxRate {
+  id: string;
+  rate: number;
+  name: string;
+  type: string;
+  percentage: string;
+}
+
+interface UploadedImage {
+  filename: string;
+  originalname: string;
+  mimetype: string;
+  size: number;
+  url: string;
+}
+
+interface HSNCode {
+  id: string;
+  code: string;
+  description: string;
+  gstRate?: number;
+  category?: string;
+}
+
+interface ProductVariant {
+  name: string;
+  code: string;
+  description: string;
+  rate: number;
+  taxPercentage: number;
+  taxAmount: number;
+  quantity: number;
+  openingQuantity: number;
+  openingRate: number;
+  salePrice: number;
+  costPrice: number;
+  reorderQuantity: number;
+  imageUrl: string;
+  sku: string;
+  barcode: string;
+  includeTax: boolean;
+  status: 'STOCK' | 'OUT_OF_STOCK';
+  branchId: number;
+  adminId: number;
+  isAvailable: boolean;
+  unitId: number;
+}
+
+interface CreateProductRequest {
+  name: string;
+  description: string;
+  imageUrl: string;
+  itemType: 'PRODUCT';
+  categoryId: number;
+  branchId: number;
+  adminId: number;
+  hsnCodeId: number;
+  variants: ProductVariant[];
+}
+
+export default function AddItemScreen() {
+  const { theme, themeType }: any = useTheme();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const adminId = useSelector((state: any) => state.auth?.user?.id);
+  const branchId = useSelector((state: any) => state.auth?.branchInfo?.id);
+
+  const [showUnitModal, setShowUnitModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showHSNModal, setShowHSNModal] = useState(false);
+  const [showTaxModal, setShowTaxModal] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showMoreSections, setShowMoreSections] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isScanned, setIsScanned] = useState(false); // Add new state
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isValid, isDirty },
+  } = useForm<FormData>({
+    defaultValues: {
+      name: '',
+      itemCode: '',
+      barcode: '',
+      category: 'Select Category',
+      categoryId: '',
+      hsnCode: '',
+      hsnCodeId: '',
+      purchasePrice: '',
+      sellingPrice: '',
+      stock: '',
+      openingRate: '',
+      unit: 'Select Unit',
+      unitId: '',
+      lowStockAlert: '',
+      gstRate: 'Select GST Rate',
+      taxPercentage: '',
+      description: '',
+      includeGst: true,
+    },
+    mode: 'onChange',
+  });
+
+  const purchasePrice = watch('purchasePrice');
+  const sellingPrice = watch('sellingPrice');
+  const selectedUnit = watch('unit');
+  const selectedCategory = watch('category');
+  const selectedGstRate = watch('gstRate');
+  const selectedHsnCode = watch('hsnCode');
+
+  const createProductMutation = useMutation({
+    mutationFn: async (productData: CreateProductRequest) => {
+      return await apiClient.post(API.PRODUCTS || '/products', productData);
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY.PRODUCTS] });
+      Alert.alert('Success', 'Product created successfully!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    },
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.message || 'Failed to create product';
+      Alert.alert('Error', errorMessage);
+    },
+  });
+
+  const handleUnitSelect = (unit: Unit) => {
+    setValue('unit', unit.unit, { shouldValidate: true });
+    setValue('unitId', unit.id, { shouldValidate: true });
+  };
+
+  const handleCategorySelect = (category: Category) => {
+    setValue('category', category.name, { shouldValidate: true });
+    setValue('categoryId', category.id, { shouldValidate: true });
+  };
+
+  const handleHSNSelect = (hsn: HSNCode) => {
+    setValue('hsnCode', hsn.code, { shouldValidate: true });
+    setValue('hsnCodeId', hsn.id, { shouldValidate: true });
+    if (hsn.gstRate !== undefined) {
+      setValue('gstRate', `${hsn.gstRate}%`, { shouldValidate: true });
+      setValue('taxPercentage', hsn.gstRate.toString(), {
+        shouldValidate: true,
+      });
+    }
+  };
+
+  const handleTaxSelect = (tax: TaxRate) => {
+    setValue('gstRate', `${tax.percentage}%`, { shouldValidate: true });
+    setValue('taxPercentage', tax.percentage, { shouldValidate: true });
+  };
+
+  const calculateProfit = () => {
+    const purchase = parseFloat(purchasePrice) || 0;
+    const selling = parseFloat(sellingPrice) || 0;
+    return purchase === 0 || selling === 0
+      ? { amount: 0, percentage: 0 }
+      : {
+          amount: selling - purchase,
+          percentage: parseFloat(
+            (((selling - purchase) / purchase) * 100).toFixed(2)
+          ),
+        };
+  };
+
+  const profit = calculateProfit();
+
+  const generateSKU = (name: string, categoryId: string): string => {
+    const nameCode = name.substring(0, 3).toUpperCase();
+    const catCode = categoryId ? categoryId.substring(0, 2) : 'XX';
+    const timestamp = Date.now().toString().slice(-4);
+    return `${nameCode}${catCode}${timestamp}`;
+  };
+
+  const generateBarcode = (): string => {
+    return (
+      Date.now().toString() +
+      Math.floor(Math.random() * 1000)
+        .toString()
+        .padStart(3, '0')
+    );
+  };
+
+  const calculateTaxAmount = (
+    price: number,
+    taxPercentage: number,
+    includeTax: boolean
+  ): number => {
+    return includeTax
+      ? price - price / (1 + taxPercentage / 100)
+      : price * (taxPercentage / 100);
+  };
+
+  const handleBarCodeScanned = ({ data }: { data: string }) => {
+    if (isScanned) return;
+    setIsScanned(true);
+    setShowBarcodeScanner(false);
+    setValue('barcode', data, { shouldValidate: true });
+    console.log('Barcode set:', data); // Debug log
+    Alert.alert('Success', `Barcode scanned: ${data}`, [
+      {
+        text: 'OK',
+        onPress: () => {
+          setIsScanned(false);
+          console.log('Form barcode value:', watch('barcode')); // Debug form state
+        },
+      },
+    ]);
+  };
+
+  const scanBarcode = async () => {
+    try {
+      console.log('Requesting camera permission:', permission); // Debug
+      if (!permission) {
+        const { status, canAskAgain } = await requestPermission();
+        console.log(
+          'Permission status:',
+          status,
+          'Can ask again:',
+          canAskAgain
+        ); // Debug
+        if (status !== 'granted') {
+          if (canAskAgain) {
+            Alert.alert(
+              'Permission Required',
+              'Camera permission is required to scan barcodes. Please allow camera access.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Try Again', onPress: scanBarcode },
+              ]
+            );
+          } else {
+            Alert.alert(
+              'Permission Required',
+              'Camera permission was denied. Please enable it in Settings to scan barcodes.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Open Settings',
+                  onPress: () => Linking.openSettings(),
+                },
+              ]
+            );
+          }
+          return;
+        }
+      } else if (!permission.granted) {
+        if (permission.canAskAgain) {
+          const { status } = await requestPermission();
+          console.log('Retry permission status:', status); // Debug
+          if (status !== 'granted') {
+            Alert.alert(
+              'Permission Required',
+              'Camera permission is required to scan barcodes. Please allow camera access.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Try Again', onPress: scanBarcode },
+              ]
+            );
+            return;
+          }
+        } else {
+          Alert.alert(
+            'Permission Required',
+            'Camera permission was denied. Please enable it in Settings to scan barcodes.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          );
+          return;
+        }
+      }
+      console.log('Opening barcode scanner'); // Debug
+      setShowBarcodeScanner(true);
+    } catch (error) {
+      console.error('Error requesting camera permission:', error);
+      Alert.alert(
+        'Error',
+        'Failed to request camera permission. Please try again.'
+      );
+    }
+  };
+
+  const onSubmit = (data: FormData) => {
+    if (!adminId || !branchId) {
+      Alert.alert('Error', 'User information not found. Please login again.');
+      return;
+    }
+
+    if (!data.categoryId) {
+      Alert.alert('Error', 'Please select a category');
+      return;
+    }
+
+    if (!data.unitId) {
+      Alert.alert('Error', 'Please select a unit');
+      return;
+    }
+
+    const numericTaxPercentage = parseFloat(data.taxPercentage) || 0;
+    const costPrice = parseFloat(data.purchasePrice) || 0;
+    const salePrice = parseFloat(data.sellingPrice) || 0;
+    const quantity = parseInt(data.stock) || 0;
+    const reorderQuantity = parseInt(data.lowStockAlert) || 0;
+    const openingRate = parseFloat(data.openingRate) || 0;
+
+    const taxAmount = calculateTaxAmount(
+      salePrice,
+      numericTaxPercentage,
+      data.includeGst
+    );
+
+    const variant: ProductVariant = {
+      name: data.name,
+      code: data.itemCode || generateSKU(data.name, data.categoryId),
+      description: data.description || '',
+      rate: salePrice,
+      taxPercentage: numericTaxPercentage,
+      taxAmount: taxAmount,
+      quantity: quantity,
+      openingQuantity: quantity,
+      openingRate: openingRate,
+      salePrice: salePrice,
+      costPrice: costPrice,
+      reorderQuantity: reorderQuantity,
+      imageUrl: uploadedImages[0]?.url || '',
+      sku: data.itemCode || generateSKU(data.name, data.categoryId),
+      barcode: data.barcode || generateBarcode(),
+      includeTax: data.includeGst,
+      status: quantity > 0 ? 'STOCK' : 'OUT_OF_STOCK',
+      branchId: Number(branchId),
+      adminId: Number(adminId),
+      isAvailable: true,
+      unitId: Number(data.unitId),
+    };
+
+    const productData: CreateProductRequest = {
+      name: data.name,
+      description: data.description || '',
+      imageUrl: uploadedImages[0]?.url || '',
+      itemType: 'PRODUCT',
+      categoryId: Number(data.categoryId),
+      branchId: Number(branchId),
+      adminId: Number(adminId),
+      hsnCodeId: Number(data.hsnCodeId) || 0,
+      variants: [variant],
+    };
+
+    createProductMutation.mutate(productData);
+  };
+
+  const pickImage = async () => {
+    try {
+      console.log('Requesting media library permission');
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log('Media library permission result:', permissionResult);
+
+      if (!permissionResult.granted) {
+        if (permissionResult.canAskAgain) {
+          Alert.alert(
+            'Permission Required',
+            'Permission to access your photo library is required to select images. Please allow access.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Try Again', onPress: pickImage },
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Permission Required',
+            'Photo library access was denied. Please enable it in Settings to select images.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          );
+        }
+        return;
+      }
+
+      console.log('Launching image library');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        console.log('Image selected:', result.assets[0].uri);
+        await uploadImage(result.assets[0]);
+      } else {
+        console.log('Image selection canceled');
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to select image. Please try again.');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert(
+          'Permission Required',
+          'Permission to access camera is required!'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadImage(result.assets[0]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
+
+  const uploadImageXHR = async (imageAsset: ImagePicker.ImagePickerAsset) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      const fileExtension =
+        imageAsset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+      const fileName =
+        imageAsset.fileName || `image_${Date.now()}.${fileExtension}`;
+
+      formData.append('file', {
+        uri:
+          Platform.OS === 'ios'
+            ? imageAsset.uri.replace('file://', '')
+            : imageAsset.uri,
+        type: mimeType,
+        name: fileName,
+      } as any);
+
+      xhr.open('POST', 'https://api.ybill.in/v1/files/upload');
+      xhr.setRequestHeader('Accept', '*/*');
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } catch (e) {
+            reject(
+              new Error(`Invalid JSON: ${xhr.responseText.substring(0, 100)}`)
+            );
+          }
+        } else {
+          reject(
+            new Error(
+              `HTTP ${xhr.status}: ${xhr.responseText.substring(0, 100)}`
+            )
+          );
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error occurred'));
+      xhr.ontimeout = () => reject(new Error('Request timed out'));
+      xhr.timeout = 30000;
+      xhr.send(formData);
+    });
+  };
+
+  const uploadImage = async (imageAsset: ImagePicker.ImagePickerAsset) => {
+    try {
+      setIsUploading(true);
+      let responseData;
+      try {
+        const formData = new FormData();
+        const fileExtension =
+          imageAsset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+        const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+        const fileName =
+          imageAsset.fileName || `image_${Date.now()}.${fileExtension}`;
+
+        formData.append('file', {
+          uri:
+            Platform.OS === 'ios'
+              ? imageAsset.uri.replace('file://', '')
+              : imageAsset.uri,
+          type: mimeType,
+          name: fileName,
+        } as any);
+
+        const response = await fetch('https://api.ybill.in/v1/files/upload', {
+          method: 'POST',
+          headers: {
+            Accept: '*/*',
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formData,
+        });
+
+        const responseText = await response.text();
+        if (!response.ok) {
+          throw new Error(
+            `Fetch failed: HTTP ${response.status} - ${responseText}`
+          );
+        }
+        responseData = JSON.parse(responseText);
+      } catch (fetchError) {
+        console.error('Fetch upload failed, trying XHR:', fetchError);
+        responseData = await uploadImageXHR(imageAsset);
+      }
+
+      if (responseData.success && responseData.data) {
+        setUploadedImages((prev) => [...prev, responseData.data]);
+        Alert.alert('Success', 'Image uploaded successfully!');
+      } else {
+        throw new Error(
+          responseData.message ||
+            `Upload failed: ${JSON.stringify(responseData)}`
+        );
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      Alert.alert('Upload Error', `Failed to upload image: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    Alert.alert('Remove Image', 'Are you sure you want to remove this image?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () =>
+          setUploadedImages((prev) => prev.filter((_, i) => i !== index)),
+      },
+    ]);
+  };
+
+  const showImageOptions = () => {
+    Alert.alert('Add Image', 'Choose an option', [
+      { text: 'Camera', onPress: takePhoto },
+      { text: 'Gallery', onPress: pickImage },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const renderFormInput = (
+    name: keyof FormData,
+    label: string,
+    placeholder: string,
+    icon: React.ReactNode,
+    keyboardType: any = 'default',
+    multiline = false,
+    required = false,
+    rules: any = {}
+  ) => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        {icon}
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          {label}
+          {required && <Text style={{ color: '#EF4444' }}>*</Text>}
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name={name}
+        rules={{
+          ...(required && { required: `${label} is required` }),
+          ...rules,
+        }}
+        render={({ field: { onChange, onBlur, value } }: any) => (
+          <View
+            style={[
+              styles.inputContainer,
+              multiline && styles.multilineContainer,
+              errors[name] && styles.inputError,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor: errors[name]
+                  ? '#EF4444'
+                  : themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+          >
+            <TextInput
+              style={[
+                styles.textInput,
+                multiline && styles.multilineInput,
+                { color: theme.colors.text },
+              ]}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder={placeholder}
+              placeholderTextColor={theme.colors.textSecondary}
+              keyboardType={keyboardType}
+              multiline={multiline}
+              textAlignVertical={multiline ? 'top' : 'center'}
+            />
+          </View>
+        )}
+      />
+      {errors[name] && (
+        <Text style={styles.errorText}>{errors[name]?.message}</Text>
+      )}
+    </View>
+  );
+
+  const renderBarcodeInput = () => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <QrCode size={16} color={theme.colors.primary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          Barcode
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name="barcode"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <View style={styles.barcodeContainer}>
+            <TextInput
+              style={[
+                styles.barcodeInput,
+                errors.barcode && styles.inputError,
+                {
+                  backgroundColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(255, 255, 255, 0.8)',
+                  borderColor: errors.barcode
+                    ? theme.colors.error
+                    : themeType === 'dark'
+                    ? 'rgba(255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+                  color: theme.colors.text,
+                },
+              ]}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="Enter or scan barcode"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+            <TouchableOpacity
+              style={[
+                styles.scanButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={scanBarcode}
+            >
+              <QrCode size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+      {errors.barcode && (
+        <Text style={styles.errorText}>{errors.barcode?.message}</Text>
+      )}
+    </View>
+  );
+
+  const renderPriceInput = (
+    name: keyof FormData,
+    label: string,
+    placeholder: string,
+    required = false
+  ) => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <IndianRupee size={16} color={theme.colors.primary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          {label}
+          {required && <Text style={{ color: '#EF4444' }}>*</Text>}
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name={name}
+        rules={{
+          ...(required && { required: `${label} is required` }),
+          pattern: {
+            value: /^\d*\.?\d*$/,
+            message: 'Please enter a valid price',
+          },
+          validate: (value: any) => {
+            const num = parseFloat(value);
+            if (value && (isNaN(num) || num < 0)) {
+              return 'Price must be a positive number';
+            }
+            return true;
+          },
+        }}
+        render={({ field: { onChange, onBlur, value } }: any) => (
+          <View style={styles.priceInputContainer}>
+            <View
+              style={[
+                styles.currencyContainer,
+                {
+                  backgroundColor: `${theme.colors.primary}15`,
+                  borderColor: `${theme.colors.primary}20`,
+                },
+              ]}
+            >
+              <IndianRupee size={14} color={theme.colors.primary} />
+            </View>
+            <TextInput
+              style={[
+                styles.priceInput,
+                errors[name] && styles.inputError,
+                {
+                  backgroundColor:
+                    themeType === 'dark'
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(255, 255, 255, 0.8)',
+                  borderColor: errors[name]
+                    ? '#EF4444'
+                    : themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+                  color: theme.colors.text,
+                },
+              ]}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder={placeholder}
+              placeholderTextColor={theme.colors.textSecondary}
+              keyboardType="numeric"
+            />
+          </View>
+        )}
+      />
+      {errors[name] && (
+        <Text style={styles.errorText}>{errors[name]?.message}</Text>
+      )}
+    </View>
+  );
+
+  const renderUnitSelector = () => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <Package size={16} color={theme.colors.primary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          Unit
+          <Text style={{ color: '#EF4444' }}>*</Text>
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name="unit"
+        rules={{
+          required: 'Unit is required',
+          validate: (value) =>
+            value !== 'Select Unit' || 'Please select a unit',
+        }}
+        render={({ field: { value } }) => (
+          <TouchableOpacity
+            style={[
+              styles.selectContainer,
+              errors.unit && styles.inputError,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor: errors.unit
+                  ? '#EF4444'
+                  : themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+            onPress={() => setShowUnitModal(true)}
+          >
+            <Text
+              style={[
+                styles.selectText,
+                {
+                  color:
+                    value === 'Select Unit'
+                      ? theme.colors.textSecondary
+                      : theme.colors.text,
+                },
+              ]}
+            >
+              {value}
+            </Text>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      />
+      {errors.unit && (
+        <Text style={styles.errorText}>{errors.unit?.message}</Text>
+      )}
+    </View>
+  );
+
+  const renderCategorySelector = () => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <Folder size={16} color={theme.colors.secondary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          Category
+          <Text style={{ color: '#EF4444' }}>*</Text>
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name="category"
+        rules={{
+          required: 'Category is required',
+          validate: (value) =>
+            value !== 'Select Category' || 'Please select a category',
+        }}
+        render={({ field: { value } }) => (
+          <TouchableOpacity
+            style={[
+              styles.selectContainer,
+              errors.category && styles.inputError,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor: errors.category
+                  ? '#EF4444'
+                  : themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+            onPress={() => setShowCategoryModal(true)}
+          >
+            <Text
+              style={[
+                styles.selectText,
+                {
+                  color:
+                    value === 'Select Category'
+                      ? theme.colors.textSecondary
+                      : theme.colors.text,
+                },
+              ]}
+            >
+              {value}
+            </Text>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      />
+      {errors.category && (
+        <Text style={styles.errorText}>{errors.category?.message}</Text>
+      )}
+    </View>
+  );
+
+  const renderHSNSelector = () => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <Hash size={16} color={theme.colors.accent} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          HSN/SAC Code
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name="hsnCode"
+        render={({ field: { value } }) => (
+          <TouchableOpacity
+            style={[
+              styles.selectContainer,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+            onPress={() => setShowHSNModal(true)}
+          >
+            <Text
+              style={[
+                styles.selectText,
+                {
+                  color:
+                    !value || value === ''
+                      ? theme.colors.textSecondary
+                      : theme.colors.text,
+                },
+              ]}
+            >
+              {value || 'HSN Code'}
+            </Text>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+
+  const renderTaxSelector = () => (
+    <View style={styles.formGroup}>
+      <View style={styles.labelContainer}>
+        <FileText size={16} color={theme.colors.secondary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          GST Rate
+        </Text>
+      </View>
+      <Controller
+        control={control}
+        name="gstRate"
+        render={({ field: { value } }) => (
+          <TouchableOpacity
+            style={[
+              styles.selectContainer,
+              {
+                backgroundColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                borderColor:
+                  themeType === 'dark'
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}
+            onPress={() => setShowTaxModal(true)}
+          >
+            <Text
+              style={[
+                styles.selectText,
+                {
+                  color:
+                    value === 'Select GST Rate'
+                      ? theme.colors.textSecondary
+                      : theme.colors.text,
+                },
+              ]}
+            >
+              {value}
+            </Text>
+            <ChevronDown size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+
+  const renderImageSection = () => (
+    <View style={styles.imageSection}>
+      <View style={styles.imageSectionHeader}>
+        <ImageIcon size={16} color={theme.colors.primary} />
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          Product Images
+        </Text>
+      </View>
+      {uploadedImages.length > 0 && (
+        <View style={styles.uploadedImagesContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.imagesScrollContainer}
+          >
+            {uploadedImages.map((image, index) => (
+              <Animated.View
+                key={index}
+                entering={FadeIn.delay(index * 100)}
+                exiting={FadeOut}
+                style={styles.uploadedImageContainer}
+              >
+                <Image
+                  source={{ uri: image.url }}
+                  style={styles.uploadedImage}
+                />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => removeImage(index)}
+                >
+                  <X size={12} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={styles.imageInfo}>
+                  <Text
+                    style={[
+                      styles.imageSize,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    {(image.size / 1024).toFixed(1)}KB
+                  </Text>
+                </View>
+              </Animated.View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+      <TouchableOpacity
+        style={[
+          styles.imageButton,
+          {
+            backgroundColor:
+              themeType === 'dark'
+                ? 'rgba(255, 255, 255, 0.03)'
+                : 'rgba(255, 255, 255, 0.6)',
+            borderColor: `${theme.colors.primary}30`,
+          },
+        ]}
+        onPress={showImageOptions}
+        disabled={isUploading}
+      >
+        <LinearGradient
+          colors={[
+            `${theme.colors.primary}15`,
+            `${theme.colors.primary}05`,
+            'transparent',
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.imageGradientOverlay}
+        />
+        <View style={styles.imageButtonContent}>
+          {isUploading ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : (
+            <View
+              style={[
+                styles.cameraIconContainer,
+                { backgroundColor: `${theme.colors.primary}20` },
+              ]}
+            >
+              {uploadedImages.length > 0 ? (
+                <Upload size={20} color={theme.colors.primary} />
+              ) : (
+                <Camera size={20} color={theme.colors.primary} />
+              )}
+            </View>
+          )}
+          <Text
+            style={[styles.imageButtonText, { color: theme.colors.primary }]}
+          >
+            {isUploading
+              ? 'Uploading...'
+              : uploadedImages.length > 0
+              ? 'Add More Images'
+              : 'Add Product Images'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      {uploadedImages.length > 0 && (
+        <Text
+          style={[styles.imageCount, { color: theme.colors.textSecondary }]}
+        >
+          {uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''}{' '}
+          uploaded
+        </Text>
+      )}
+    </View>
+  );
+
+  return (
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+      <LinearGradient
+        colors={
+          themeType === 'dark'
+            ? ['#1A1B3A', '#2D1B69', 'rgba(61, 42, 122, 0.3)', 'transparent']
+            : ['#6366F1', '#8B5CF6', 'rgba(139, 92, 246, 0.2)', 'transparent']
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.headerGradient}
+      >
+        <SafeAreaView>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Package size={20} color="#FFFFFF" />
+              <Text style={styles.headerTitle}>Add New Item</Text>
+            </View>
+            <View style={styles.placeholder} />
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View entering={FadeInUp.delay(100)}>
+            <BlurView
+              intensity={themeType === 'dark' ? 15 : 80}
+              tint={themeType}
+              style={styles.section}
+            >
+              <View style={styles.sectionHeader}>
+                <Info size={18} color={theme.colors.primary} />
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
+                  Basic Information
+                </Text>
+              </View>
+              {renderFormInput(
+                'name',
+                'Item Name',
+                'Enter item name',
+                <Tag size={16} color={theme.colors.primary} />,
+                'default',
+                false,
+                true
+              )}
+              {renderFormInput(
+                'itemCode',
+                'Item Code',
+                'Enter item code',
+                <Hash size={16} color={theme.colors.primary} />,
+                'default',
+                false,
+                false
+              )}
+              {renderBarcodeInput()}
+              {renderCategorySelector()}
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                  {renderHSNSelector()}
+                </View>
+                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+                  {renderUnitSelector()}
+                </View>
+              </View>
+            </BlurView>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.delay(200)}>
+            <BlurView
+              intensity={themeType === 'dark' ? 15 : 80}
+              tint={themeType}
+              style={styles.section}
+            >
+              <View style={styles.sectionHeader}>
+                <IndianRupee size={18} color={theme.colors.accent} />
+                <Text
+                  style={[styles.sectionTitle, { color: theme.colors.text }]}
+                >
+                  Pricing Information
+                </Text>
+              </View>
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                  {renderPriceInput(
+                    'purchasePrice',
+                    'Purchase Price',
+                    '0.00',
+                    true
+                  )}
+                </View>
+                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+                  {renderPriceInput(
+                    'sellingPrice',
+                    'Selling Price',
+                    '0.00',
+                    true
+                  )}
+                </View>
+              </View>
+              {purchasePrice && sellingPrice && (
+                <View
+                  style={[
+                    styles.profitContainer,
+                    {
+                      backgroundColor:
+                        profit.amount >= 0
+                          ? `${theme.colors.success}15`
+                          : `rgba(239, 68, 68, 0.1)`,
+                      borderColor:
+                        profit.amount >= 0
+                          ? `${theme.colors.success}20`
+                          : 'rgba(239, 68, 68, 0.2)',
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[
+                      profit.amount >= 0
+                        ? `${theme.colors.success}10`
+                        : 'rgba(239, 68, 68, 0.05)',
+                      'transparent',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.profitGradientOverlay}
+                  />
+                  <View style={styles.profitContent}>
+                    <View style={styles.profitItem}>
+                      <View style={styles.profitHeader}>
+                        <TrendingUp
+                          size={14}
+                          color={
+                            profit.amount >= 0
+                              ? theme.colors.success
+                              : '#EF4444'
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.profitLabel,
+                            {
+                              color:
+                                profit.amount >= 0
+                                  ? theme.colors.success
+                                  : '#EF4444',
+                            },
+                          ]}
+                        >
+                          Profit Amount
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.profitValue,
+                          {
+                            color:
+                              profit.amount >= 0
+                                ? theme.colors.success
+                                : '#EF4444',
+                          },
+                        ]}
+                      >
+                        ₹{Math.abs(profit.amount).toFixed(2)}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.profitDivider,
+                        {
+                          backgroundColor:
+                            profit.amount >= 0
+                              ? `${theme.colors.success}30`
+                              : 'rgba(239, 68, 68, 0.3)',
+                        },
+                      ]}
+                    />
+                    <View style={styles.profitItem}>
+                      <View style={styles.profitHeader}>
+                        <BarChart3
+                          size={14}
+                          color={
+                            profit.amount >= 0
+                              ? theme.colors.success
+                              : '#EF4444'
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.profitLabel,
+                            {
+                              color:
+                                profit.amount >= 0
+                                  ? theme.colors.success
+                                  : '#EF4444',
+                            },
+                          ]}
+                        >
+                          {profit.amount >= 0 ? 'Profit Margin' : 'Loss Margin'}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.profitValue,
+                          {
+                            color:
+                              profit.amount >= 0
+                                ? theme.colors.success
+                                : '#EF4444',
+                          },
+                        ]}
+                      >
+                        {Math.abs(profit.percentage)}%
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+              {renderTaxSelector()}
+              <View style={styles.switchContainer}>
+                <View style={styles.switchLabelContainer}>
+                  <IndianRupee size={16} color={theme.colors.primary} />
+                  <Text
+                    style={[styles.switchLabel, { color: theme.colors.text }]}
+                  >
+                    Price inclusive of GST
+                  </Text>
+                </View>
+                <Controller
+                  control={control}
+                  name="includeGst"
+                  render={({ field: { onChange, value } }) => (
+                    <Switch
+                      value={value}
+                      onValueChange={onChange}
+                      trackColor={{
+                        false:
+                          themeType === 'dark'
+                            ? 'rgba(255, 255, 255, 0.1)'
+                            : '#D1D5DB',
+                        true: `${theme.colors.primary}40`,
+                      }}
+                      thumbColor={value ? theme.colors.primary : '#FFFFFF'}
+                    />
+                  )}
+                />
+              </View>
+            </BlurView>
+          </Animated.View>
+
+          <TouchableOpacity
+            style={styles.moreButton}
+            onPress={() => setShowMoreSections(!showMoreSections)}
+          >
+            <Text
+              style={[styles.moreButtonText, { color: theme.colors.primary }]}
+            >
+              {showMoreSections
+                ? 'Hide Additional Details'
+                : 'Show More Details'}
+            </Text>
+            <MoreHorizontal size={20} color={theme.colors.primary} />
+          </TouchableOpacity>
+
+          {showMoreSections && (
+            <>
+              <Animated.View entering={FadeInUp.delay(300)}>
+                <BlurView
+                  intensity={themeType === 'dark' ? 15 : 80}
+                  tint={themeType}
+                  style={styles.section}
+                >
+                  <View style={styles.sectionHeader}>
+                    <BarChart3 size={18} color={theme.colors.secondary} />
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      Stock Information
+                    </Text>
+                  </View>
+                  <View style={styles.formRow}>
+                    <View
+                      style={[styles.formGroup, { flex: 1, marginRight: 8 }]}
+                    >
+                      {renderFormInput(
+                        'stock',
+                        'Opening Stock',
+                        '0',
+                        <Package size={16} color={theme.colors.primary} />,
+                        'numeric',
+                        false,
+                        false,
+                        {
+                          pattern: {
+                            value: /^\d*$/,
+                            message: 'Please enter a valid number',
+                          },
+                        }
+                      )}
+                    </View>
+                    <View
+                      style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}
+                    >
+                      {renderFormInput(
+                        'lowStockAlert',
+                        'Low Stock Alert',
+                        '0',
+                        <AlertTriangle size={16} color="#F59E0B" />,
+                        'numeric',
+                        false,
+                        false,
+                        {
+                          pattern: {
+                            value: /^\d*$/,
+                            message: 'Please enter a valid number',
+                          },
+                        }
+                      )}
+                    </View>
+                  </View>
+                  {renderPriceInput(
+                    'openingRate',
+                    'Opening Rate',
+                    '0.00',
+                    false
+                  )}
+                </BlurView>
+              </Animated.View>
+
+              <Animated.View entering={FadeInUp.delay(400)}>
+                <BlurView
+                  intensity={themeType === 'dark' ? 15 : 80}
+                  tint={themeType}
+                  style={styles.section}
+                >
+                  <View style={styles.sectionHeader}>
+                    <Sparkles size={18} color={theme.colors.accent} />
+                    <Text
+                      style={[
+                        styles.sectionTitle,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      Additional Information
+                    </Text>
+                  </View>
+                  {renderFormInput(
+                    'description',
+                    'Description',
+                    'Enter item description (optional)',
+                    <FileText size={16} color={theme.colors.secondary} />,
+                    'default',
+                    true
+                  )}
+                  {renderImageSection()}
+                </BlurView>
+              </Animated.View>
+            </>
+          )}
+        </ScrollView>
+
+        <BlurView
+          intensity={themeType === 'dark' ? 20 : 80}
+          tint={themeType}
+          style={styles.footer}
+        >
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              {
+                backgroundColor: theme.colors.primary,
+                shadowColor: theme.colors.primary,
+                opacity: isValid && !createProductMutation.isPending ? 1 : 0.6,
+              },
+            ]}
+            onPress={handleSubmit(onSubmit)}
+            disabled={!isValid || createProductMutation.isPending}
+          >
+            <LinearGradient
+              colors={[
+                theme.colors.primary,
+                theme.colors.primaryLight || theme.colors.primary,
+              ]}
+              style={styles.saveGradient}
+            >
+              {createProductMutation.isPending ? (
+                <ActivityIndicator size={20} color="#FFFFFF" />
+              ) : (
+                <Save size={20} color="#FFFFFF" />
+              )}
+              <Text style={styles.saveButtonText}>
+                {createProductMutation.isPending ? 'Creating...' : 'Save Item'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </BlurView>
+      </KeyboardAvoidingView>
+
+      <Modal
+        visible={showBarcodeScanner}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowBarcodeScanner(false);
+          setIsScanned(false);
+        }}
+      >
+        <View style={styles.scannerContainer}>
+          {permission?.granted && !isScanned ? (
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: [
+                  'upc_a',
+                  'upc_e',
+                  'ean13',
+                  'ean8',
+                  'code39',
+                  'code93',
+                  'code128',
+                  'codabar',
+                  'itf14',
+                  'qr',
+                ],
+              }}
+              onBarcodeScanned={handleBarCodeScanned}
+            />
+          ) : (
+            <View style={styles.cameraPermissionContainer}>
+              <Text style={styles.cameraPermissionText}>
+                {permission?.granted
+                  ? 'Processing barcode...'
+                  : 'Camera permission is required to scan barcodes.'}
+              </Text>
+              {!permission?.granted && (
+                <>
+                  {permission?.canAskAgain ? (
+                    <TouchableOpacity
+                      style={[
+                        styles.scanButton,
+                        { backgroundColor: theme.colors.primary },
+                      ]}
+                      onPress={scanBarcode}
+                    >
+                      <Text style={styles.cameraPermissionButtonText}>
+                        Request Permission
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.scanButton,
+                        { backgroundColor: theme.colors.primary },
+                      ]}
+                      onPress={() => Linking.openSettings()}
+                    >
+                      <Text style={styles.cameraPermissionButtonText}>
+                        Open Settings
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+          <TouchableOpacity
+            style={[
+              styles.closeScannerButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+            onPress={() => {
+              setShowBarcodeScanner(false);
+              setIsScanned(false);
+            }}
+          >
+            <X size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      <CategorySelectionModal
+        visible={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onSelectCategory={handleCategorySelect}
+        selectedCategory={
+          selectedCategory !== 'Select Category' ? selectedCategory : undefined
+        }
+      />
+      <HSNSelectionModal
+        visible={showHSNModal}
+        onClose={() => setShowHSNModal(false)}
+        onSelectHSN={handleHSNSelect}
+        selectedHSN={selectedHsnCode}
+      />
+      <UnitSelectionModal
+        visible={showUnitModal}
+        onClose={() => setShowUnitModal(false)}
+        onSelectUnit={handleUnitSelect}
+        selectedUnit={selectedUnit !== 'Select Unit' ? selectedUnit : undefined}
+      />
+      <TaxSelectionModal
+        visible={showTaxModal}
+        onClose={() => setShowTaxModal(false)}
+        onSelectTax={handleTaxSelect}
+        selectedTax={
+          selectedGstRate !== 'Select GST Rate' ? selectedGstRate : undefined
+        }
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerGradient: {
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+  placeholder: {
+    width: 40,
+  },
+  keyboardAvoid: {
+    flex: 1,
+    marginTop: -10,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 120,
+  },
+  section: {
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  formRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  inputContainer: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  inputError: {
+    borderColor: '#EF4444',
+    borderWidth: 2,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  multilineContainer: {
+    paddingVertical: 12,
+  },
+  textInput: {
+    fontSize: 15,
+    fontWeight: '500',
+    minHeight: 20,
+  },
+  multilineInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  currencyContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  priceInput: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  barcodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barcodeInput: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  scanButton: {
+    padding: 12,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraPermissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  cameraPermissionText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  cameraPermissionButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  closeScannerButton: {
+    position: 'absolute',
+    top: 50,
+    right: 30,
+    padding: 12,
+    borderRadius: 12,
+  },
+  selectContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  selectText: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  profitContainer: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  profitGradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  profitContent: {
+    flexDirection: 'row',
+    position: 'relative',
+    zIndex: 2,
+  },
+  profitItem: {
+    flex: 1,
+  },
+  profitHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  profitLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  profitValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  profitDivider: {
+    width: 1,
+    marginHorizontal: 16,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+  },
+  switchLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  switchLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  imageSection: {
+    marginTop: 8,
+  },
+  imageSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  uploadedImagesContainer: {
+    marginBottom: 16,
+  },
+  imagesScrollContainer: {
+    paddingRight: 20,
+  },
+  uploadedImageContainer: {
+    position: 'relative',
+    marginRight: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  uploadedImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageInfo: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  imageSize: {
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  imageButton: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    padding: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  imageGradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  imageButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    position: 'relative',
+    zIndex: 2,
+  },
+  cameraIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  imageCount: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 8,
+    opacity: 0.7,
+  },
+  footer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  saveButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 6px 20px rgba(99, 102, 241, 0.3)',
+      },
+    }),
+  },
+  saveGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.1,
+  },
+  moreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginBottom: 20,
+    gap: 8,
+  },
+  moreButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

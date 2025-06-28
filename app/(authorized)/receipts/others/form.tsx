@@ -59,7 +59,7 @@ interface DropdownItem {
   value: string;
 }
 
-export default function AddOtherReceiptScreen() {
+export default function OtherReceiptFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const [showDatePicker, setShowDatePicker] = useState(false);

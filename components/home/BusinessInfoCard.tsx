@@ -1,4 +1,7 @@
 import { useTheme } from '@/context/ThemeContext';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import { useRouter } from 'expo-router';
 import { Calendar, Settings, Star } from 'lucide-react-native';
 import React from 'react';
 import {
@@ -9,9 +12,6 @@ import {
   View,
 } from 'react-native';
 import { useSelector } from 'react-redux';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import { useRouter } from 'expo-router';
 
 dayjs.extend(utc);
 
@@ -26,7 +26,6 @@ export const BusinessInfoCard = () => {
     user,
     accessToken,
   } = useSelector((state: any) => state.auth);
-  console.log('accessTokenaccessTokenaccessToken', accessToken);
   return (
     <View
       style={[

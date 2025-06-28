@@ -17,14 +17,13 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const state:any = store.getState();
     const token = state.auth.accessToken;
-    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
     return config;
   },
   (error) => {
+    console.log("error----->",error)
     return Promise.reject(error);
   }
 );
@@ -51,16 +50,17 @@ const processQueue = (error: any, token: string | null = null) => {
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error) => {
+    console.log("error====>",error)
     const originalRequest = error.config;
     if (error.response?.status === 401 || error.response?.status === 403 && !originalRequest._retry) {
       if (isRefreshing) {
-        // If we're already refreshing, queue this request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return apiClient(originalRequest);
         }).catch((err) => {
+          console.log("err====>",err)
           return Promise.reject(err);
         });
       }

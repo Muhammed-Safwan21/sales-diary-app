@@ -1,7 +1,11 @@
+import API from '@/config/api';
+import QUERY_KEY from '@/config/queryKey';
 import { useTheme } from '@/context/ThemeContext';
+import { apiClient } from '@/services/api';
 import { useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   ArrowUpRight,
@@ -12,9 +16,12 @@ import {
   Plus,
   Search,
   TrendingUp,
-  Users
+  Users,
+  User,
+  AlertCircle,
+  ChevronRight,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -27,6 +34,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInRight, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 // Types based on your API response
 interface ContactLedger {
@@ -45,121 +53,105 @@ interface Contact {
   ledger: ContactLedger;
 }
 
-interface APIResponse {
-  statusCode: number;
-  status: boolean;
-  message: string;
-  data: {
-    rows: Contact[];
-    totalOutstanding: string;
-    totalParties: string;
-  };
-  meta: {
-    take: number;
-    itemCount: number;
-    page: number;
-    totalPages: number;
-    hasPreviousPage: boolean;
-    hasNextPage: boolean;
-  };
-}
-
-// API client configuration
-const apiClient = {
-  getCustomers: async (): Promise<APIResponse> => {
-    const response = await fetch(
-      'https://api.ybill.in/v1/contacts?order=ASC&page=1&take=10&adminId=1&branchId=2&contactType=CUSTOMER',
-      {
-        method: 'GET',
-        headers: {
-          accept: '*/*',
-          Authorization:
-            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJicmFuY2hJZCI6IjIiLCJmeUlkIjoiMSIsImZpZCI6MjA4MzExNTY0LCJpYXQiOjE3NDk0ODY3NzMsImV4cCI6MTc0OTQ5MDM3M30.c559KPReReO5G9vZoS-IEcawN_aQ3inHYpsnr3PL8gc',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch customers');
-    }
-
-    return response.json();
-  },
-
-  getSuppliers: async (): Promise<APIResponse> => {
-    const response = await fetch(
-      'https://api.ybill.in/v1/contacts?order=ASC&page=1&take=10&adminId=1&branchId=2&contactType=SUPPLIER',
-      {
-        method: 'GET',
-        headers: {
-          accept: '*/*',
-          Authorization:
-            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjIiLCJicmFuY2hJZCI6IjIiLCJmeUlkIjoiMSIsImZpZCI6MjA4MzExNTY0LCJpYXQiOjE3NDk0ODY3NzMsImV4cCI6MTc0OTQ5MDM3M30.c559KPReReO5G9vZoS-IEcawN_aQ3inHYpsnr3PL8gc',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch suppliers');
-    }
-
-    return response.json();
-  },
-};
-
 export default function PartiesScreen() {
+  const router = useRouter();
   const { theme, themeType }: any = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('customers');
+  const [activeTab, setActiveTab] = useState<'CUSTOMER' | 'SUPPLIER'>(
+    'CUSTOMER'
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allContacts, setAllContacts] = useState<Contact[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const pageSize = 10;
 
-  // Fetch data using React Query
-  const {
-    data: customersData,
-    isLoading: isLoadingCustomers,
-    error: customersError,
-    refetch: refetchCustomers,
-  } = useQuery({
-    queryKey: ['customers'],
-    queryFn: async () => apiClient.getCustomers(),
-    enabled: activeTab === 'customers',
+  const { branchInfo, user } = useSelector((state: any) => state.auth);
+
+  // Fetch contacts with pagination and search
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: [
+      QUERY_KEY.PARTIES,
+      activeTab,
+      searchQuery,
+      currentPage,
+      pageSize,
+    ],
+    queryFn: async () => {
+      const response = await apiClient.get(`${API.PARTIES}`, {
+        params: {
+          query: searchQuery,
+          page: currentPage,
+          take: pageSize,
+          adminId: user?.id,
+          branchId: branchInfo?.id ,
+          contactType: activeTab,
+        },
+      });
+      return response.data;
+    },
   });
 
-  const {
-    data: suppliersData,
-    isLoading: isLoadingSuppliers,
-    error: suppliersError,
-    refetch: refetchSuppliers,
-  } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: async () => apiClient.getSuppliers(),
-    enabled: activeTab === 'suppliers',
-  });
+  const contacts : any = data?.data?.rows ?? [];
+  const totalOutstanding = parseFloat(data?.data?.totalOutstanding ?? '0');
+  const totalParties = parseInt(data?.data?.totalParties ?? '0');
+  const meta = data?.meta;
 
-  // Process the data based on active tab
-  const currentData = activeTab === 'customers' ? customersData : suppliersData;
-  const isLoading =
-    activeTab === 'customers' ? isLoadingCustomers : isLoadingSuppliers;
-  const error = activeTab === 'customers' ? customersError : suppliersError;
-  const refetch =
-    activeTab === 'customers' ? refetchCustomers : refetchSuppliers;
+  // Reset data when search query or tab changes
+  useEffect(() => {
+    setAllContacts([]);
+    setCurrentPage(1);
+  }, [searchQuery, activeTab]);
 
-  const contacts = currentData?.data?.rows || [];
-  const totalOutstanding = parseFloat(
-    currentData?.data?.totalOutstanding || '0'
-  );
-  const totalParties = parseInt(currentData?.data?.totalParties || '0');
+  // Accumulate contacts when new data arrives
+  useEffect(() => {
+    if (contacts.length > 0) {
+      setAllContacts((prevContacts) => {
+        // If it's the first page or a new search/tab, replace the data
+        if (currentPage === 1) {
+          return contacts;
+        }
 
-  const filteredContacts = contacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.mobile.includes(searchQuery) ||
-      contact.businessName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+        // For subsequent pages, append new contacts
+        // Filter out duplicates based on ID
+        const existingIds = new Set(prevContacts.map((contact) => contact.id));
+        const newContacts = contacts.filter(
+          (contact:any) => !existingIds.has(contact.id)
+        );
+
+        return [...prevContacts, ...newContacts];
+      });
+
+      setIsLoadingMore(false);
+    }
+  }, [contacts, currentPage]);
+
+  const handleEndReached = useCallback(() => {
+    // Prevent multiple simultaneous requests
+    if (isLoadingMore || isLoading || isFetching) {
+      return;
+    }
+
+    // Check if there are more pages
+    if (meta?.hasNextPage) {
+      setIsLoadingMore(true);
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  }, [isLoadingMore, isLoading, isFetching, meta?.hasNextPage]);
 
   const formatAmount = (amount: string | number): string => {
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     return numAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 });
   };
+
+  const handleSearch = useCallback((text: string) => {
+    setSearchQuery(text);
+    // The useEffect will handle resetting the page and contacts
+  }, []);
+
+  const handleTabChange = useCallback((tab: 'CUSTOMER' | 'SUPPLIER') => {
+    setActiveTab(tab);
+    // The useEffect will handle resetting the page and contacts
+  }, []);
 
   const renderContactItem = ({
     item,
@@ -170,187 +162,134 @@ export default function PartiesScreen() {
   }) => {
     const outstandingAmount = parseFloat(item.ledger.totalAmount || '0');
     const hasOutstanding = outstandingAmount > 0;
-
+  
     return (
       <Animated.View
         entering={FadeInRight.delay(index * 50).springify()}
-        style={styles.customerCardWrapper}
+        style={styles.cardContainer}
       >
-        <TouchableOpacity style={styles.customerCard} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={() => {
+            // Navigate to contact details
+            router.push(`/parties/${item.id}`);
+          }}
+          activeOpacity={0.95}
+          style={styles.cardTouchable}
+        >
           <BlurView
-            intensity={themeType === 'dark' ? 15 : 80}
+            intensity={themeType === 'dark' ? 20 : 85}
             tint={themeType}
             style={[
-              styles.customerCardContainer,
+              styles.contactCard,
               {
                 borderColor:
                   themeType === 'dark'
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.06)',
+                    ? 'rgba(255, 255, 255, 0.12)'
+                    : 'rgba(255, 255, 255, 0.4)',
               },
             ]}
           >
-            {/* Gradient overlay */}
-            <LinearGradient
-              colors={
-                hasOutstanding
-                  ? activeTab === 'customers'
-                    ? [
-                        'rgba(34, 197, 94, 0.08)',
-                        'rgba(34, 197, 94, 0.02)',
-                        'transparent',
-                      ]
-                    : [
-                        'rgba(239, 68, 68, 0.08)',
-                        'rgba(239, 68, 68, 0.02)',
-                        'transparent',
-                      ]
-                  : [
-                      'rgba(99, 102, 241, 0.06)',
-                      'rgba(99, 102, 241, 0.02)',
-                      'transparent',
-                    ]
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.customerGradientOverlay}
-            />
-
-            <View style={styles.customerMainContent}>
-              <View style={styles.customerInfo}>
-                <View style={styles.nameContainer}>
+            <View style={styles.cardContent}>
+              {/* Top Row - Name and Status */}
+              <View style={styles.topRow}>
+                <Text style={[styles.contactName, { color: theme.colors.text }]}>
+                  {item.name}
+                </Text>
+                <View style={[
+                  styles.statusBadge, 
+                  { 
+                    backgroundColor: hasOutstanding
+                      ? activeTab === 'CUSTOMER'
+                        ? `${theme.colors.success}15`
+                        : `${theme.colors.error}15`
+                      : `${theme.colors.primary}15`
+                  }
+                ]}>
+                  <View style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor: hasOutstanding
+                        ? activeTab === 'CUSTOMER'
+                          ? theme.colors.success
+                          : theme.colors.error
+                        : theme.colors.primary,
+                    },
+                  ]} />
                   <Text
-                    style={[styles.customerName, { color: theme.colors.text }]}
-                  >
-                    {item.name}
-                  </Text>
-                  <View
                     style={[
-                      styles.statusDot,
+                      styles.statusText,
                       {
-                        backgroundColor: hasOutstanding
-                          ? activeTab === 'customers'
+                        color: hasOutstanding
+                          ? activeTab === 'CUSTOMER'
                             ? theme.colors.success
                             : theme.colors.error
                           : theme.colors.primary,
                       },
                     ]}
-                  />
+                  >
+                    {hasOutstanding ? 'Outstanding' : 'Settled'}
+                  </Text>
                 </View>
-
-                {item.businessName && (
-                  <View style={styles.businessContainer}>
-                    <View
-                      style={[
-                        styles.businessIconContainer,
-                        { backgroundColor: `${theme.colors.primary}10` },
-                      ]}
-                    >
-                      <Building2 size={10} color={theme.colors.primary} />
-                    </View>
-                    <Text
-                      style={[
-                        styles.businessName,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      {item.businessName}
-                    </Text>
-                  </View>
-                )}
-
+              </View>
+  
+              {/* Business Name Row */}
+              {item.businessName && (
+                <View style={styles.businessRow}>
+                  <Building2 size={14} color={theme.colors.textSecondary} />
+                  <Text style={[styles.businessName, { color: theme.colors.textSecondary }]}>
+                    {item.businessName}
+                  </Text>
+                </View>
+              )}
+  
+              {/* Contact Details Row */}
+              <View style={styles.contactDetailsRow}>
                 <View style={styles.phoneContainer}>
-                  <View
-                    style={[
-                      styles.phoneIconContainer,
-                      { backgroundColor: `${theme.colors.primary}15` },
-                    ]}
-                  >
-                    <Phone size={12} color={theme.colors.primary} />
-                  </View>
-                  <Text
-                    style={[
-                      styles.customerPhone,
-                      { color: theme.colors.textSecondary },
-                    ]}
-                  >
+                  <Phone size={14} color={theme.colors.textSecondary} />
+                  <Text style={[styles.phoneText, { color: theme.colors.textSecondary }]}>
                     {item.mobile}
                   </Text>
                 </View>
-
-                {item.email && (
-                  <View style={styles.emailContainer}>
-                    <Mail size={12} color={theme.colors.textSecondary} />
-                    <Text
-                      style={[
-                        styles.emailText,
-                        { color: theme.colors.textSecondary },
-                      ]}
-                    >
-                      {item.email}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.amountSection}>
-                <Text
-                  style={[
-                    styles.amountLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  {activeTab === 'customers'
-                    ? hasOutstanding
-                      ? "You'll Get"
-                      : 'Settled'
-                    : hasOutstanding
-                    ? "You'll Pay"
-                    : 'Settled'}
-                </Text>
-
-                <View style={styles.amountContainer}>
-                  <IndianRupee
-                    size={14}
-                    color={
-                      hasOutstanding
-                        ? activeTab === 'customers'
-                          ? theme.colors.success
-                          : theme.colors.error
-                        : theme.colors.textSecondary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.amount,
-                      {
-                        color: hasOutstanding
-                          ? activeTab === 'customers'
+                <View style={styles.rightSection}>
+                  <View style={styles.amountContainer}>
+                    <IndianRupee 
+                      size={16} 
+                      color={
+                        hasOutstanding
+                          ? activeTab === 'CUSTOMER'
                             ? theme.colors.success
                             : theme.colors.error
-                          : theme.colors.textSecondary,
-                        fontWeight: hasOutstanding ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {formatAmount(item.ledger.totalAmount)}
+                          : theme.colors.primary
+                      } 
+                    />
+                    <Text
+                      style={[
+                        styles.amount,
+                        {
+                          color: hasOutstanding
+                            ? activeTab === 'CUSTOMER'
+                              ? theme.colors.success
+                              : theme.colors.error
+                            : theme.colors.primary,
+                        },
+                      ]}
+                    >
+                      {formatAmount(item.ledger.totalAmount)}
+                    </Text>
+                  </View>
+                  <ChevronRight size={16} color={theme.colors.textSecondary} />
+                </View>
+              </View>
+  
+              {/* Overdue Warning - if applicable */}
+              {hasOutstanding && activeTab === 'SUPPLIER' && (
+                <View style={styles.overdueWarning}>
+                  <AlertCircle size={12} color={theme.colors.error} />
+                  <Text style={[styles.overdueText, { color: theme.colors.error }]}>
+                    Outstanding amount pending
                   </Text>
                 </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    {
-                      backgroundColor:
-                        themeType === 'dark'
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(0, 0, 0, 0.05)',
-                    },
-                  ]}
-                >
-                  <ArrowUpRight size={12} color={theme.colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
+              )}
             </View>
           </BlurView>
         </TouchableOpacity>
@@ -371,7 +310,7 @@ export default function PartiesScreen() {
               : 'transparent',
           },
         ]}
-        onPress={() => setActiveTab(tabId)}
+        onPress={() => handleTabChange(tabId as 'CUSTOMER' | 'SUPPLIER')}
         activeOpacity={0.8}
       >
         <View
@@ -442,13 +381,34 @@ export default function PartiesScreen() {
     </View>
   );
 
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+        <Text
+          style={[
+            styles.footerLoaderText,
+            { color: theme.colors.textSecondary },
+          ]}
+        >
+          Loading more...
+        </Text>
+      </View>
+    );
+  };
+
+  const handleAdd = () => {
+    router.push(`/parties/form?contactType=${activeTab}`);
+  };
+
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
 
-      {/* Modern header with gradient */}
       <LinearGradient
         colors={
           themeType === 'dark'
@@ -496,7 +456,7 @@ export default function PartiesScreen() {
                   styles.statNumber,
                   {
                     color:
-                      activeTab === 'customers'
+                      activeTab === 'CUSTOMER'
                         ? theme.colors.success
                         : theme.colors.error,
                   },
@@ -507,7 +467,7 @@ export default function PartiesScreen() {
               <Text
                 style={[styles.statText, { color: theme.colors.textSecondary }]}
               >
-                {activeTab === 'customers' ? "You'll Get" : "You'll Pay"}
+                {activeTab === 'CUSTOMER' ? "You'll Get" : "You'll Pay"}
               </Text>
             </View>
           </View>
@@ -522,9 +482,22 @@ export default function PartiesScreen() {
         <BlurView
           intensity={themeType === 'dark' ? 15 : 80}
           tint={themeType}
-          style={styles.searchContainer}
+          style={[
+            styles.searchContainer,
+            styles.searchBar,
+            {
+              backgroundColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'rgba(255, 255, 255, 0.8)',
+              borderColor:
+                themeType === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.06)',
+            },
+          ]}
         >
-          <View
+          {/* <View
             style={[
               styles.searchBar,
               {
@@ -538,82 +511,49 @@ export default function PartiesScreen() {
                     : 'rgba(0, 0, 0, 0.06)',
               },
             ]}
+          > */}
+          <View
+            style={[
+              styles.searchIconContainer,
+              { backgroundColor: `${theme.colors.primary}15` },
+            ]}
           >
-            <View
-              style={[
-                styles.searchIconContainer,
-                { backgroundColor: `${theme.colors.primary}15` },
-              ]}
-            >
-              <Search size={14} color={theme.colors.primary} />
-            </View>
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              placeholder="Search by name, phone, or business"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
+            <Search size={14} color={theme.colors.primary} />
           </View>
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search by name, phone, or business"
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {/* </View> */}
         </BlurView>
       </Animated.View>
 
       {/* Tabs Section */}
       <Animated.View entering={FadeInUp.delay(300)} style={styles.tabsSection}>
         <View style={styles.tabsContainer}>
-          {renderTabButton('customers', 'Customers', <Users />)}
-          {renderTabButton('suppliers', 'Suppliers', <TrendingUp />)}
+          {renderTabButton('CUSTOMER', 'Customers', <Users />)}
+          {renderTabButton('SUPPLIER', 'Suppliers', <TrendingUp />)}
         </View>
       </Animated.View>
 
       {/* Content */}
-      {isLoading ? (
+      {isLoading && allContacts.length === 0 ? (
         renderLoadingState()
       ) : error ? (
         renderErrorState()
-      ) : activeTab === 'customers' ? (
-        <FlatList
-          data={filteredContacts}
-          keyExtractor={(item) => item.id}
-          renderItem={renderContactItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <LinearGradient
-                colors={
-                  themeType === 'dark'
-                    ? ['rgba(129, 140, 248, 0.1)', 'rgba(139, 92, 246, 0.1)']
-                    : ['rgba(99, 102, 241, 0.1)', 'rgba(139, 92, 246, 0.1)']
-                }
-                style={styles.emptyIconContainer}
-              >
-                <Users size={32} color={theme.colors.primary} />
-              </LinearGradient>
-
-              <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                No customers found
-              </Text>
-              <Text
-                style={[
-                  styles.emptySubtitle,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                {searchQuery
-                  ? 'Try adjusting your search terms'
-                  : 'Start by adding your first customer'}
-              </Text>
-            </View>
-          }
-        />
       ) : (
         <FlatList
-          data={filteredContacts}
+          data={allContacts}
           keyExtractor={(item) => item.id}
           renderItem={renderContactItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <LinearGradient
@@ -624,11 +564,14 @@ export default function PartiesScreen() {
                 }
                 style={styles.emptyIconContainer}
               >
-                <TrendingUp size={32} color={theme.colors.primary} />
+                {activeTab === 'CUSTOMER' ? (
+                  <Users size={32} color={theme.colors.primary} />
+                ) : (
+                  <TrendingUp size={32} color={theme.colors.primary} />
+                )}
               </LinearGradient>
-
               <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                No suppliers found
+                No {activeTab} found
               </Text>
               <Text
                 style={[
@@ -638,7 +581,9 @@ export default function PartiesScreen() {
               >
                 {searchQuery
                   ? 'Try adjusting your search terms'
-                  : 'Start by adding your first supplier'}
+                  : `Start by adding your first ${
+                      activeTab === 'CUSTOMER' ? 'customer' : 'supplier'
+                    }`}
               </Text>
             </View>
           }
@@ -654,6 +599,7 @@ export default function PartiesScreen() {
             shadowColor: theme.colors.primary,
           },
         ]}
+        onPress={handleAdd}
       >
         <LinearGradient
           colors={[
@@ -839,11 +785,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.2,
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   businessContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -857,17 +798,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  businessName: {
-    fontSize: 12,
-    fontWeight: '500',
-    flex: 1,
-  },
-  phoneContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-    gap: 8,
-  },
   phoneIconContainer: {
     width: 20,
     height: 20,
@@ -879,36 +809,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  emailContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  emailText: {
-    fontSize: 12,
-    fontWeight: '500',
-    flex: 1,
-  },
   amountSection: {
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     minWidth: 100,
-  },
-  amountLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    marginBottom: 4,
-    letterSpacing: -0.1,
-  },
-  amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
-  },
-  amount: {
-    fontSize: 15,
-    letterSpacing: -0.2,
   },
   actionButton: {
     width: 24,
@@ -1009,5 +913,139 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  footerLoaderText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  cardContainer: {
+    marginBottom: 16,
+  },
+  cardTouchable: {
+    borderRadius: 16,
+  },
+  contactCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  cardContent: {
+    padding: 16,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  contactName: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    flex: 1,
+    marginRight: 12,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  businessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  businessName: {
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
+  },
+  contactDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  phoneText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  emailContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  emailText: {
+    fontSize: 11,
+    fontWeight: '500',
+    maxWidth: 120,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  amountLabelContainer: {
+    flex: 1,
+  },
+  amountLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  amountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  amount: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  overdueWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(239, 68, 68, 0.15)',
+  },
+  overdueText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
 });

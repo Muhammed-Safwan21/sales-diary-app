@@ -131,7 +131,7 @@ export default function CreateScreen() {
         title: 'Receipt',
         description: 'Record receipts from customers',
         icon: <Receipt size={22} />,
-        route: '/receipts/customer/form',
+        route: '/receipts/customer',
         gradient: ['#06D6A0', '#34D399'],
       },
       {
@@ -139,7 +139,7 @@ export default function CreateScreen() {
         title: 'Other Receipt',
         description: 'Record other receipts',
         icon: <Wallet size={22} />,
-        route: '/receipts/others/add',
+        route: '/receipts/others',
         gradient: ['#8B5CF6', '#A78BFA'],
       },
       {
@@ -147,7 +147,7 @@ export default function CreateScreen() {
         title: 'Supplier Refund',
         description: 'Record supplier refunds',
         icon: <CreditCard size={22} />,
-        route: '/receipts/refund/form',
+        route: '/receipts/refund',
         gradient: ['#06B6D4', '#22D3EE'],
       },
     ],
@@ -157,7 +157,7 @@ export default function CreateScreen() {
         title: 'Payment',
         description: 'Record payment to suppliers',
         icon: <CreditCard size={22} />,
-        route: '/payments/supplier/form',
+        route: '/payments/supplier',
         gradient: ['#8B5CF6', '#A78BFA'],
       },
       {
@@ -165,7 +165,7 @@ export default function CreateScreen() {
         title: 'Other Payment',
         description: 'Record other payments',
         icon: <WalletCards size={22} />,
-        route: '/payments/others/add',
+        route: '/payments/others',
         gradient: ['#F97316', '#FB923C'],
       },
       {
@@ -173,27 +173,19 @@ export default function CreateScreen() {
         title: 'Customer Refund',
         description: 'Record customer refunds',
         icon: <Wallet size={22} />,
-        route: '/payments/refund/form',
+        route: '/payments/refund',
         gradient: ['#06D6A0', '#34D399'],
       },
     ],
     items: [
       {
         id: 'addItem',
-        title: 'Add Item',
+        title: 'Items',
         description: 'Create new product or service',
         icon: <Package size={22} />,
-        route: '/inventory/add-item',
+        route: '/items',
         gradient: ['#6366F1', '#8B5CF6'],
-      },
-      {
-        id: 'stockAdjustment',
-        title: 'Stock Adjustment',
-        description: 'Update current inventory levels',
-        icon: <Truck size={22} />,
-        route: '/inventory/stock-adjustment',
-        gradient: ['#F59E0B', '#FBBF24'],
-      },
+      }
     ],
     parties: [
       {
@@ -216,48 +208,32 @@ export default function CreateScreen() {
     banking: [
       {
         id: 'addBankAccount',
-        title: 'Add Bank Account',
+        title: 'Bank Account',
         description: 'Create bank account',
         icon: <CreditCard size={22} />,
-        route: '/banking/add',
+        route: '/banks',
         gradient: ['#06B6D4', '#22D3EE'],
       },
     ],
     ledger: [
       {
         id: 'addLedger',
-        title: 'Add Ledger',
+        title: 'Ledgers',
         description: 'Create ledger entries',
         icon: <FileText size={22} />,
-        route: '/ledger/add',
+        route: '/ledger',
         gradient: ['#8B5CF6', '#A78BFA'],
       },
     ],
     others: [
       {
         id: 'journal',
-        title: 'Add Journal',
+        title: 'Journal',
         description: 'Create journal entries',
         icon: <FileText size={22} />,
-        route: '/journal/add',
+        route: '/journal',
         gradient: ['#8B5CF6', '#A78BFA'],
-      },
-      // {
-      //   id: 'otherReceipt',
-      //   title: 'Add Other Receipt',
-      //   description: 'Create other receipts',
-      //   icon: <Receipt size={22} />,
-      //   route: '/receipts/others/add',
-      //   gradient: ['#06D6A0', '#34D399'],
-      // },
-      // {
-      //   id: 'otherPayments',
-      //   title: 'Add Other Payment',
-      //   description: 'Create other payments',
-      //   icon: <WalletCards size={22} />,
-      //   route: '/payments/others/add',
-      //   gradient: ['#F59E0B', '#FBBF24'],
-      // },
+      }
     ],
   };
 

@@ -76,7 +76,7 @@ const validationRules = {
   },
 };
 
-export default function AddLedgerScreen() {
+export default function LedgerFormScreen() {
   const { theme, themeType }: any = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
