@@ -1,8 +1,6 @@
-import API from '@/config/api';
-import QUERY_KEY from '@/config/queryKey';
 import { useTheme } from '@/context/ThemeContext';
 import { apiClient } from '@/services/api';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -14,10 +12,8 @@ import {
   ChevronDown,
   FileText,
   FolderOpen,
-  IndianRupee,
-  Plus,
   Save,
-  Tag,
+  Tag
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';

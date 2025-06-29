@@ -8,7 +8,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 export default function TabLayout() {
   const { theme, themeType }: any = useTheme();
 
-  const tabBarHeight = Platform.OS === 'ios' ? 88 : 65;
+  const tabBarHeight = Platform.OS === 'ios' ? 88 : 85;
 
   return (
     <Tabs

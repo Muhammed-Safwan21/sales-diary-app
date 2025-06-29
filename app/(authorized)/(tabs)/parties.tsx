@@ -8,20 +8,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
-  ArrowUpRight,
+  AlertCircle,
   Building2,
+  ChevronRight,
   IndianRupee,
-  Mail,
   Phone,
   Plus,
   Search,
   TrendingUp,
-  Users,
-  User,
-  AlertCircle,
-  ChevronRight,
+  Users
 } from 'lucide-react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -53,45 +50,75 @@ interface Contact {
   ledger: ContactLedger;
 }
 
+interface ApiResponse {
+  data: {
+    rows: Contact[];
+    totalOutstanding: string;
+    totalParties: string;
+  };
+  meta: {
+    hasNextPage: boolean;
+    currentPage: number;
+    totalPages: number;
+  };
+}
+
 export default function PartiesScreen() {
   const router = useRouter();
   const { theme, themeType }: any = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'CUSTOMER' | 'SUPPLIER'>(
-    'CUSTOMER'
-  );
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'CUSTOMER' | 'SUPPLIER'>('CUSTOMER');
   const [currentPage, setCurrentPage] = useState(1);
   const [allContacts, setAllContacts] = useState<Contact[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
   const pageSize = 10;
 
   const { branchInfo, user } = useSelector((state: any) => state.auth);
 
+  // Debounce search query to prevent excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Build query key with proper dependencies
+  const queryKey = useMemo(() => [
+    QUERY_KEY.PARTIES,
+    activeTab,
+    debouncedSearchQuery,
+    currentPage,
+    pageSize,
+    user?.id,
+    branchInfo?.id,
+  ], [activeTab, debouncedSearchQuery, currentPage, pageSize, user?.id, branchInfo?.id]);
+
   // Fetch contacts with pagination and search
-  const { data, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: [
-      QUERY_KEY.PARTIES,
-      activeTab,
-      searchQuery,
-      currentPage,
-      pageSize,
-    ],
+  const { data, isLoading, error, refetch, isFetching } = useQuery<ApiResponse>({
+    queryKey,
     queryFn: async () => {
       const response = await apiClient.get(`${API.PARTIES}`, {
         params: {
-          query: searchQuery,
+          query: debouncedSearchQuery,
           page: currentPage,
           take: pageSize,
           adminId: user?.id,
-          branchId: branchInfo?.id ,
+          branchId: branchInfo?.id,
           contactType: activeTab,
         },
       });
       return response.data;
     },
+    enabled: !!(user?.id && branchInfo?.id), // Only run query when required data is available
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
   });
 
-  const contacts : any = data?.data?.rows ?? [];
+  const contacts: Contact[] = data?.data?.rows ?? [];
   const totalOutstanding = parseFloat(data?.data?.totalOutstanding ?? '0');
   const totalParties = parseInt(data?.data?.totalParties ?? '0');
   const meta = data?.meta;
@@ -100,7 +127,9 @@ export default function PartiesScreen() {
   useEffect(() => {
     setAllContacts([]);
     setCurrentPage(1);
-  }, [searchQuery, activeTab]);
+    setHasReachedEnd(false);
+    setIsLoadingMore(false);
+  }, [debouncedSearchQuery, activeTab]);
 
   // Accumulate contacts when new data arrives
   useEffect(() => {
@@ -112,56 +141,76 @@ export default function PartiesScreen() {
         }
 
         // For subsequent pages, append new contacts
-        // Filter out duplicates based on ID
+        // Filter out duplicates based on ID to prevent duplicate entries
         const existingIds = new Set(prevContacts.map((contact) => contact.id));
         const newContacts = contacts.filter(
-          (contact:any) => !existingIds.has(contact.id)
+          (contact) => !existingIds.has(contact.id)
         );
 
         return [...prevContacts, ...newContacts];
       });
 
+      // Update pagination state
+      setIsLoadingMore(false);
+      
+      // Check if we've reached the end
+      if (!meta?.hasNextPage || contacts.length < pageSize) {
+        setHasReachedEnd(true);
+      }
+    } else if (currentPage > 1) {
+      // No contacts returned for a page > 1, we've reached the end
+      setHasReachedEnd(true);
       setIsLoadingMore(false);
     }
-  }, [contacts, currentPage]);
+  }, [contacts, currentPage, meta?.hasNextPage, pageSize]);
 
   const handleEndReached = useCallback(() => {
-    // Prevent multiple simultaneous requests
-    if (isLoadingMore || isLoading || isFetching) {
+    // Prevent multiple simultaneous requests and check all conditions
+    if (
+      isLoadingMore || 
+      isLoading || 
+      isFetching || 
+      hasReachedEnd || 
+      !meta?.hasNextPage ||
+      allContacts.length === 0 // Don't load more if no initial data
+    ) {
       return;
     }
 
-    // Check if there are more pages
-    if (meta?.hasNextPage) {
-      setIsLoadingMore(true);
-      setCurrentPage((prevPage) => prevPage + 1);
-    }
-  }, [isLoadingMore, isLoading, isFetching, meta?.hasNextPage]);
+    console.log('Loading more contacts...', { currentPage, hasNextPage: meta?.hasNextPage });
+    setIsLoadingMore(true);
+    setCurrentPage((prevPage) => prevPage + 1);
+  }, [isLoadingMore, isLoading, isFetching, hasReachedEnd, meta?.hasNextPage, allContacts.length]);
 
   const formatAmount = (amount: string | number): string => {
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return '0';
     return numAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 });
   };
 
   const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
-    // The useEffect will handle resetting the page and contacts
+    // The debounced effect will handle the actual search
   }, []);
 
   const handleTabChange = useCallback((tab: 'CUSTOMER' | 'SUPPLIER') => {
-    setActiveTab(tab);
-    // The useEffect will handle resetting the page and contacts
-  }, []);
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      // The useEffect will handle resetting the page and contacts
+    }
+  }, [activeTab]);
 
-  const renderContactItem = ({
-    item,
-    index,
-  }: {
-    item: Contact;
-    index: number;
-  }) => {
-    const outstandingAmount = parseFloat(item.ledger.totalAmount || '0');
-    const hasOutstanding = outstandingAmount > 0;
+  const handleRefresh = useCallback(() => {
+    setAllContacts([]);
+    setCurrentPage(1);
+    setHasReachedEnd(false);
+    setIsLoadingMore(false);
+    refetch();
+  }, [refetch]);
+
+  const renderContactItem = ({ item, index }: { item: Contact; index: number }) => {
+    const outstandingAmount = parseFloat(item.ledger?.totalAmount || '0');
+    const hasOutstanding = !isNaN(outstandingAmount) && outstandingAmount > 0;
   
     return (
       <Animated.View
@@ -192,8 +241,8 @@ export default function PartiesScreen() {
             <View style={styles.cardContent}>
               {/* Top Row - Name and Status */}
               <View style={styles.topRow}>
-                <Text style={[styles.contactName, { color: theme.colors.text }]}>
-                  {item.name}
+                <Text style={[styles.contactName, { color: theme.colors.text }]} numberOfLines={1}>
+                  {item.name || 'Unknown Contact'}
                 </Text>
                 <View style={[
                   styles.statusBadge, 
@@ -236,7 +285,10 @@ export default function PartiesScreen() {
               {item.businessName && (
                 <View style={styles.businessRow}>
                   <Building2 size={14} color={theme.colors.textSecondary} />
-                  <Text style={[styles.businessName, { color: theme.colors.textSecondary }]}>
+                  <Text 
+                    style={[styles.businessName, { color: theme.colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
                     {item.businessName}
                   </Text>
                 </View>
@@ -247,7 +299,7 @@ export default function PartiesScreen() {
                 <View style={styles.phoneContainer}>
                   <Phone size={14} color={theme.colors.textSecondary} />
                   <Text style={[styles.phoneText, { color: theme.colors.textSecondary }]}>
-                    {item.mobile}
+                    {item.mobile || 'No phone'}
                   </Text>
                 </View>
                 <View style={styles.rightSection}>
@@ -274,7 +326,7 @@ export default function PartiesScreen() {
                         },
                       ]}
                     >
-                      {formatAmount(item.ledger.totalAmount)}
+                      {formatAmount(item.ledger?.totalAmount || '0')}
                     </Text>
                   </View>
                   <ChevronRight size={16} color={theme.colors.textSecondary} />
@@ -374,7 +426,7 @@ export default function PartiesScreen() {
       </Text>
       <TouchableOpacity
         style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-        onPress={() => refetch()}
+        onPress={handleRefresh}
       >
         <Text style={styles.retryButtonText}>Retry</Text>
       </TouchableOpacity>
@@ -402,6 +454,12 @@ export default function PartiesScreen() {
   const handleAdd = () => {
     router.push(`/parties/form?contactType=${activeTab}`);
   };
+
+  // Memoize the keyExtractor to prevent unnecessary re-renders
+  const keyExtractor = useCallback((item: Contact) => item.id, []);
+
+  // Show initial loading only when there's no data
+  const showInitialLoading = isLoading && allContacts.length === 0;
 
   return (
     <View
@@ -439,7 +497,7 @@ export default function PartiesScreen() {
           <View style={styles.statsContent}>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: theme.colors.text }]}>
-                {isLoading ? '-' : totalParties}
+                {showInitialLoading ? '-' : totalParties}
               </Text>
               <Text
                 style={[styles.statText, { color: theme.colors.textSecondary }]}
@@ -462,7 +520,7 @@ export default function PartiesScreen() {
                   },
                 ]}
               >
-                {isLoading ? '-' : `₹${formatAmount(totalOutstanding)}`}
+                {showInitialLoading ? '-' : `₹${formatAmount(totalOutstanding)}`}
               </Text>
               <Text
                 style={[styles.statText, { color: theme.colors.textSecondary }]}
@@ -497,21 +555,6 @@ export default function PartiesScreen() {
             },
           ]}
         >
-          {/* <View
-            style={[
-              styles.searchBar,
-              {
-                backgroundColor:
-                  themeType === 'dark'
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(255, 255, 255, 0.8)',
-                borderColor:
-                  themeType === 'dark'
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.06)',
-              },
-            ]}
-          > */}
           <View
             style={[
               styles.searchIconContainer,
@@ -526,8 +569,10 @@ export default function PartiesScreen() {
             placeholderTextColor={theme.colors.textSecondary}
             value={searchQuery}
             onChangeText={handleSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
           />
-          {/* </View> */}
         </BlurView>
       </Animated.View>
 
@@ -540,20 +585,27 @@ export default function PartiesScreen() {
       </Animated.View>
 
       {/* Content */}
-      {isLoading && allContacts.length === 0 ? (
+      {showInitialLoading ? (
         renderLoadingState()
       ) : error ? (
         renderErrorState()
       ) : (
         <FlatList
           data={allContacts}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           renderItem={renderContactItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           onEndReached={handleEndReached}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.3} // Reduced from 0.5 for better pagination
           ListFooterComponent={renderFooter}
+          onRefresh={handleRefresh}
+          refreshing={isLoading && currentPage === 1}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={undefined} // Let FlatList calculate item height dynamically
+          removeClippedSubviews={Platform.OS === 'android'}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <LinearGradient
@@ -571,7 +623,7 @@ export default function PartiesScreen() {
                 )}
               </LinearGradient>
               <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-                No {activeTab} found
+                No {activeTab.toLowerCase()}s found
               </Text>
               <Text
                 style={[
@@ -600,6 +652,7 @@ export default function PartiesScreen() {
           },
         ]}
         onPress={handleAdd}
+        activeOpacity={0.8}
       >
         <LinearGradient
           colors={[
@@ -615,6 +668,7 @@ export default function PartiesScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -623,9 +677,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingVertical: 16,
+    paddingBottom: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: Platform.OS === 'android' ? 20 : 8,
   },
   headerTitleContainer: {
     flexDirection: 'row',
@@ -639,7 +696,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   statsSection: {
-    marginTop: -30,
+    marginTop: -10,
     paddingHorizontal: 20,
     marginBottom: 12,
   },

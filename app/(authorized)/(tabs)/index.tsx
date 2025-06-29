@@ -485,8 +485,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingTop: Platform.OS === 'android' ? 16 : 8,
   },
   headerTop: {
     flexDirection: 'row',
@@ -530,7 +533,7 @@ const styles = StyleSheet.create({
   },
   businessCardContainer: {
     position: 'absolute',
-    top: 160, // Positioned in the gradient fade area
+    top: Platform.OS === 'android' ? 125 : 160, 
     left: 20,
     right: 20,
     zIndex: 999,
@@ -540,7 +543,7 @@ const styles = StyleSheet.create({
     marginTop: -80, // Overlap to create seamless flow
   },
   scrollContent: {
-    paddingTop: 200, // Space for the business card and gradient overlap
+    paddingTop: Platform.OS === 'android' ? 180 : 200, // Space for the business card and gradient overlap
     paddingHorizontal: 20,
     paddingBottom: 40,
   },

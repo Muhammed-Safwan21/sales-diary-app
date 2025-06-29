@@ -42,7 +42,7 @@ export const Header = ({
       </View>
 
       <Text
-        style={[styles.title, { color: theme.colors.onBackground }]}
+        style={[styles.title, { color: theme.colors.background }]}
         numberOfLines={1}
       >
         {title}

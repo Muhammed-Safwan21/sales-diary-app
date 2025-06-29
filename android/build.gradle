@@ -1,6 +1,10 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+  ext {
+        kotlinVersion = "1.8.22" // Expo recommended version
+        androidGradlePluginVersion = "7.3.1" // Compatible version
+    }
   repositories {
     google()
     mavenCentral()

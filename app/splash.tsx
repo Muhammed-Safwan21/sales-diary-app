@@ -54,7 +54,7 @@ export default function SplashScreen() {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[styles.container]}
     >
       <Animated.View
         entering={FadeIn.duration(1000)}

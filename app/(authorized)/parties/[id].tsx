@@ -1,33 +1,30 @@
 import { useTheme } from '@/context/ThemeContext';
+import { apiClient } from '@/services/api';
+import { useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
+  AlertCircle,
   ArrowLeft,
   Edit3,
   FileText,
   IndianRupee,
-  Building2,
-  Mail,
   Phone,
-  User,
-  MapPin,
-  AlertCircle,
   Trash2,
+  User
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/services/api';
 
 export default function PartyView() {
   const { theme, themeType }: any = useTheme();

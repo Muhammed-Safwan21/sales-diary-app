@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
-  ArrowLeft,
   ClipboardList,
   CreditCard,
   ChartBar as FileBarChart,
@@ -15,7 +14,7 @@ import {
   Truck,
   Users,
   Wallet,
-  WalletCards,
+  WalletCards
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -401,19 +400,18 @@ export default function CreateScreen() {
       >
         <SafeAreaView>
           <View style={styles.header}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
             >
               <ArrowLeft size={20} color="rgba(255, 255, 255, 0.9)" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <View style={styles.headerTitleContainer}>
               <Sparkles size={20} color="#FFFFFF" />
               <Text style={styles.headerTitle}>Create New</Text>
             </View>
 
-            <View style={styles.placeholder} />
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -455,20 +453,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: Platform.OS === 'android' ? 20 : 8,
   },
   headerTitleContainer: {
     flexDirection: 'row',
@@ -481,11 +469,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.2,
   },
-  placeholder: {
-    width: 40,
-  },
   categorySection: {
-    marginTop: -30,
+    marginTop: -10,
     paddingVertical: 20,
   },
   categoryScroll: {

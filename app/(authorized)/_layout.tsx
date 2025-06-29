@@ -7,7 +7,6 @@ export default function RootLayout(): ReactNode {
   const { isAuthenticated, isLoading } = useSelector(
     (state: any) => state.auth
   );
-  console.log('isAuthenticatedisAuthenticatedisAuthenticated', isAuthenticated);
   if (isLoading) {
     return <Text>Loading...</Text>;
   }

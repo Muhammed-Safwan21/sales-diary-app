@@ -31,9 +31,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -67,10 +67,10 @@ const validationRules = {
   },
   phone: {
     required: 'Phone number is required',
-    pattern: {
-      value: /^[0-9]{10}$/,
-      message: 'Please enter a valid 10-digit phone number',
-    },
+    // pattern: {
+    //   value: /^[0-9]{10}$/,
+    //   message: 'Please enter a valid 10-digit phone number',
+    // },
   },
   email: {
     pattern: {
@@ -79,22 +79,22 @@ const validationRules = {
     },
   },
   gstNumber: {
-    pattern: {
-      value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
-      message: 'Please enter a valid GST number (15 characters)',
-    },
+    // pattern: {
+    //   value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+    //   message: 'Please enter a valid GST number (15 characters)',
+    // },
   },
   pan: {
-    pattern: {
-      value: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
-      message: 'Please enter a valid PAN number (10 characters)',
-    },
+    // pattern: {
+    //   value: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
+    //   message: 'Please enter a valid PAN number (10 characters)',
+    // },
   },
   pincode: {
-    pattern: {
-      value: /^[0-9]{6}$/,
-      message: 'Please enter a valid 6-digit pincode',
-    },
+    // pattern: {
+    //   value: /^[0-9]{6}$/,
+    //   message: 'Please enter a valid 6-digit pincode',
+    // },
   },
   openingBalance: {
     pattern: {
@@ -165,15 +165,11 @@ export default function ContactFormScreen() {
   // Populate form when editing
   useEffect(() => {
     if (isEditing && contactData?.data) {
-      const cleanPhone =
-        contactData.mobile?.replace(/^\+91\s?/, '') ||
-        contactData.phone?.replace(/^\+91\s?/, '') ||
-        '';
-        const intitalContactData = contactData?.data
+       const intitalContactData = contactData?.data
       reset({
         name: intitalContactData.name || '',
         businessName: intitalContactData.businessName || '',
-        phone: cleanPhone,
+        phone: intitalContactData?.mobile,
         email: intitalContactData.email || '',
         gstNumber: intitalContactData.gstin || '',
         address: intitalContactData.address || '',
@@ -519,7 +515,7 @@ export default function ContactFormScreen() {
               {renderFormInput(
                 'businessName',
                 'Business Name',
-                'Enter business name (optional)',
+                'Enter business name',
                 <Building size={18} />
               )}
 
@@ -538,7 +534,7 @@ export default function ContactFormScreen() {
               {renderFormInput(
                 'email',
                 'Email Address',
-                'Enter email address (optional)',
+                'Enter email address',
                 <Mail size={18} />,
                 'email-address',
                 'none',
@@ -579,25 +575,25 @@ export default function ContactFormScreen() {
               {renderFormInput(
                 'gstNumber',
                 'GST Number',
-                'Enter GST number (15 characters)',
+                'Enter GST number',
                 <Hash size={18} />,
                 'default',
                 'characters',
                 false,
                 false,
-                { pattern: validationRules.gstNumber.pattern }
+                // { pattern: validationRules.gstNumber.pattern }
               )}
 
               {renderFormInput(
                 'pan',
                 'PAN Number',
-                'Enter PAN number (10 characters)',
+                'Enter PAN number',
                 <FileText size={18} />,
                 'default',
                 'characters',
                 false,
                 false,
-                { pattern: validationRules.pan.pattern }
+                // { pattern: validationRules.pan.pattern }
               )}
             </BlurView>
           </Animated.View>
@@ -647,7 +643,7 @@ export default function ContactFormScreen() {
                   {renderFormInput(
                     'city',
                     'City',
-                    'Enter city',
+                    'City',
                     <Building size={18} />
                   )}
                 </Animated.View>
@@ -659,7 +655,7 @@ export default function ContactFormScreen() {
                   {renderFormInput(
                     'state',
                     'State',
-                    'Enter state',
+                    'State',
                     <Globe size={18} />
                   )}
                 </Animated.View>
@@ -673,13 +669,13 @@ export default function ContactFormScreen() {
                   {renderFormInput(
                     'pincode',
                     'Pincode',
-                    'Enter 6-digit pincode',
+                    'Pin',
                     <Hash size={18} />,
                     'numeric',
                     'none',
                     false,
                     false,
-                    { pattern: validationRules.pincode.pattern }
+                    // { pattern: validationRules.pincode.pattern }
                   )}
                 </Animated.View>
 
@@ -690,7 +686,7 @@ export default function ContactFormScreen() {
                   {renderFormInput(
                     'country',
                     'Country',
-                    'Enter country',
+                    'Country',
                     <Globe size={18} />
                   )}
                 </Animated.View>

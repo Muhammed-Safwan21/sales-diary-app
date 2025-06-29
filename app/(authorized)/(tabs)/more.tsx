@@ -1,40 +1,40 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Platform,
-} from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/hooks/useAuth';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import {
-  Settings,
-  Store,
+  ArrowUpRight,
+  ChevronRight,
   CreditCard,
+  Crown,
   FileText,
   Headphones,
-  Share2,
-  Star,
-  Sun,
-  Moon,
-  ChevronRight,
   LogOut,
-  Users,
   Menu,
-  Sparkles,
-  Crown,
+  Moon,
+  Settings,
+  Share2,
   Shield,
-  ArrowUpRight,
+  Sparkles,
+  Star,
+  Store,
+  Sun,
+  Users,
 } from 'lucide-react-native';
+import React from 'react';
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useAuth } from '@/hooks/useAuth';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -393,17 +393,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerGradient: {
-    paddingBottom: 20,
+    paddingBottom: 30,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingVertical: 16,
+    paddingBottom: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: Platform.OS === 'android' ? 20 : 8,
   },
   headerTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   headerTitle: {
     fontSize: 20,
@@ -413,7 +416,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginTop: -10,
+    marginTop: -40,
   },
   scrollContent: {
     paddingHorizontal: 20,
