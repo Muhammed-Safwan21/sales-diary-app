@@ -1,4 +1,8 @@
+import API from '@/config/api';
+import QUERY_KEY from '@/config/queryKey';
 import { useTheme } from '@/context/ThemeContext';
+import { apiClient } from '@/services/api';
+import { useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -11,8 +15,10 @@ import {
   CheckCircle,
   XCircle,
   FileText,
+  Search,
+  X,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -22,91 +28,142 @@ import {
   Text,
   TouchableOpacity,
   View,
+  TextInput,
+  Alert,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
-// Mock data for ledgers
-const mockLedgers = [
-  {
-    id: '1',
-    name: 'Cash Ledger',
-    type: 'Cash',
-    balance: 50000,
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: 'Sales Ledger',
-    type: 'Sales',
-    balance: 120000,
-    status: 'active',
-  },
-  {
-    id: '3',
-    name: 'Purchase Ledger',
-    type: 'Purchase',
-    balance: 30000,
-    status: 'inactive',
-  },
-  {
-    id: '4',
-    name: 'Bank Ledger',
-    type: 'Bank',
-    balance: 200000,
-    status: 'active',
-  },
-];
+// Define types for better type safety
+interface LedgerData {
+  data: any[];
+  meta: {
+    itemCount: number;
+    hasNextPage: boolean;
+  };
+}
 
 export default function LedgerListingScreen() {
-  const { theme, themeType }: any = useTheme();
+  const { theme, themeType } = useTheme();
   const router = useRouter();
-  const [ledgers, setLedgers] = useState(mockLedgers);
-  const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showSearch, setShowSearch] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [allLedgers, setAllLedgers] = useState<any[]>([]);
+  
+  const { branchInfo, user } = useSelector((state: any) => state.auth);
+  const itemsPerPage = 10;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return theme.colors.success;
-      case 'inactive':
-        return theme.colors.error;
-      default:
-        return theme.colors.textSecondary;
+  const { data, isLoading, error, refetch, isFetching } = useQuery<LedgerData>({
+    queryKey: [QUERY_KEY.CHART_OF_ACCOUNTS, searchQuery, currentPage, selectedFilter],
+    queryFn: async (): Promise<LedgerData> => {
+      const response = await apiClient.get(`${API.CHART_OF_ACCOUNTS}`, {
+        params: {
+          query: searchQuery,
+          page: currentPage,
+          take: itemsPerPage,
+          order: 'ASC',
+          adminId: user?.id,
+          branchId: branchInfo?.id,
+        },
+      });
+      return response.data;
+    },
+    enabled: !!(user?.id && branchInfo?.id),
+  });
+
+  // Handle success and error cases with useEffect
+  useEffect(() => {
+    if (data) {
+      if (currentPage === 1) {
+        setAllLedgers(data.data || []);
+      } else {
+        setAllLedgers((prev: any[]) => [...prev, ...(data.data || [])]);
+      }
+      setIsLoadingMore(false);
     }
+  }, [data, currentPage]);
+
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching ledgers:', error);
+      setIsLoadingMore(false);
+      Alert.alert('Error', 'Failed to fetch ledgers. Please try again.');
+    }
+  }, [error]);
+
+  const meta = data?.meta || { itemCount: 0, hasNextPage: false };
+  const ledgers = allLedgers || [];
+
+  // Filter ledgers based on selected filter
+  const filteredLedgers = useMemo(() => {
+    let filtered = [...ledgers];
+    
+    // Apply status filter if needed (you can add status logic based on your business rules)
+    if (selectedFilter === 'active') {
+      filtered = filtered.filter((ledger: any) => ledger.deletedAt === null);
+    } else if (selectedFilter === 'inactive') {
+      filtered = filtered.filter((ledger: any) => ledger.deletedAt !== null);
+    }
+    
+    return filtered;
+  }, [ledgers, selectedFilter]);
+
+  const getStatusColor = (ledger: any) => {
+    if (ledger.deletedAt) {
+      return theme.colors.error;
+    }
+    return theme.colors.success;
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle size={12} color={theme.colors.success} />;
-      case 'inactive':
-        return <XCircle size={12} color={theme.colors.error} />;
-      default:
-        return <BookOpen size={12} color={theme.colors.textSecondary} />;
+  const getStatusIcon = (ledger: any) => {
+    if (ledger.deletedAt) {
+      return <XCircle size={12} color={theme.colors.error} />;
     }
+    return <CheckCircle size={12} color={theme.colors.success} />;
   };
 
-  const handleViewLedger = (ledgerId: string) => {
+  const getStatusText = (ledger: any) => {
+    return ledger.deletedAt ? 'Inactive' : 'Active';
+  };
+
+  const handleViewLedger = (ledgerId: any) => {
     router.push(`/ledger/${ledgerId}`);
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    setCurrentPage(1);
+    setAllLedgers([]);
   };
 
-  const filteredLedgers = ledgers.filter((ledger) => {
-    if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'active') return ledger.status === 'active';
-    if (selectedFilter === 'inactive') return ledger.status === 'inactive';
-    return true;
-  });
+  const clearSearch = () => {
+    setSearchQuery('');
+    setShowSearch(false);
+    setCurrentPage(1);
+    setAllLedgers([]);
+  };
 
-  const totalBalance = ledgers.reduce((sum, ledger) => sum + ledger.balance, 0);
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+    setCurrentPage(1);
+    setAllLedgers([]);
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    setAllLedgers([]);
+    refetch().finally(() => setRefreshing(false));
+  }, [refetch]);
+
+  const totalBalance = useMemo(() => {
+    return ledgers.reduce((sum: number, ledger: any) => sum + parseFloat(ledger.totalAmount || 0), 0);
+  }, [ledgers]);
 
   const renderHeader = () => (
     <LinearGradient
@@ -134,8 +191,43 @@ export default function LedgerListingScreen() {
             <Text style={styles.headerTitle}>Ledgers</Text>
           </View>
 
-          <View style={styles.headerRightSpacer} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setShowSearch(!showSearch)}
+            activeOpacity={0.7}
+          >
+            <Search size={20} color="rgba(255, 255, 255, 0.9)" />
+          </TouchableOpacity>
         </View>
+
+        {/* Search Bar */}
+        {showSearch && (
+          <Animated.View
+            entering={FadeInUp.springify()}
+            style={styles.searchContainer}
+          >
+            <BlurView
+              intensity={themeType === 'dark' ? 20 : 80}
+              tint={themeType}
+              style={styles.searchBar}
+            >
+              <Search size={18} color="rgba(255, 255, 255, 0.7)" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search ledgers..."
+                placeholderTextColor="rgba(255, 255, 255, 0.7)"
+                value={searchQuery}
+                onChangeText={handleSearch}
+                autoFocus
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={clearSearch}>
+                  <X size={18} color="rgba(255, 255, 255, 0.7)" />
+                </TouchableOpacity>
+              )}
+            </BlurView>
+          </Animated.View>
+        )}
 
         {/* Summary Cards */}
         <View style={styles.summaryContainer}>
@@ -146,7 +238,7 @@ export default function LedgerListingScreen() {
               style={styles.summaryCard}
             >
               <Text style={styles.summaryLabel}>Total Ledgers</Text>
-              <Text style={styles.summaryValue}>{ledgers.length}</Text>
+              <Text style={styles.summaryValue}>{meta.itemCount || 0}</Text>
             </BlurView>
             <BlurView
               intensity={themeType === 'dark' ? 20 : 80}
@@ -179,12 +271,12 @@ export default function LedgerListingScreen() {
           {
             key: 'active',
             label: 'Active',
-            count: ledgers.filter((l) => l.status === 'active').length,
+            count: ledgers.filter((l: any) => !l.deletedAt).length,
           },
           {
             key: 'inactive',
             label: 'Inactive',
-            count: ledgers.filter((l) => l.status === 'inactive').length,
+            count: ledgers.filter((l: any) => l.deletedAt).length,
           },
         ].map((filter) => (
           <TouchableOpacity
@@ -211,7 +303,7 @@ export default function LedgerListingScreen() {
                 elevation: selectedFilter === filter.key ? 4 : 0,
               },
             ]}
-            onPress={() => setSelectedFilter(filter.key)}
+            onPress={() => handleFilterChange(filter.key)}
             activeOpacity={0.8}
           >
             <Text
@@ -291,36 +383,36 @@ export default function LedgerListingScreen() {
               <Text style={[styles.ledgerName, { color: theme.colors.text }]}> 
                 {ledger.name}
               </Text>
-              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(ledger.status)}15` }]}> 
-                {getStatusIcon(ledger.status)}
+              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(ledger)}15` }]}> 
+                {getStatusIcon(ledger)}
                 <Text
                   style={[
                     styles.statusText,
-                    { color: getStatusColor(ledger.status) },
+                    { color: getStatusColor(ledger) },
                   ]}
                 >
-                  {ledger.status.charAt(0).toUpperCase() + ledger.status.slice(1)}
+                  {getStatusText(ledger)}
                 </Text>
               </View>
             </View>
 
             {/* Type Row */}
             <View style={styles.typeRow}>
-              <FileText size={14} color={theme.colors.textSecondary} />
-              <Text style={[styles.typeName, { color: theme.colors.textSecondary }]}> 
-                {ledger.type}
+              <FileText size={14} color={theme.colors.text} />
+              <Text style={[styles.typeName, { color: theme.colors.text }]}> 
+                {ledger.category?.name || 'N/A'}
               </Text>
             </View>
 
-            {/* Bottom Row - Balance, Chevron */}
+            {/* Bottom Row - Balance and Chevron */}
             <View style={styles.bottomRow}>
               <View style={styles.balanceContainer}>
                 <BookOpen size={16} color={theme.colors.primary} />
                 <Text style={[styles.balance, { color: theme.colors.primary }]}> 
-                  ₹{ledger.balance.toLocaleString('en-IN')}
+                  ₹{parseFloat(ledger.totalAmount || 0).toLocaleString('en-IN')}
                 </Text>
               </View>
-              <ChevronRight size={16} color={theme.colors.textSecondary} />
+              <ChevronRight size={16} color={theme.colors.text} />
             </View>
           </View>
         </BlurView>
@@ -338,18 +430,20 @@ export default function LedgerListingScreen() {
         <View style={styles.emptyIconContainer}>
           <BookOpen
             size={56}
-            color={theme.colors.textSecondary}
+            color={theme.colors.text}
             strokeWidth={1.5}
           />
         </View>
         <Text style={[styles.emptyTitle, { color: theme.colors.text }]}> 
-          No {selectedFilter === 'all' ? '' : selectedFilter} ledgers
+          No {selectedFilter === 'all' ? '' : selectedFilter} ledgers found
         </Text>
         <Text
-          style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}
+          style={[styles.emptySubtitle, { color: theme.colors.text }]}
         >
           {selectedFilter === 'all'
-            ? 'Add your first ledger to get started'
+            ? searchQuery 
+              ? 'No ledgers match your search criteria'
+              : 'Add your first ledger to get started'
             : `No ${selectedFilter} ledgers found`}
         </Text>
       </BlurView>
@@ -401,13 +495,13 @@ export default function LedgerListingScreen() {
             />
           }
         >
-          {isLoading ? (
+          {isLoading && currentPage === 1 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text
                 style={[
                   styles.loadingText,
-                  { color: theme.colors.textSecondary },
+                  { color: theme.colors.text },
                 ]}
               >
                 Loading ledgers...
@@ -466,8 +560,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.3,
   },
-  headerRightSpacer: {
-    width: 42,
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   summaryContainer: {
     paddingHorizontal: 20,

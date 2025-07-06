@@ -8,7 +8,7 @@ const QUERY_KEY = {
     TRANSACTIONS:"transactions/",
     CHART_OF_ACCOUNTS:"chart-of-accounts/",
     BANKING:"banking",
-    ACCOUNT_CATEGORIES:"acount-categories",
+    ACCOUNT_CATEGORIES:"acount-categories/",
 
 }
 

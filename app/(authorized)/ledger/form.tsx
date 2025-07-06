@@ -291,7 +291,9 @@ export default function LedgerFormScreen() {
                   : 'rgba(0, 0, 0, 0.06)',
               },
             ]}
-            onPress={() => setShowCategoryModal(true)}
+            onPress={() => {
+              console.log("first")
+              setShowCategoryModal(true)}}
             disabled={isPending}
           >
             <View style={styles.selectContent}>

@@ -4,12 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
+  BookOpen,
+  CheckCircle,
   Edit,
   Trash2,
-  BookOpen,
-  FileText,
-  CheckCircle,
-  XCircle,
+  XCircle
 } from 'lucide-react-native';
 import React from 'react';
 import {

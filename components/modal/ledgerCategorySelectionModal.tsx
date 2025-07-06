@@ -96,22 +96,22 @@ const LedgerCategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
   // Get branchId from Redux
   const branchId = useSelector((state: any) => state.auth?.branchInfo?.id);
 
-  const {
+  const {   
     data: categories = [],
     isLoading,
     error,
-    refetch,
-  } = useQuery({
-    queryKey: [QUERY_KEY.ACCOUNT_CATEGORIES, branchId, 'CATEGORY'],
-    queryFn: async () =>
-      await apiClient.get(API.ACCOUNT_CATEGORIES, {
+    refetch, } = useQuery({
+    queryKey: ['overall-business-report',  branchId, 'CATEGORY'],
+    queryFn: async () => {
+      const response = await apiClient.get(API.ACCOUNT_CATEGORIES, {
         params: {
           branchId: branchId,
           categoryType: 'CATEGORY',
         },
-      }),
-    select: (res: any) => res?.data?.data,
-    enabled: visible,
+      });
+      return response.data.data;
+    },
+    enabled: !!visible,
   });
 
   // Add category mutation

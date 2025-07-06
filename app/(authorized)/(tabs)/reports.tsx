@@ -53,11 +53,8 @@ export default function ReportsScreen() {
   const startDate = oneWeekAgo;
   const endDate = today;
 
-  // Define the query key for the report
-  const reportQueryKey = ['overall-business-report', user?.id, branchInfo?.id, financialYear?.id];
-
   const { data: reportData, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: reportQueryKey,
+    queryKey: ['overall-business-report', user?.id, branchInfo?.id, financialYear?.id],
     queryFn: async () => {
       const response = await apiClient.get('/reports/overall-business', {
         params: {
